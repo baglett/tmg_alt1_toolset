@@ -1,0 +1,17 @@
+{
+    "appName": "Dungeoneering Gate Engine",
+    "description": "Dungeoneering Optimization Gate Engine with integrated text recognition",
+    "appUrl": "/index.html",
+    "configUrl": "/appconfig.json",
+    "defaultWidth": 400,
+    "defaultHeight": 300,
+    "minWidth": 300,
+    "minHeight": 200,
+    "maxWidth": 800,
+    "maxHeight": 600,
+    "requestHandlers": [],
+    "activators": [],
+    "permissions": "pixel,gamestate,overlay",
+    "killOnClose": true,
+    "version": "1.0.0"
+} 

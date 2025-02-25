@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Dungeoneering Gate Engine</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background: #2b2b2b;
+            color: #ffffff;
+            text-align: center;
+            max-width: 800px;
+            margin: 0 auto;
+        }
+        .title-container {
+            margin-bottom: 20px;
+        }
+        .title {
+            font-size: 24px;
+            display: inline;
+            margin-right: 5px;
+        }
+        .version {
+            background: #4CAF50;
+            color: white;
+            padding: 2px 6px;
+            border-radius: 3px;
+            font-size: 12px;
+        }
+        #alt1-status {
+            margin: 20px 0;
+            padding: 15px;
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 4px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+        }
+        #alt1-status:not(.detected) {
+            color: #ff4444;
+        }
+        #alt1-status.detected {
+            color: #4CAF50;
+            cursor: default;
+        }
+        #output-container {
+            margin: 20px auto;
+            padding: 15px;
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 4px;
+            width: 100%;
+            box-sizing: border-box;
+        }
+        #text-output {
+            margin: 10px auto;
+            padding: 15px;
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 4px;
+            min-height: 30px;
+            white-space: pre-wrap;
+            font-size: 16px;
+            width: 100%;
+            box-sizing: border-box;
+            text-align: left;
+        }
+        .button {
+            background: #4CAF50;
+            color: white;
+            padding: 12px 24px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 16px;
+            margin: 10px auto;
+            display: block;
+            width: 200px;
+            transition: background-color 0.3s;
+        }
+        .button:hover {
+            background: #45a049;
+        }
+        .button:disabled {
+            background: #cccccc;
+            cursor: not-allowed;
+        }
+        .section-title {
+            font-size: 18px;
+            margin-top: 20px;
+            margin-bottom: 10px;
+            text-align: left;
+        }
+        .info-text {
+            font-size: 14px;
+            color: #aaaaaa;
+            margin-bottom: 10px;
+            text-align: left;
+        }
+        footer {
+            margin-top: 40px;
+            font-size: 12px;
+            color: #888888;
+        }
+        #add-app-container {
+            margin: 20px 0;
+            padding: 15px;
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 4px;
+            display: none; /* Hidden by default, shown when not in Alt1 */
+        }
+        #add-app-container a {
+            color: #4CAF50;
+            text-decoration: none;
+            font-weight: bold;
+        }
+        #add-app-container a:hover {
+            text-decoration: underline;
+        }
+        .loading-indicator {
+            display: none;
+            margin: 20px auto;
+            text-align: center;
+        }
+        .loading-indicator.visible {
+            display: block;
+        }
+        .spinner {
+            border: 4px solid rgba(0, 0, 0, 0.1);
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            border-left-color: #4CAF50;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 10px;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body>
+    <div class="title-container">
+        <div class="title">Dungeoneering Gate Engine</div>
+        <span class="version" id="version">v1.0.0</span>
+    </div>
+
+    <div id="alt1-status" class="not-detected">
+        <div id="alt1-status-text">Alt1 not detected</div>
+    </div>
+
+    <div id="add-app-container">
+        <p>This app needs to run inside Alt1 to function properly.</p>
+        <a href="#" id="add-app-link">Click here to add this app to Alt1</a>
+    </div>
+
+    <div id="loading-indicator" class="loading-indicator">
+        <div class="spinner"></div>
+        <div>Initializing text recognition engine...</div>
+    </div>
+
+    <div id="output-container">
+        <div class="section-title">Door Text</div>
+        <div class="info-text">Hover your mouse over door text in-game to read it</div>
+        <div id="text-output">Waiting for text...</div>
+    </div>
+
+    <button id="start-button" class="button" disabled>Start Scanning</button>
+    <button id="stop-button" class="button" disabled>Stop Scanning</button>
+
+    <footer>
+        Dungeoneering Gate Engine v<span id="footer-version">1.0.0</span>
+    </footer>
+
+    <script src="index.bundle.js"></script>
+</body>
+</html> 

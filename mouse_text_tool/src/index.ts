@@ -55,6 +55,9 @@ class DoorTextReader {
     private lastCaptureTime: number = 0;
     private captureUpdateInterval: number = 250; // Milliseconds between capture updates
     
+    // Add a property to store the last recognized text
+    private lastRecognizedText: string = '';
+    
     // Text box detection settings
     private enableTextBoxDetection: boolean = true;
     private borderColorThreshold: number = 20;
@@ -425,6 +428,9 @@ class DoorTextReader {
             const result = await this.worker.recognize(croppedCanvas);
             const recognizedText = result.data.text.trim();
             
+            // Store the recognized text
+            this.lastRecognizedText = recognizedText;
+            
             // Update the output with the recognized text
             this.callback?.(recognizedText);
             
@@ -680,6 +686,11 @@ class DoorTextReader {
                 console.warn('Failed to clear overlay group:', error);
             }
         }
+    }
+    
+    // Add a method to get the last recognized text
+    public getLastText(): string {
+        return this.lastRecognizedText;
     }
 }
 
