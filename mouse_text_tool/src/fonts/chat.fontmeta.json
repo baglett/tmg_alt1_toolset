@@ -1,0 +1,13 @@
+{
+    "chars": [
+        {
+            "width": 8,
+            "height": 8,
+            "pixels": [0, 0, 255, 255, 255, 255, 0, 0],
+            "chr": "A"
+        }
+    ],
+    "spacewidth": 4,
+    "shadow": 0,
+    "basey": 8
+} 
