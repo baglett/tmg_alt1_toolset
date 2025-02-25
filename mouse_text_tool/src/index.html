@@ -50,19 +50,19 @@
             margin: 20px auto;
             max-width: 400px;
         }
-        #viewport {
+        #viewport, #croppedViewport {
             margin: 10px auto;
             padding: 10px;
             background: rgba(0, 0, 0, 0.3);
             border-radius: 4px;
             width: 100%;
-            height: 30px;
+            height: 60px;
             display: flex;
             align-items: center;
             justify-content: center;
             position: relative;
         }
-        #viewport canvas {
+        #viewport canvas, #croppedViewport canvas {
             width: 100%;
             height: 100%;
             object-fit: contain;
@@ -147,6 +147,12 @@
             text-align: left;
             color: #aaa;
         }
+        .settings-section {
+            margin-bottom: 20px;
+        }
+        .setting {
+            margin-bottom: 10px;
+        }
     </style>
 </head>
 <body>
@@ -169,16 +175,52 @@
             <div id="captureRegion">Capture Region: (0, 0) 250x30</div>
         </div>
         
-        <div class="viewport-label">Scan Preview:</div>
+        <div class="viewport-label">Original Capture:</div>
         <div id="viewport">
             <canvas id="previewCanvas" width="200" height="100"></canvas>
         </div>
+        
+        <div class="viewport-label">Cropped Image (For OCR):</div>
+        <div id="croppedViewport">
+            <canvas id="croppedCanvas" width="200" height="100"></canvas>
+        </div>
+        
         <div class="checkbox-container">
             <input type="checkbox" id="showPreviewBox" checked>
             <label for="showPreviewBox">Toggle scanning preview box</label>
         </div>
         <button id="toggleScan" class="button">Start Scanning</button>
         <div id="output"></div>
+
+        <div class="settings-section">
+            <h3>Display Settings</h3>
+            <div class="setting">
+                <input type="checkbox" id="enablePreviewBox" checked>
+                <label for="enablePreviewBox">Show preview box</label>
+            </div>
+        </div>
+
+        <div class="settings-section">
+            <h3>Text Box Detection</h3>
+            <div class="setting">
+                <input type="checkbox" id="enableTextBoxDetection" checked>
+                <label for="enableTextBoxDetection">Enable text box detection</label>
+            </div>
+            <div class="setting">
+                <label for="borderColorThreshold">Border color threshold:</label>
+                <input type="range" id="borderColorThreshold" min="5" max="50" value="20" step="1">
+                <span id="borderColorThresholdValue">20</span>
+            </div>
+            <div class="setting">
+                <label for="cropMargin">Crop margin (pixels):</label>
+                <input type="range" id="cropMargin" min="0" max="10" value="2" step="1">
+                <span id="cropMarginValue">2</span>
+            </div>
+            <div class="setting">
+                <input type="checkbox" id="showDebugOverlay">
+                <label for="showDebugOverlay">Show debug overlay</label>
+            </div>
+        </div>
     </div>
 
     <script>
