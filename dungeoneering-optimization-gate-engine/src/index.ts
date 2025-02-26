@@ -421,8 +421,10 @@ export class DungeoneeringGateEngine {
     private mapTrackingEnabled: boolean = false;
     private mapOutlineVisible: boolean = true;
     private mapSize: string = 'small';
-    private xOffset: number = 8;
-    private yOffset: number = -6;
+    private xOffset: number = 15;
+    private yOffset: number = 0;
+    private outlineWidth: number = -15; // Width adjustment for the outer outline
+    private outlineHeight: number = -12; // Height adjustment for the outer outline
     private mapTrackingInterval: number | null = null;
 
     constructor() {
@@ -440,6 +442,8 @@ export class DungeoneeringGateEngine {
         const mapSizeRadios = document.querySelectorAll('input[name="map-size"]');
         const xOffsetInput = document.getElementById('x-offset') as HTMLInputElement;
         const yOffsetInput = document.getElementById('y-offset') as HTMLInputElement;
+        const outlineWidthInput = document.getElementById('outline-width') as HTMLInputElement;
+        const outlineHeightInput = document.getElementById('outline-height') as HTMLInputElement;
         
         if (startButton) {
             startButton.addEventListener('click', () => this.startTextScanning());
@@ -490,6 +494,25 @@ export class DungeoneeringGateEngine {
         if (yOffsetInput) {
             yOffsetInput.addEventListener('change', () => {
                 this.yOffset = parseInt(yOffsetInput.value, 10) || 0;
+                if (this.mapTrackingEnabled) {
+                    this.drawMapOutline();
+                }
+            });
+        }
+        
+        // Add event listeners for outline width/height
+        if (outlineWidthInput) {
+            outlineWidthInput.addEventListener('change', () => {
+                this.outlineWidth = parseInt(outlineWidthInput.value, 10) || 0;
+                if (this.mapTrackingEnabled) {
+                    this.drawMapOutline();
+                }
+            });
+        }
+        
+        if (outlineHeightInput) {
+            outlineHeightInput.addEventListener('change', () => {
+                this.outlineHeight = parseInt(outlineHeightInput.value, 10) || 0;
                 if (this.mapTrackingEnabled) {
                     this.drawMapOutline();
                 }
@@ -844,29 +867,64 @@ export class DungeoneeringGateEngine {
                 // Get the map size based on the selected dungeon size
                 const size = MAP_SIZES[this.mapSize];
                 
-                // Calculate the map outline coordinates
+                // Calculate the map outline coordinates with width/height adjustments
                 // The marker is at the top-right corner of the map
-                const x = this.markerLocation.x - size.width + this.xOffset;
-                const y = this.markerLocation.y + this.yOffset;
+                const x = Math.floor(this.markerLocation.x - size.width + this.xOffset);
+                const y = Math.floor(this.markerLocation.y + this.yOffset);
+                const outlineWidth = Math.floor(size.width + this.outlineWidth);
+                const outlineHeight = Math.floor(size.height + this.outlineHeight);
                 
-                // Create white color for the outline
-                const whiteColor = a1lib.mixColor(255, 255, 255);
+                // Create colors for the outline and grid
+                const whiteColor = a1lib.mixColor(255, 255, 255); // White for outline
+                const gridColor = a1lib.mixColor(200, 200, 50); // Bright yellow-ish for grid
+                const blackColor = a1lib.mixColor(0, 0, 0); // Black for background
                 
-                // Draw the map outline (rectangle)
+                // Draw a semi-transparent black background for the grid area
+                // Alt1 API expects integers for coordinates and dimensions, and opacity as an integer percentage
+                window.alt1.overLayRect(blackColor, x, y, outlineWidth, outlineHeight, 2000, 30); // 30% opacity (as integer)
+                
+                // Draw grid based on dungeon size
+                let gridCols = 4; // Default for small
+                let gridRows = 4; // Default for small
+                
+                if (this.mapSize === 'medium') {
+                    gridCols = 4;
+                    gridRows = 8;
+                } else if (this.mapSize === 'large') {
+                    gridCols = 8;
+                    gridRows = 8;
+                }
+                
+                const cellWidth = outlineWidth / gridCols;
+                const cellHeight = outlineHeight / gridRows;
+                
+                // Draw vertical grid lines (draw these first so they appear behind the outline)
+                for (let i = 1; i < gridCols; i++) {
+                    const lineX = Math.floor(x + (cellWidth * i));
+                    window.alt1.overLayLine(gridColor, 2, lineX, y, lineX, y + outlineHeight, 2000);
+                }
+                
+                // Draw horizontal grid lines
+                for (let i = 1; i < gridRows; i++) {
+                    const lineY = Math.floor(y + (cellHeight * i));
+                    window.alt1.overLayLine(gridColor, 2, x, lineY, x + outlineWidth, lineY, 2000);
+                }
+                
+                // Draw the map outline (rectangle) - draw this last so it appears on top
                 // Top line
-                window.alt1.overLayLine(whiteColor, 2, x, y, x + size.width, y, 2000);
+                window.alt1.overLayLine(whiteColor, 2, x, y, x + outlineWidth, y, 2000);
                 
                 // Right line
-                window.alt1.overLayLine(whiteColor, 2, x + size.width, y, x + size.width, y + size.height, 2000);
+                window.alt1.overLayLine(whiteColor, 2, x + outlineWidth, y, x + outlineWidth, y + outlineHeight, 2000);
                 
                 // Bottom line
-                window.alt1.overLayLine(whiteColor, 2, x, y + size.height, x + size.width, y + size.height, 2000);
+                window.alt1.overLayLine(whiteColor, 2, x, y + outlineHeight, x + outlineWidth, y + outlineHeight, 2000);
                 
                 // Left line
-                window.alt1.overLayLine(whiteColor, 2, x, y, x, y + size.height, 2000);
+                window.alt1.overLayLine(whiteColor, 2, x, y, x, y + outlineHeight, 2000);
                 
                 // Draw map size text
-                window.alt1.overLayText(`${this.mapSize.toUpperCase()} MAP (${size.width}x${size.height})`, whiteColor, 10, x, y - 15, 2000);
+                window.alt1.overLayText(`${this.mapSize.toUpperCase()} MAP (${outlineWidth}x${outlineHeight})`, whiteColor, 10, x, y - 15, 2000);
                 
             } catch (error) {
                 console.error("Error drawing map outline:", error);
