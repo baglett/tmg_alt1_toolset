@@ -922,65 +922,41 @@ export function highlightRedXMarker(x: number, y: number, duration: number = 500
     if (!window.alt1) return;
 
     try {
-        // Set the overlay group
-        window.alt1.overLaySetGroup("dungeoneering_marker");
+        // Draw a crosshair and circle using lines instead of the non-existent overLayCircle
+        const greenColor = a1lib.mixColor(0, 255, 0); // Bright green
+        const yellowColor = a1lib.mixColor(255, 255, 0); // Yellow
+        const whiteColor = a1lib.mixColor(255, 255, 255); // White
+        const purpleColor = a1lib.mixColor(255, 0, 255); // Purple
         
-        // Clear any previous overlays
-        window.alt1.overLayClearGroup("dungeoneering_marker");
+        // Draw crosshair lines
+        const size = 15;
+        // Horizontal line
+        window.alt1.overLayLine(greenColor, 2, x - size, y, x + size, y, duration);
+        // Vertical line
+        window.alt1.overLayLine(greenColor, 2, x, y - size, x, y + size, duration);
         
-        // Draw a circle around the marker
-        const color = a1lib.mixColor(0, 255, 0, 255); // Bright green
-        
-        // Draw the circle
-        window.alt1.overLayCircle(
-            color,
-            x,
-            y,
-            15, // Radius
-            duration,
-            2 // Thickness in pixels
-        );
-        
-        // Add a larger indicator to make it more visible
-        const indicatorColor = a1lib.mixColor(255, 255, 0, 150); // Semi-transparent yellow
-        window.alt1.overLayCircle(
-            indicatorColor,
-            x,
-            y,
-            25, // Radius
-            duration,
-            1 // Thickness in pixels
-        );
+        // Draw a square around the marker (instead of a circle)
+        window.alt1.overLayLine(yellowColor, 1, x - 25, y - 25, x + 25, y - 25, duration); // Top
+        window.alt1.overLayLine(yellowColor, 1, x + 25, y - 25, x + 25, y + 25, duration); // Right
+        window.alt1.overLayLine(yellowColor, 1, x + 25, y + 25, x - 25, y + 25, duration); // Bottom
+        window.alt1.overLayLine(yellowColor, 1, x - 25, y + 25, x - 25, y - 25, duration); // Left
         
         // Add a text label
-        window.alt1.overLayText(
-            a1lib.mixColor(255, 255, 255, 255), // White
-            x,
-            y - 30,
-            duration,
-            "Minimap Marker"
-        );
+        window.alt1.overLayText("Minimap Marker", whiteColor, 12, x, y - 30, duration);
         
-        // Add a pulsing circle for better visibility
+        // Add a pulsing effect with a square
         const pulseInterval = setInterval(() => {
-            const pulseColor = a1lib.mixColor(255, 0, 255, 150); // Purple, semi-transparent
-            window.alt1.overLayCircle(
-                pulseColor,
-                x,
-                y,
-                35, // Radius
-                1000, // Duration
-                2 // Thickness
-            );
+            const pulseSize = 35;
+            window.alt1.overLayLine(purpleColor, 2, x - pulseSize, y - pulseSize, x + pulseSize, y - pulseSize, 1000); // Top
+            window.alt1.overLayLine(purpleColor, 2, x + pulseSize, y - pulseSize, x + pulseSize, y + pulseSize, 1000); // Right
+            window.alt1.overLayLine(purpleColor, 2, x + pulseSize, y + pulseSize, x - pulseSize, y + pulseSize, 1000); // Bottom
+            window.alt1.overLayLine(purpleColor, 2, x - pulseSize, y + pulseSize, x - pulseSize, y - pulseSize, 1000); // Left
         }, 1000);
         
         // Clear the interval after the duration
         setTimeout(() => {
             clearInterval(pulseInterval);
         }, duration);
-        
-        // Refresh the overlay group
-        window.alt1.overLayRefreshGroup("dungeoneering_marker");
         
         console.log(`Highlighted red X marker at (${x}, ${y})`);
     } catch (error) {

@@ -23,6 +23,19 @@ interface MousePosition {
     y: number;
 }
 
+// Map size interface
+interface MapSize {
+    width: number;
+    height: number;
+}
+
+// Map sizes for different dungeon types
+const MAP_SIZES: Record<string, MapSize> = {
+    small: { width: 140, height: 140 },
+    medium: { width: 140, height: 280 },
+    large: { width: 280, height: 280 }
+};
+
 // Helper function to get mouse position from Alt1
 function getAlt1MousePosition(): MousePosition | null {
     if (!window.alt1) return null;
@@ -403,6 +416,14 @@ export class DungeoneeringGateEngine {
     private isDraggingMarker: boolean = false;
     private dragInterval: number | null = null;
     private lastDrawnPosition: { x: number, y: number } | null = null;
+    
+    // Map tracking properties
+    private mapTrackingEnabled: boolean = false;
+    private mapOutlineVisible: boolean = true;
+    private mapSize: string = 'small';
+    private xOffset: number = 8;
+    private yOffset: number = -6;
+    private mapTrackingInterval: number | null = null;
 
     constructor() {
         this.doorTextReader = new DoorTextReader();
@@ -414,6 +435,11 @@ export class DungeoneeringGateEngine {
         const startButton = document.getElementById('start-button');
         const stopButton = document.getElementById('stop-button');
         const placeMarkerButton = document.getElementById('place-marker-button');
+        const updateMapButton = document.getElementById('update-map-button');
+        const showMapOutlineCheckbox = document.getElementById('show-map-outline') as HTMLInputElement;
+        const mapSizeRadios = document.querySelectorAll('input[name="map-size"]');
+        const xOffsetInput = document.getElementById('x-offset') as HTMLInputElement;
+        const yOffsetInput = document.getElementById('y-offset') as HTMLInputElement;
         
         if (startButton) {
             startButton.addEventListener('click', () => this.startTextScanning());
@@ -425,6 +451,49 @@ export class DungeoneeringGateEngine {
         
         if (placeMarkerButton) {
             placeMarkerButton.addEventListener('click', () => this.toggleMarkerPlacement());
+        }
+        
+        if (updateMapButton) {
+            updateMapButton.addEventListener('click', () => this.updateMapTracking());
+        }
+        
+        if (showMapOutlineCheckbox) {
+            showMapOutlineCheckbox.addEventListener('change', () => {
+                this.mapOutlineVisible = showMapOutlineCheckbox.checked;
+                if (this.mapTrackingEnabled) {
+                    this.drawMapOutline();
+                }
+            });
+        }
+        
+        // Add event listeners for map size radio buttons
+        mapSizeRadios.forEach((radio) => {
+            radio.addEventListener('change', (e) => {
+                const target = e.target as HTMLInputElement;
+                this.mapSize = target.value;
+                if (this.mapTrackingEnabled) {
+                    this.drawMapOutline();
+                }
+            });
+        });
+        
+        // Add event listeners for offset inputs
+        if (xOffsetInput) {
+            xOffsetInput.addEventListener('change', () => {
+                this.xOffset = parseInt(xOffsetInput.value, 10) || 0;
+                if (this.mapTrackingEnabled) {
+                    this.drawMapOutline();
+                }
+            });
+        }
+        
+        if (yOffsetInput) {
+            yOffsetInput.addEventListener('change', () => {
+                this.yOffset = parseInt(yOffsetInput.value, 10) || 0;
+                if (this.mapTrackingEnabled) {
+                    this.drawMapOutline();
+                }
+            });
         }
         
         // Add global key listener for Escape to cancel marker placement
@@ -595,14 +664,25 @@ export class DungeoneeringGateEngine {
 
     private updateMarkerStatus(): void {
         const statusElement = document.getElementById('marker-status');
+        const mapStatusElement = document.getElementById('map-status');
         
         if (statusElement) {
             if (this.markerLocation) {
                 statusElement.textContent = `X marker set at (${this.markerLocation.x}, ${this.markerLocation.y})`;
                 statusElement.classList.add('success');
+                
+                // Update map status
+                if (mapStatusElement) {
+                    mapStatusElement.textContent = 'Marker set. Click "Update Map Tracking" to enable map outline.';
+                }
             } else {
                 statusElement.textContent = 'No X marker set. Click "Place Marker on X" to set it.';
                 statusElement.classList.remove('success');
+                
+                // Update map status
+                if (mapStatusElement) {
+                    mapStatusElement.textContent = 'Set a marker position first to enable map tracking.';
+                }
             }
         }
     }
@@ -686,6 +766,119 @@ export class DungeoneeringGateEngine {
         
         // Stop reading text
         this.doorTextReader.stopReading();
+    }
+
+    // Map tracking methods
+    private updateMapTracking(): void {
+        if (!this.markerLocation) {
+            alert('Please set a marker position first.');
+            return;
+        }
+        
+        // Toggle map tracking
+        this.mapTrackingEnabled = !this.mapTrackingEnabled;
+        
+        const updateMapButton = document.getElementById('update-map-button');
+        const mapStatusElement = document.getElementById('map-status');
+        
+        if (this.mapTrackingEnabled) {
+            // Start map tracking
+            if (updateMapButton) {
+                updateMapButton.textContent = 'Stop Map Tracking';
+                updateMapButton.classList.add('active');
+            }
+            
+            if (mapStatusElement) {
+                mapStatusElement.textContent = `Map tracking enabled (${this.mapSize} dungeon)`;
+                mapStatusElement.classList.add('active');
+            }
+            
+            // Start the map tracking interval
+            this.startMapTracking();
+        } else {
+            // Stop map tracking
+            if (updateMapButton) {
+                updateMapButton.textContent = 'Update Map Tracking';
+                updateMapButton.classList.remove('active');
+            }
+            
+            if (mapStatusElement) {
+                mapStatusElement.textContent = 'Map tracking disabled. Click "Update Map Tracking" to enable.';
+                mapStatusElement.classList.remove('active');
+            }
+            
+            // Stop the map tracking interval
+            this.stopMapTracking();
+        }
+    }
+    
+    private startMapTracking(): void {
+        // Clear any existing interval
+        if (this.mapTrackingInterval) {
+            clearInterval(this.mapTrackingInterval);
+        }
+        
+        // Draw the initial map outline
+        this.drawMapOutline();
+        
+        // Set up an interval to redraw the map outline
+        this.mapTrackingInterval = window.setInterval(() => {
+            this.drawMapOutline();
+        }, 1000); // Redraw every second
+    }
+    
+    private stopMapTracking(): void {
+        // Clear the interval
+        if (this.mapTrackingInterval) {
+            clearInterval(this.mapTrackingInterval);
+            this.mapTrackingInterval = null;
+        }
+    }
+    
+    private drawMapOutline(): void {
+        if (!window.alt1 || !this.markerLocation || !this.mapOutlineVisible) return;
+        
+        // Check if we have overlay permission
+        if (window.alt1.permissionOverlay) {
+            try {
+                // Get the map size based on the selected dungeon size
+                const size = MAP_SIZES[this.mapSize];
+                
+                // Calculate the map outline coordinates
+                // The marker is at the top-right corner of the map
+                const x = this.markerLocation.x - size.width + this.xOffset;
+                const y = this.markerLocation.y + this.yOffset;
+                
+                // Create white color for the outline
+                const whiteColor = a1lib.mixColor(255, 255, 255);
+                
+                // Draw the map outline (rectangle)
+                // Top line
+                window.alt1.overLayLine(whiteColor, 2, x, y, x + size.width, y, 2000);
+                
+                // Right line
+                window.alt1.overLayLine(whiteColor, 2, x + size.width, y, x + size.width, y + size.height, 2000);
+                
+                // Bottom line
+                window.alt1.overLayLine(whiteColor, 2, x, y + size.height, x + size.width, y + size.height, 2000);
+                
+                // Left line
+                window.alt1.overLayLine(whiteColor, 2, x, y, x, y + size.height, 2000);
+                
+                // Draw map size text
+                window.alt1.overLayText(`${this.mapSize.toUpperCase()} MAP (${size.width}x${size.height})`, whiteColor, 10, x, y - 15, 2000);
+                
+            } catch (error) {
+                console.error("Error drawing map outline:", error);
+            }
+        } else {
+            console.error("Overlay permission not granted");
+            const mapStatusElement = document.getElementById('map-status');
+            if (mapStatusElement) {
+                mapStatusElement.textContent = 'Overlay permission not granted. Please enable in Alt1 settings.';
+            }
+            this.stopMapTracking();
+        }
     }
 }
 
