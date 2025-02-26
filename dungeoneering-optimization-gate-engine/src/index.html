@@ -6,18 +6,18 @@
         body {
             font-family: Arial, sans-serif;
             margin: 0;
-            padding: 20px;
+            padding: 15px;
             background: #2b2b2b;
             color: #ffffff;
             text-align: center;
-            max-width: 800px;
+            max-width: 500px;
             margin: 0 auto;
         }
         .title-container {
-            margin-bottom: 20px;
+            margin-bottom: 15px;
         }
         .title {
-            font-size: 24px;
+            font-size: 20px;
             display: inline;
             margin-right: 5px;
         }
@@ -29,8 +29,8 @@
             font-size: 12px;
         }
         #alt1-status {
-            margin: 20px 0;
-            padding: 15px;
+            margin: 10px 0;
+            padding: 10px;
             background: rgba(0, 0, 0, 0.3);
             border-radius: 4px;
             cursor: pointer;
@@ -46,9 +46,9 @@
             color: #4CAF50;
             cursor: default;
         }
-        #output-container {
-            margin: 20px auto;
-            padding: 15px;
+        .container {
+            margin: 10px auto;
+            padding: 10px;
             background: rgba(0, 0, 0, 0.3);
             border-radius: 4px;
             width: 100%;
@@ -56,7 +56,7 @@
         }
         #text-output {
             margin: 10px auto;
-            padding: 15px;
+            padding: 10px;
             background: rgba(0, 0, 0, 0.3);
             border-radius: 4px;
             min-height: 30px;
@@ -69,7 +69,7 @@
         .button {
             background: #4CAF50;
             color: white;
-            padding: 12px 24px;
+            padding: 10px 20px;
             border: none;
             border-radius: 4px;
             cursor: pointer;
@@ -86,26 +86,32 @@
             background: #cccccc;
             cursor: not-allowed;
         }
+        .button.active {
+            background: #ff4444;
+        }
+        .button.active:hover {
+            background: #e53935;
+        }
         .section-title {
-            font-size: 18px;
-            margin-top: 20px;
-            margin-bottom: 10px;
+            font-size: 16px;
+            margin-top: 10px;
+            margin-bottom: 5px;
             text-align: left;
         }
         .info-text {
             font-size: 14px;
             color: #aaaaaa;
-            margin-bottom: 10px;
+            margin-bottom: 5px;
             text-align: left;
         }
         footer {
-            margin-top: 40px;
+            margin-top: 20px;
             font-size: 12px;
             color: #888888;
         }
         #add-app-container {
-            margin: 20px 0;
-            padding: 15px;
+            margin: 10px 0;
+            padding: 10px;
             background: rgba(0, 0, 0, 0.3);
             border-radius: 4px;
             display: none; /* Hidden by default, shown when not in Alt1 */
@@ -120,7 +126,7 @@
         }
         .loading-indicator {
             display: none;
-            margin: 20px auto;
+            margin: 10px auto;
             text-align: center;
         }
         .loading-indicator.visible {
@@ -138,6 +144,55 @@
         @keyframes spin {
             0% { transform: rotate(0deg); }
             100% { transform: rotate(360deg); }
+        }
+        @keyframes pulse {
+            0% { opacity: 0.5; }
+            50% { opacity: 1; }
+            100% { opacity: 0.5; }
+        }
+        .status-indicator {
+            display: inline-block;
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            margin-right: 8px;
+        }
+        .status-indicator.found {
+            background-color: #4CAF50;
+        }
+        .status-indicator.not-found {
+            background-color: #ff4444;
+        }
+        .status-indicator.searching {
+            background-color: #FFA500;
+            animation: pulse 1s infinite;
+        }
+        #marker-status {
+            margin: 10px 0;
+            padding: 10px;
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 4px;
+            text-align: left;
+        }
+        #marker-status.success {
+            color: #4CAF50;
+            font-weight: bold;
+        }
+        .coordinates {
+            font-family: monospace;
+            font-size: 14px;
+            color: #4CAF50;
+        }
+        .debug-options {
+            margin-top: 5px;
+            text-align: left;
+        }
+        .debug-options label {
+            display: block;
+            margin-bottom: 5px;
+        }
+        .debug-options input[type="checkbox"] {
+            margin-right: 5px;
         }
     </style>
 </head>
@@ -161,14 +216,23 @@
         <div>Initializing text recognition engine...</div>
     </div>
 
-    <div id="output-container">
+    <div class="container">
         <div class="section-title">Door Text</div>
-        <div class="info-text">Hover your mouse over door text in-game to read it</div>
+        <div class="info-text">Hover your mouse over door text in-game</div>
         <div id="text-output">Waiting for text...</div>
+        <button id="start-button" class="button" disabled>Start Text Scanning</button>
+        <button id="stop-button" class="button" disabled>Stop Text Scanning</button>
     </div>
 
-    <button id="start-button" class="button" disabled>Start Scanning</button>
-    <button id="stop-button" class="button" disabled>Stop Scanning</button>
+    <div class="section" id="minimap-marker-section">
+        <h2>Minimap X Marker</h2>
+        <div class="content">
+            <div class="button-group">
+                <button id="place-marker-button" class="button">Place Marker on X</button>
+            </div>
+            <div id="marker-status">No X marker set. Click "Place Marker on X" to set it.</div>
+        </div>
+    </div>
 
     <footer>
         Dungeoneering Gate Engine v<span id="footer-version">1.0.0</span>

@@ -60,6 +60,10 @@ module.exports = {
                 { 
                     from: "../appconfig.json",
                     to: "appconfig.json"
+                },
+                {
+                    from: "../assets",
+                    to: "assets"
                 }
             ]
         })

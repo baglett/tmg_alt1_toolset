@@ -2,6 +2,9 @@
 import * as a1lib from "@alt1/base";
 import { createWorker, PSM } from 'tesseract.js';
 import type { Worker } from 'tesseract.js';
+import { 
+    highlightRedXMarker
+} from './imageDetection';
 
 // Set up Alt1 detection
 let appColor = a1lib.mixColor(255, 144, 0);
@@ -392,92 +395,297 @@ class DoorTextReader {
 }
 
 // Main application class
-class DungeoneeringGateEngine {
-    private doorTextReader: DoorTextReader | null = null;
-    private isListening: boolean = false;
-    
+export class DungeoneeringGateEngine {
+    private doorTextReader: DoorTextReader;
+    private isRunning: boolean = false;
+    private textInterval: number | null = null;
+    private markerLocation: { x: number, y: number } | null = null;
+    private isDraggingMarker: boolean = false;
+    private dragInterval: number | null = null;
+    private lastDrawnPosition: { x: number, y: number } | null = null;
+
     constructor() {
-        // Initialize the app when the DOM is ready
-        document.addEventListener("DOMContentLoaded", this.initialize.bind(this));
+        this.doorTextReader = new DoorTextReader();
+        this.setupEventListeners();
     }
-    
-    private initialize() {
-        // Set version in UI
-        const version = "1.0.0";
-        document.getElementById("version")!.textContent = `v${version}`;
-        document.getElementById("footer-version")!.textContent = version;
 
-        // Check if Alt1 is available
-        if (window.alt1) {
-            document.getElementById("alt1-status")!.classList.add("detected");
-            document.getElementById("alt1-status-text")!.textContent = "Alt1 detected";
-            
-            // Buttons will be enabled after Tesseract is initialized
-            
-            // Hide the add app container
-            document.getElementById("add-app-container")!.style.display = "none";
-            
-            // Tell Alt1 about the app
-            window.alt1.identifyAppUrl("./appconfig.json");
-        } else {
-            document.getElementById("alt1-status")!.classList.add("not-detected");
-            document.getElementById("alt1-status-text")!.textContent = "Alt1 not detected";
-            
-            // Show the add app container
-            document.getElementById("add-app-container")!.style.display = "block";
-            
-            // Set up the add app link
-            const addAppLink = document.getElementById("add-app-link") as HTMLAnchorElement;
-            const appConfigUrl = new URL("./appconfig.json", window.location.href).href;
-            addAppLink.href = `alt1://addapp/${appConfigUrl}`;
+    private setupEventListeners(): void {
+        // Set up event listeners for the buttons
+        const startButton = document.getElementById('start-button');
+        const stopButton = document.getElementById('stop-button');
+        const placeMarkerButton = document.getElementById('place-marker-button');
+        
+        if (startButton) {
+            startButton.addEventListener('click', () => this.startTextScanning());
         }
-
-        // Set up event listeners for buttons
-        document.getElementById("start-button")!.addEventListener("click", this.startListening.bind(this));
-        document.getElementById("stop-button")!.addEventListener("click", this.stopListening.bind(this));
-
-        // Set up Alt1 status click handler for installation instructions
-        document.getElementById("alt1-status")!.addEventListener("click", () => {
-            if (!window.alt1) {
-                window.open("https://runeapps.org/alt1", "_blank");
+        
+        if (stopButton) {
+            stopButton.addEventListener('click', () => this.stopTextScanning());
+        }
+        
+        if (placeMarkerButton) {
+            placeMarkerButton.addEventListener('click', () => this.toggleMarkerPlacement());
+        }
+        
+        // Add global key listener for Escape to cancel marker placement
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape' && this.isDraggingMarker) {
+                this.cancelMarkerPlacement();
             }
         });
-        
-        // Initialize the DoorTextReader
-        this.doorTextReader = new DoorTextReader();
-    }
-    
-    // Function to start listening for text
-    private async startListening() {
-        if (this.isListening || !this.doorTextReader) return;
-        
-        this.isListening = true;
-        document.getElementById("start-button")!.setAttribute("disabled", "true");
-        document.getElementById("stop-button")!.removeAttribute("disabled");
-        document.getElementById("text-output")!.textContent = "Scanning for text...";
-        
-        // Start reading text
-        await this.doorTextReader.startReading((text) => {
-            document.getElementById("text-output")!.textContent = text || "No text detected";
-        });
     }
 
-    // Function to stop listening for text
-    private stopListening() {
-        if (!this.isListening || !this.doorTextReader) return;
+    private toggleMarkerPlacement(): void {
+        if (this.isDraggingMarker) {
+            this.confirmMarkerPlacement();
+        } else {
+            this.startMarkerPlacement();
+        }
+    }
+    
+    private startMarkerPlacement(): void {
+        if (!window.alt1) {
+            alert('Alt1 is required for marker placement');
+            return;
+        }
         
-        this.isListening = false;
-        document.getElementById("stop-button")!.setAttribute("disabled", "true");
-        document.getElementById("start-button")!.removeAttribute("disabled");
-        document.getElementById("text-output")!.textContent = "Stopped scanning.";
+        this.isDraggingMarker = true;
+        this.markerLocation = null; // Reset marker location
+        
+        const placeMarkerButton = document.getElementById('place-marker-button');
+        const statusElement = document.getElementById('marker-status');
+        
+        if (placeMarkerButton) {
+            placeMarkerButton.textContent = 'Confirm Marker Position';
+            placeMarkerButton.classList.add('active');
+        }
+        
+        if (statusElement) {
+            statusElement.textContent = 'Move cursor to X marker and press SPACE to anchor, then confirm with button';
+        }
+        
+        // Start tracking mouse position for the marker
+        this.startDragTracking();
+        
+        // Add a keyboard listener for SPACE to anchor the marker
+        const keyHandler = (e: KeyboardEvent) => {
+            if (e.code === 'Space' && this.isDraggingMarker && !this.markerLocation) {
+                e.preventDefault();
+                
+                // Get current mouse position
+                const mousePos = getAlt1MousePosition();
+                if (mousePos) {
+                    // Remove the event listener
+                    document.removeEventListener('keydown', keyHandler);
+                    
+                    // Anchor the marker at the current mouse position
+                    this.anchorMarkerAt(mousePos.x, mousePos.y);
+                }
+            }
+        };
+        
+        // Add the keyboard listener
+        document.addEventListener('keydown', keyHandler);
+    }
+    
+    private startDragTracking(): void {
+        // Clear any existing interval
+        if (this.dragInterval) {
+            clearInterval(this.dragInterval);
+        }
+        
+        // Start a new interval to track mouse position
+        this.dragInterval = window.setInterval(() => {
+            const mousePos = getAlt1MousePosition();
+            if (mousePos && this.isDraggingMarker) {
+                if (!this.markerLocation) {
+                    // If no marker is anchored, draw at mouse position
+                    this.drawCrosshair(mousePos.x, mousePos.y, false);
+                } else {
+                    // If marker is anchored, keep drawing it
+                    this.drawCrosshair(this.markerLocation.x, this.markerLocation.y, true);
+                }
+            }
+        }, 50);
+    }
+    
+    private drawCrosshair(x: number, y: number, isAnchored: boolean): void {
+        if (!window.alt1) return;
+        
+        // Check if we have overlay permission
+        if (window.alt1.permissionOverlay) {
+            try {
+                // Draw a simple crosshair
+                const size = 15;
+                const duration = isAnchored ? 2000 : 100; // Longer duration if anchored
+                
+                // Create white color
+                const whiteColor = a1lib.mixColor(255, 255, 255);
+                const redColor = a1lib.mixColor(255, 0, 0);
+                
+                // Horizontal line
+                window.alt1.overLayLine(whiteColor, 2, x - size, y, x + size, y, duration);
+                
+                // Vertical line
+                window.alt1.overLayLine(whiteColor, 2, x, y - size, x, y + size, duration);
+                
+                // Draw a small red dot in the center if anchored
+                if (isAnchored) {
+                    window.alt1.overLayRect(redColor, x - 2, y - 2, 4, 4, duration, 1);
+                    window.alt1.overLayText("Marker anchored", whiteColor, 12, x + 15, y, duration);
+                }
+            } catch (error) {
+                console.error("Error drawing crosshair:", error);
+                console.error(error);
+            }
+        } else {
+            console.error("Overlay permission not granted");
+            const statusElement = document.getElementById('marker-status');
+            if (statusElement) {
+                statusElement.textContent = 'Overlay permission not granted. Please enable in Alt1 settings.';
+            }
+            this.cancelMarkerPlacement();
+        }
+    }
+    
+    private anchorMarkerAt(x: number, y: number): void {
+        // Store the position
+        this.markerLocation = { x, y };
+        
+        // Update the UI to show we're waiting for confirmation
+        const statusElement = document.getElementById('marker-status');
+        if (statusElement) {
+            statusElement.textContent = `Marker anchored at (${x}, ${y}). Press the button to confirm or ESC to cancel.`;
+        }
+        
+        // Draw the anchored marker
+        this.drawCrosshair(x, y, true);
+    }
+    
+    private confirmMarkerPlacement(): void {
+        this.isDraggingMarker = false;
+        
+        // Stop tracking
+        if (this.dragInterval) {
+            clearInterval(this.dragInterval);
+            this.dragInterval = null;
+        }
+        
+        // Update UI
+        const placeMarkerButton = document.getElementById('place-marker-button');
+        if (placeMarkerButton) {
+            placeMarkerButton.textContent = 'Place Marker on X';
+            placeMarkerButton.classList.remove('active');
+        }
+        
+        // If we have a marker location, use it
+        if (this.markerLocation) {
+            // Update status
+            this.updateMarkerStatus();
+            
+            // Highlight the marker
+            highlightRedXMarker(this.markerLocation.x, this.markerLocation.y);
+        } else {
+            const statusElement = document.getElementById('marker-status');
+            if (statusElement) {
+                statusElement.textContent = 'No marker was anchored. Press the button to try again.';
+            }
+        }
+    }
+
+    private updateMarkerStatus(): void {
+        const statusElement = document.getElementById('marker-status');
+        
+        if (statusElement) {
+            if (this.markerLocation) {
+                statusElement.textContent = `X marker set at (${this.markerLocation.x}, ${this.markerLocation.y})`;
+                statusElement.classList.add('success');
+            } else {
+                statusElement.textContent = 'No X marker set. Click "Place Marker on X" to set it.';
+                statusElement.classList.remove('success');
+            }
+        }
+    }
+
+    private cancelMarkerPlacement(): void {
+        this.isDraggingMarker = false;
+        
+        // Stop tracking
+        if (this.dragInterval) {
+            clearInterval(this.dragInterval);
+            this.dragInterval = null;
+        }
+        
+        // Update UI
+        const placeMarkerButton = document.getElementById('place-marker-button');
+        if (placeMarkerButton) {
+            placeMarkerButton.textContent = 'Place Marker on X';
+            placeMarkerButton.classList.remove('active');
+        }
+        
+        const statusElement = document.getElementById('marker-status');
+        if (statusElement) {
+            statusElement.textContent = 'Marker placement cancelled. Press the button to try again.';
+        }
+        
+        // Reset last drawn position
+        this.lastDrawnPosition = null;
+    }
+
+    // Start text scanning functionality
+    private startTextScanning(): void {
+        if (this.isRunning) return;
+        
+        this.isRunning = true;
+        
+        const startButton = document.getElementById('start-button');
+        const stopButton = document.getElementById('stop-button');
+        const textOutput = document.getElementById('text-output');
+        
+        if (startButton) {
+            startButton.setAttribute('disabled', 'true');
+        }
+        
+        if (stopButton) {
+            stopButton.removeAttribute('disabled');
+        }
+        
+        if (textOutput) {
+            textOutput.textContent = 'Scanning for text...';
+        }
+        
+        // Start reading text
+        this.doorTextReader.startReading((text) => {
+            if (textOutput) {
+                textOutput.textContent = text || 'No text detected';
+            }
+        });
+    }
+    
+    // Stop text scanning functionality
+    private stopTextScanning(): void {
+        if (!this.isRunning) return;
+        
+        this.isRunning = false;
+        
+        const startButton = document.getElementById('start-button');
+        const stopButton = document.getElementById('stop-button');
+        const textOutput = document.getElementById('text-output');
+        
+        if (stopButton) {
+            stopButton.setAttribute('disabled', 'true');
+        }
+        
+        if (startButton) {
+            startButton.removeAttribute('disabled');
+        }
+        
+        if (textOutput) {
+            textOutput.textContent = 'Stopped scanning.';
+        }
         
         // Stop reading text
         this.doorTextReader.stopReading();
-    }
-    
-    // Method to get the last recognized text
-    public getLastText(): string {
-        return this.doorTextReader?.getLastText() || "";
     }
 }
 
