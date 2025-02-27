@@ -426,10 +426,55 @@ export class DungeoneeringGateEngine {
     private outlineWidth: number = -15; // Width adjustment for the outer outline
     private outlineHeight: number = -12; // Height adjustment for the outer outline
     private mapTrackingInterval: number | null = null;
+    private clickCaptureOverlay: HTMLDivElement | null = null;
+    
+    // Grid interaction properties
+    private gridSquares: { row: number, col: number, icon: string | null }[][] = [];
+    private isListeningForGridClicks: boolean = false;
+    private clickListenerInterval: number | null = null;
+    private activeDropdown: { x: number, y: number, row: number, col: number } | null = null;
+    private keyImages: Map<string, HTMLImageElement> = new Map();
+    // Add a property to track the last clicked grid square
+    private lastClickedSquare: { row: number, col: number } | null = null;
+    
+    // Map window properties
+    private mapCanvas: HTMLCanvasElement | null = null;
+    private mapContext: CanvasRenderingContext2D | null = null;
+    private mapTabActive: boolean = false;
+    private mapTabInterval: number | null = null;
 
     constructor() {
         this.doorTextReader = new DoorTextReader();
         this.setupEventListeners();
+        this.initializeGridSquares();
+        this.preloadKeyImages();
+        this.createGridClickInfoElement();
+        this.createMapTabInterface();
+    }
+    
+    // Initialize the grid squares array based on dungeon size
+    private initializeGridSquares(): void {
+        // Default to small dungeon (4x4)
+        let rows = 4;
+        let cols = 4;
+        
+        if (this.mapSize === 'medium') {
+            rows = 8;
+            cols = 4;
+        } else if (this.mapSize === 'large') {
+            rows = 8;
+            cols = 8;
+        }
+        
+        // Create a 2D array to track grid squares
+        this.gridSquares = [];
+        for (let r = 0; r < rows; r++) {
+            const row = [];
+            for (let c = 0; c < cols; c++) {
+                row.push({ row: r, col: c, icon: null });
+            }
+            this.gridSquares.push(row);
+        }
     }
 
     private setupEventListeners(): void {
@@ -475,6 +520,8 @@ export class DungeoneeringGateEngine {
             radio.addEventListener('change', (e) => {
                 const target = e.target as HTMLInputElement;
                 this.mapSize = target.value;
+                // Reinitialize grid squares when map size changes
+                this.initializeGridSquares();
                 if (this.mapTrackingEnabled) {
                     this.drawMapOutline();
                 }
@@ -523,6 +570,17 @@ export class DungeoneeringGateEngine {
         document.addEventListener('keydown', (e) => {
             if (e.key === 'Escape' && this.isDraggingMarker) {
                 this.cancelMarkerPlacement();
+            }
+        });
+        
+        // Add global click listener for grid interaction
+        document.addEventListener('click', (e) => {
+            // If we have an active dropdown, check if the click is outside of it
+            if (this.activeDropdown) {
+                const dropdown = document.getElementById('grid-icon-dropdown');
+                if (dropdown && !dropdown.contains(e.target as Node)) {
+                    this.hideIconDropdown();
+                }
             }
         });
     }
@@ -803,6 +861,7 @@ export class DungeoneeringGateEngine {
         
         const updateMapButton = document.getElementById('update-map-button');
         const mapStatusElement = document.getElementById('map-status');
+        const gridClickInfo = document.getElementById('grid-click-info');
         
         if (this.mapTrackingEnabled) {
             // Start map tracking
@@ -812,12 +871,23 @@ export class DungeoneeringGateEngine {
             }
             
             if (mapStatusElement) {
-                mapStatusElement.textContent = `Map tracking enabled (${this.mapSize} dungeon)`;
+                mapStatusElement.textContent = `Map tracking enabled with interactive tab (${this.mapSize} dungeon)`;
                 mapStatusElement.classList.add('active');
+            }
+            
+            // Show the grid click info
+            if (gridClickInfo) {
+                gridClickInfo.style.display = 'block';
             }
             
             // Start the map tracking interval
             this.startMapTracking();
+            
+            // Switch to the map tab
+            this.switchToTab('map');
+            
+            // Remove any existing DOM overlay
+            this.removeClickCaptureOverlay();
         } else {
             // Stop map tracking
             if (updateMapButton) {
@@ -830,8 +900,16 @@ export class DungeoneeringGateEngine {
                 mapStatusElement.classList.remove('active');
             }
             
+            // Hide the grid click info
+            if (gridClickInfo) {
+                gridClickInfo.style.display = 'none';
+            }
+            
             // Stop the map tracking interval
             this.stopMapTracking();
+            
+            // Switch back to the main tab
+            this.switchToTab('main');
         }
     }
     
@@ -926,6 +1004,18 @@ export class DungeoneeringGateEngine {
                 // Draw map size text
                 window.alt1.overLayText(`${this.mapSize.toUpperCase()} MAP (${outlineWidth}x${outlineHeight})`, whiteColor, 10, x, y - 15, 2000);
                 
+                // Draw coordinate labels for the corners (0,0 at bottom left)
+                window.alt1.overLayText("(0,0)", whiteColor, 10, x + 5, y + outlineHeight - 15, 2000);
+                window.alt1.overLayText(`(${gridCols-1},0)`, whiteColor, 10, x + outlineWidth - 30, y + outlineHeight - 15, 2000);
+                window.alt1.overLayText(`(0,${gridRows-1})`, whiteColor, 10, x + 5, y + 15, 2000);
+                window.alt1.overLayText(`(${gridCols-1},${gridRows-1})`, whiteColor, 10, x + outlineWidth - 30, y + 15, 2000);
+                
+                // Draw icons on grid squares
+                this.drawGridIcons(x, y, cellWidth, cellHeight, gridRows, gridCols);
+                
+                // Update debug info with grid dimensions
+                this.updateDebugInfo(`Grid: ${gridCols}x${gridRows}, Cell size: ${Math.floor(cellWidth)}x${Math.floor(cellHeight)}`);
+                
             } catch (error) {
                 console.error("Error drawing map outline:", error);
             }
@@ -937,6 +1027,996 @@ export class DungeoneeringGateEngine {
             }
             this.stopMapTracking();
         }
+    }
+    
+    // Draw icons on grid squares
+    private drawGridIcons(gridX: number, gridY: number, cellWidth: number, cellHeight: number, rows: number, cols: number): void {
+        if (!window.alt1) return;
+        
+        // Loop through all grid squares
+        for (let r = 0; r < rows; r++) {
+            for (let c = 0; c < cols; c++) {
+                // Check if this square has an icon
+                if (this.gridSquares[r] && this.gridSquares[r][c] && this.gridSquares[r][c].icon) {
+                    const icon = this.gridSquares[r][c].icon;
+                    if (icon) {
+                        // Calculate the center position of this grid square
+                        const centerX = Math.floor(gridX + (c * cellWidth) + (cellWidth / 2));
+                        const centerY = Math.floor(gridY + (r * cellHeight) + (cellHeight / 2));
+                        
+                        // Get the image for this icon
+                        const img = this.keyImages.get(icon);
+                        
+                        if (img && img.complete) {
+                            // Draw the image on the overlay
+                            try {
+                                // Create a temporary canvas to draw the image
+                                const tempCanvas = document.createElement('canvas');
+                                const iconSize = Math.min(cellWidth, cellHeight) * 0.7; // 70% of cell size
+                                tempCanvas.width = iconSize;
+                                tempCanvas.height = iconSize;
+                                
+                                const ctx = tempCanvas.getContext('2d');
+                                if (ctx) {
+                                    // Draw the image on the temporary canvas
+                                    ctx.drawImage(img, 0, 0, iconSize, iconSize);
+                                    
+                                    // Get the image data
+                                    const imgData = ctx.getImageData(0, 0, iconSize, iconSize);
+                                    
+                                    // Draw the image on the Alt1 overlay
+                                    window.alt1.overLayImage(
+                                        Math.floor(centerX - iconSize / 2), 
+                                        Math.floor(centerY - iconSize / 2), 
+                                        imgData.data, 
+                                        imgData.width, 
+                                        imgData.height, 
+                                        2000
+                                    );
+                                }
+                            } catch (error) {
+                                console.error("Error drawing icon image:", error);
+                                
+                                // Fallback to text if image drawing fails
+                                const whiteColor = a1lib.mixColor(255, 255, 255);
+                                window.alt1.overLayText(icon, whiteColor, 12, centerX - 10, centerY, 2000);
+                            }
+                        } else {
+                            // Fallback to text if image is not loaded
+                            const whiteColor = a1lib.mixColor(255, 255, 255);
+                            window.alt1.overLayText(icon, whiteColor, 12, centerX - 10, centerY, 2000);
+                        }
+                    }
+                }
+            }
+        }
+    }
+    
+    // Grid click handling
+    private startGridClickListener(): void {
+        if (!window.alt1) return;
+        
+        this.isListeningForGridClicks = true;
+        
+        // Set up a global click listener that checks if the click is within our grid area
+        if (this.clickListenerInterval) {
+            clearInterval(this.clickListenerInterval);
+        }
+        
+        // Add debug message to UI
+        const gridClickInfo = document.getElementById('grid-click-info');
+        if (gridClickInfo) {
+            const debugMsg = document.createElement('div');
+            debugMsg.id = 'grid-click-debug';
+            debugMsg.textContent = 'Grid click listener started';
+            debugMsg.style.color = '#ffcc00';
+            debugMsg.style.fontSize = '12px';
+            debugMsg.style.marginTop = '5px';
+            gridClickInfo.appendChild(debugMsg);
+        }
+        
+        // Use an interval to check for clicks
+        this.clickListenerInterval = window.setInterval(() => {
+            // Check if Alt1 has detected a click
+            if (window.alt1.lastLeftClick) {
+                const clickX = window.alt1.lastLeftClick.x;
+                const clickY = window.alt1.lastLeftClick.y;
+                
+                // Update debug info
+                this.updateDebugInfo(`Click detected at (${clickX}, ${clickY})`);
+                
+                // Reset Alt1's click state
+                window.alt1.lastLeftClick = null;
+                
+                // Check if the click is within our grid area
+                if (this.markerLocation && this.isListeningForGridClicks) {
+                    // Get the map size based on the selected dungeon size
+                    const size = MAP_SIZES[this.mapSize];
+                    
+                    // Calculate the map outline coordinates
+                    const x = Math.floor(this.markerLocation.x - size.width + this.xOffset);
+                    const y = Math.floor(this.markerLocation.y + this.yOffset);
+                    const outlineWidth = Math.floor(size.width + this.outlineWidth);
+                    const outlineHeight = Math.floor(size.height + this.outlineHeight);
+                    
+                    // Update debug info with grid boundaries
+                    this.updateDebugInfo(`Grid area: (${x}, ${y}) to (${x + outlineWidth}, ${y + outlineHeight})`);
+                    
+                    // Check if the click is within the grid area
+                    if (clickX >= x && clickX <= x + outlineWidth && 
+                        clickY >= y && clickY <= y + outlineHeight) {
+                        
+                        // Calculate which grid square was clicked
+                        const relX = clickX - x;
+                        const relY = clickY - y;
+                        
+                        // Update debug info
+                        this.updateDebugInfo(`Click inside grid at relative position (${relX}, ${relY})`);
+                        
+                        // Handle the grid click
+                        this.handleGridClick(relX, relY, x, y, outlineWidth, outlineHeight);
+                        
+                        // Prevent further processing of this click
+                        return;
+                    } else {
+                        // Update debug info
+                        this.updateDebugInfo(`Click outside grid area`);
+                    }
+                }
+            }
+        }, 50); // Check frequently
+    }
+    
+    private stopGridClickListener(): void {
+        this.isListeningForGridClicks = false;
+        
+        // Hide any active dropdown
+        this.hideIconDropdown();
+        
+        // Clear the interval
+        if (this.clickListenerInterval) {
+            clearInterval(this.clickListenerInterval);
+            this.clickListenerInterval = null;
+        }
+    }
+
+    // Updated method to handle grid clicks
+    private handleGridClick(relX: number, relY: number, gridX: number, gridY: number, outlineWidth: number, outlineHeight: number): void {
+        // Determine which grid square was clicked
+        let gridCols = 4; // Default for small
+        let gridRows = 4; // Default for small
+        
+        if (this.mapSize === 'medium') {
+            gridCols = 4;
+            gridRows = 8;
+        } else if (this.mapSize === 'large') {
+            gridCols = 8;
+            gridRows = 8;
+        }
+        
+        const cellWidth = outlineWidth / gridCols;
+        const cellHeight = outlineHeight / gridRows;
+        
+        const col = Math.floor(relX / cellWidth);
+        const row = gridRows - 1 - Math.floor(relY / cellHeight); // Invert row to match bottom-left = 0,0
+        
+        // Log the click for debugging
+        console.log(`Grid click at relative position (${relX},${relY}), grid square (${col},${row})`);
+        
+        // Update the grid click info in the UI
+        this.updateGridClickInfo(row, col);
+        
+        // Ensure the row and column are valid
+        if (row >= 0 && row < gridRows && col >= 0 && col < gridCols) {
+            // Calculate the center position of this grid square for the dropdown
+            const centerX = Math.floor(gridX + (col * cellWidth) + (cellWidth / 2));
+            const centerY = Math.floor(gridY + ((gridRows - 1 - row) * cellHeight) + (cellHeight / 2));
+            
+            // Show the icon dropdown at this position
+            this.showIconDropdown(centerX, centerY, row, col);
+            
+            // Highlight the clicked square temporarily
+            if (window.alt1 && window.alt1.permissionOverlay) {
+                const highlightColor = a1lib.mixColor(255, 255, 0); // Yellow highlight
+                window.alt1.overLayRect(highlightColor, 
+                    Math.floor(gridX + (col * cellWidth)), 
+                    Math.floor(gridY + ((gridRows - 1 - row) * cellHeight)), 
+                    Math.floor(cellWidth), 
+                    Math.floor(cellHeight), 
+                    1000, 50); // 50% opacity, 1000ms duration for better visibility
+            }
+        }
+    }
+
+    // Remove the DOM-based click capture overlay methods
+    private removeClickCaptureOverlay(): void {
+        if (this.clickCaptureOverlay) {
+            if (this.clickCaptureOverlay.parentNode) {
+                this.clickCaptureOverlay.parentNode.removeChild(this.clickCaptureOverlay);
+            }
+            this.clickCaptureOverlay = null;
+        }
+    }
+
+    private showIconDropdown(x: number, y: number, row: number, col: number): void {
+        // Hide any existing dropdown
+        this.hideIconDropdown();
+        
+        // Store the active dropdown position and grid coordinates
+        this.activeDropdown = { x, y, row, col };
+        
+        // Create the dropdown element if it doesn't exist
+        let dropdown = document.getElementById('grid-icon-dropdown');
+        if (!dropdown) {
+            dropdown = document.createElement('div');
+            dropdown.id = 'grid-icon-dropdown';
+            dropdown.className = 'grid-icon-dropdown';
+            document.body.appendChild(dropdown);
+            
+            // Style the dropdown
+            dropdown.style.position = 'absolute';
+            dropdown.style.backgroundColor = '#333';
+            dropdown.style.border = '1px solid #555';
+            dropdown.style.borderRadius = '4px';
+            dropdown.style.padding = '5px';
+            dropdown.style.zIndex = '1000';
+            dropdown.style.boxShadow = '0 2px 5px rgba(0,0,0,0.3)';
+        }
+        
+        // Position the dropdown
+        dropdown.style.left = `${x}px`;
+        dropdown.style.top = `${y}px`;
+        
+        // Clear any existing content
+        dropdown.innerHTML = '';
+        
+        // Add dropdown title
+        const title = document.createElement('div');
+        title.textContent = `Add key to square (${row},${col})`;
+        title.style.color = 'white';
+        title.style.marginBottom = '5px';
+        title.style.fontSize = '12px';
+        dropdown.appendChild(title);
+        
+        // Add blue corner key option
+        const blueKeyOption = document.createElement('div');
+        blueKeyOption.textContent = 'Blue Corner Key';
+        blueKeyOption.style.color = 'lightblue';
+        blueKeyOption.style.padding = '3px';
+        blueKeyOption.style.cursor = 'pointer';
+        blueKeyOption.style.borderRadius = '2px';
+        blueKeyOption.style.marginBottom = '2px';
+        
+        // Highlight on hover
+        blueKeyOption.addEventListener('mouseover', () => {
+            blueKeyOption.style.backgroundColor = '#444';
+        });
+        
+        blueKeyOption.addEventListener('mouseout', () => {
+            blueKeyOption.style.backgroundColor = 'transparent';
+        });
+        
+        // Add click handler
+        blueKeyOption.addEventListener('click', () => {
+            this.addIconToGrid(row, col, 'Blue');
+            this.hideIconDropdown();
+        });
+        
+        dropdown.appendChild(blueKeyOption);
+        
+        // Add clear option if there's already an icon
+        if (this.gridSquares[row] && this.gridSquares[row][col] && this.gridSquares[row][col].icon) {
+            const clearOption = document.createElement('div');
+            clearOption.textContent = 'Clear';
+            clearOption.style.color = 'salmon';
+            clearOption.style.padding = '3px';
+            clearOption.style.cursor = 'pointer';
+            clearOption.style.borderRadius = '2px';
+            
+            // Highlight on hover
+            clearOption.addEventListener('mouseover', () => {
+                clearOption.style.backgroundColor = '#444';
+            });
+            
+            clearOption.addEventListener('mouseout', () => {
+                clearOption.style.backgroundColor = 'transparent';
+            });
+            
+            // Add click handler
+            clearOption.addEventListener('click', () => {
+                this.addIconToGrid(row, col, null);
+                this.hideIconDropdown();
+            });
+            
+            dropdown.appendChild(clearOption);
+        }
+        
+        // Show the dropdown
+        dropdown.style.display = 'block';
+    }
+    
+    private hideIconDropdown(): void {
+        const dropdown = document.getElementById('grid-icon-dropdown');
+        if (dropdown) {
+            dropdown.style.display = 'none';
+        }
+        this.activeDropdown = null;
+    }
+    
+    private addIconToGrid(row: number, col: number, icon: string | null): void {
+        // Ensure the grid square exists
+        if (this.gridSquares[row] && this.gridSquares[row][col]) {
+            this.gridSquares[row][col].icon = icon;
+            
+            // Redraw the map to show the updated icon
+            this.drawMapOutline();
+        }
+    }
+
+    // Preload key images with better error handling
+    private preloadKeyImages(): void {
+        // Preload the blue corner key image with multiple fallback paths
+        const blueKeyImg = new Image();
+        
+        // Define all possible paths to try
+        const paths = [
+            'assets/Blue_corner_key.png',
+            'Blue_corner_key.png',
+            '../assets/Blue_corner_key.png',
+            './assets/Blue_corner_key.png',
+            '/assets/Blue_corner_key.png'
+        ];
+        
+        let pathIndex = 0;
+        
+        // Function to try loading the image from the next path
+        const tryNextPath = () => {
+            if (pathIndex < paths.length) {
+                console.log(`Trying to load blue key image from: ${paths[pathIndex]}`);
+                blueKeyImg.src = paths[pathIndex];
+                pathIndex++;
+            } else {
+                console.error('Failed to load blue corner key image from all paths');
+                // Create a fallback colored square as the image
+                const canvas = document.createElement('canvas');
+                canvas.width = 32;
+                canvas.height = 32;
+                const ctx = canvas.getContext('2d');
+                if (ctx) {
+                    ctx.fillStyle = 'blue';
+                    ctx.fillRect(0, 0, 32, 32);
+                    ctx.strokeStyle = 'white';
+                    ctx.lineWidth = 2;
+                    ctx.strokeRect(1, 1, 30, 30);
+                    
+                    // Convert canvas to image
+                    const fallbackImg = new Image();
+                    fallbackImg.src = canvas.toDataURL();
+                    fallbackImg.onload = () => {
+                        console.log('Using fallback blue key image');
+                        this.keyImages.set('Blue', fallbackImg);
+                    };
+                }
+            }
+        };
+        
+        // Set up event handlers
+        blueKeyImg.onload = () => {
+            console.log(`Blue corner key image loaded successfully from ${paths[pathIndex-1]}`);
+            this.keyImages.set('Blue', blueKeyImg);
+        };
+        
+        blueKeyImg.onerror = () => {
+            console.error(`Failed to load blue corner key image from ${paths[pathIndex-1]}`);
+            tryNextPath();
+        };
+        
+        // Start the loading process
+        tryNextPath();
+    }
+
+    // Create a UI element to display grid click information
+    private createGridClickInfoElement(): void {
+        // Check if the element already exists
+        if (document.getElementById('grid-click-info')) {
+            return;
+        }
+        
+        // Create a container for the grid click info
+        const gridClickInfo = document.createElement('div');
+        gridClickInfo.id = 'grid-click-info';
+        gridClickInfo.style.marginTop = '10px';
+        gridClickInfo.style.padding = '10px';
+        gridClickInfo.style.backgroundColor = '#222';
+        gridClickInfo.style.border = '1px solid #444';
+        gridClickInfo.style.borderRadius = '4px';
+        gridClickInfo.style.display = 'none'; // Hidden by default
+        
+        // Add a title
+        const title = document.createElement('h3');
+        title.textContent = 'Grid Click Information';
+        title.style.margin = '0 0 10px 0';
+        title.style.fontSize = '14px';
+        title.style.color = '#fff';
+        gridClickInfo.appendChild(title);
+        
+        // Add content for coordinates
+        const coordinates = document.createElement('div');
+        coordinates.id = 'grid-coordinates';
+        coordinates.textContent = 'No square clicked yet';
+        coordinates.style.fontSize = '13px';
+        coordinates.style.color = '#ddd';
+        gridClickInfo.appendChild(coordinates);
+        
+        // Add the grid click info to the page
+        // Find a good place to add it - look for map-status or create a new container
+        const mapStatus = document.getElementById('map-status');
+        if (mapStatus && mapStatus.parentNode) {
+            mapStatus.parentNode.insertBefore(gridClickInfo, mapStatus.nextSibling);
+        } else {
+            // If map-status doesn't exist, add it to the body
+            document.body.appendChild(gridClickInfo);
+        }
+    }
+    
+    // Update the grid click info display
+    private updateGridClickInfo(row: number, col: number): void {
+        const gridClickInfo = document.getElementById('grid-click-info');
+        const coordinates = document.getElementById('grid-coordinates');
+        
+        if (gridClickInfo && coordinates) {
+            // Show the grid click info
+            gridClickInfo.style.display = 'block';
+            
+            // Update the coordinates
+            coordinates.textContent = `Last clicked square: (${col}, ${row})`;
+            coordinates.style.color = '#7cfc00'; // Bright green for visibility
+            coordinates.style.fontWeight = 'bold';
+            coordinates.style.fontSize = '16px'; // Make it larger
+            
+            // Store the last clicked square
+            this.lastClickedSquare = { row, col };
+            
+            // Add a timestamp
+            const timestamp = new Date().toLocaleTimeString();
+            const timeElement = document.createElement('div');
+            timeElement.textContent = `Time: ${timestamp}`;
+            timeElement.style.fontSize = '11px';
+            timeElement.style.color = '#999';
+            timeElement.style.marginTop = '5px';
+            
+            // Remove any existing timestamp
+            const existingTime = coordinates.nextSibling;
+            if (existingTime && existingTime instanceof Element && existingTime.id !== 'grid-click-debug') {
+                coordinates.parentNode?.removeChild(existingTime);
+            }
+            
+            // Add the new timestamp
+            coordinates.parentNode?.insertBefore(timeElement, document.getElementById('grid-click-debug'));
+            
+            // Flash the coordinates to make them noticeable
+            coordinates.style.backgroundColor = '#333';
+            setTimeout(() => {
+                if (coordinates) {
+                    coordinates.style.backgroundColor = 'transparent';
+                }
+            }, 300);
+        }
+    }
+
+    // Helper method to update debug info
+    private updateDebugInfo(message: string): void {
+        const debugElement = document.getElementById('grid-click-debug');
+        if (debugElement) {
+            debugElement.textContent = message;
+            
+            // Flash the debug message to make it noticeable
+            debugElement.style.backgroundColor = '#444';
+            setTimeout(() => {
+                if (debugElement) {
+                    debugElement.style.backgroundColor = 'transparent';
+                }
+            }, 300);
+        }
+    }
+
+    // Create the tab interface for map interaction
+    private createMapTabInterface(): void {
+        // Create the tab container if it doesn't exist
+        let tabContainer = document.getElementById('app-tabs');
+        if (!tabContainer) {
+            tabContainer = document.createElement('div');
+            tabContainer.id = 'app-tabs';
+            tabContainer.className = 'tab-container';
+            
+            // Style the tab container
+            tabContainer.style.display = 'flex';
+            tabContainer.style.marginBottom = '10px';
+            tabContainer.style.borderBottom = '1px solid #444';
+            
+            // Add it to the top of the app
+            const appContainer = document.querySelector('.app-container') || document.body;
+            const firstChild = appContainer.firstChild;
+            if (firstChild) {
+                appContainer.insertBefore(tabContainer, firstChild);
+            } else {
+                appContainer.appendChild(tabContainer);
+            }
+        }
+        
+        // Create the main tab
+        const mainTab = document.createElement('div');
+        mainTab.id = 'main-tab';
+        mainTab.className = 'tab active';
+        mainTab.textContent = 'Main';
+        mainTab.style.padding = '8px 15px';
+        mainTab.style.cursor = 'pointer';
+        mainTab.style.backgroundColor = '#333';
+        mainTab.style.color = '#fff';
+        mainTab.style.borderTopLeftRadius = '4px';
+        mainTab.style.borderTopRightRadius = '4px';
+        mainTab.style.marginRight = '5px';
+        mainTab.style.border = '1px solid #444';
+        mainTab.style.borderBottom = 'none';
+        
+        // Create the map tab
+        const mapTab = document.createElement('div');
+        mapTab.id = 'map-tab';
+        mapTab.className = 'tab';
+        mapTab.textContent = 'Map Interaction';
+        mapTab.style.padding = '8px 15px';
+        mapTab.style.cursor = 'pointer';
+        mapTab.style.backgroundColor = '#222';
+        mapTab.style.color = '#ccc';
+        mapTab.style.borderTopLeftRadius = '4px';
+        mapTab.style.borderTopRightRadius = '4px';
+        mapTab.style.border = '1px solid #444';
+        mapTab.style.borderBottom = 'none';
+        
+        // Add tabs to container
+        tabContainer.appendChild(mainTab);
+        tabContainer.appendChild(mapTab);
+        
+        // Create content containers
+        const mainContent = document.createElement('div');
+        mainContent.id = 'main-content';
+        mainContent.className = 'tab-content active';
+        
+        const mapContent = document.createElement('div');
+        mapContent.id = 'map-content';
+        mapContent.className = 'tab-content';
+        mapContent.style.display = 'none';
+        
+        // Move existing content to main content
+        const existingContent = Array.from(document.body.children).filter(el => 
+            el.id !== 'app-tabs' && 
+            el.id !== 'main-content' && 
+            el.id !== 'map-content' &&
+            el.id !== 'grid-icon-dropdown'
+        );
+        
+        existingContent.forEach(el => {
+            mainContent.appendChild(el);
+        });
+        
+        // Create map interaction content
+        mapContent.innerHTML = `
+            <h2 style="margin-top: 0; font-size: 16px; color: #ffcc00;">Dungeoneering Map Interaction</h2>
+            <div style="font-size: 12px; color: #ccc; margin-bottom: 10px;">
+                Click on a grid square to add a key or other marker.
+                <br>Bottom left is (0,0), top right is (${this.getGridCols()-1},${this.getGridRows()-1}).
+            </div>
+            <div style="position: relative; margin-top: 10px; border: 2px solid #444; background-color: #333;">
+                <canvas id="mapCanvas"></canvas>
+                <div id="mapDropdown" style="position: absolute; background-color: #333; border: 1px solid #555; border-radius: 4px; padding: 5px; z-index: 1000; box-shadow: 0 2px 5px rgba(0,0,0,0.3); display: none;">
+                    <div style="color: white; margin-bottom: 5px; font-size: 12px;">Add key to square</div>
+                    <div id="mapBlueKeyOption" style="color: lightblue; padding: 3px; cursor: pointer; border-radius: 2px; margin-bottom: 2px;">Blue Corner Key</div>
+                    <div id="mapClearOption" style="color: salmon; padding: 3px; cursor: pointer; border-radius: 2px; display: none;">Clear</div>
+                </div>
+            </div>
+            <div style="margin-top: 10px; padding: 10px; background-color: #333; border: 1px solid #444; border-radius: 4px;">
+                <div id="mapCoordinates" style="font-size: 16px; font-weight: bold; color: #7cfc00; margin-bottom: 5px;">No square clicked yet</div>
+                <div id="mapTimestamp" style="font-size: 11px; color: #999;"></div>
+            </div>
+        `;
+        
+        // Add content containers to document
+        document.body.appendChild(mainContent);
+        document.body.appendChild(mapContent);
+        
+        // Add tab click handlers
+        mainTab.addEventListener('click', () => {
+            this.switchToTab('main');
+        });
+        
+        mapTab.addEventListener('click', () => {
+            this.switchToTab('map');
+        });
+        
+        // Set up the map canvas when the tab is first created
+        this.setupMapCanvas();
+    }
+
+    // Switch between tabs
+    private switchToTab(tabName: string): void {
+        const mainTab = document.getElementById('main-tab');
+        const mapTab = document.getElementById('map-tab');
+        const mainContent = document.getElementById('main-content');
+        const mapContent = document.getElementById('map-content');
+        
+        if (!mainTab || !mapTab || !mainContent || !mapContent) return;
+        
+        if (tabName === 'main') {
+            // Activate main tab
+            mainTab.className = 'tab active';
+            mainTab.style.backgroundColor = '#333';
+            mainTab.style.color = '#fff';
+            
+            mapTab.className = 'tab';
+            mapTab.style.backgroundColor = '#222';
+            mapTab.style.color = '#ccc';
+            
+            mainContent.style.display = 'block';
+            mapContent.style.display = 'none';
+            
+            this.mapTabActive = false;
+            
+            // Stop map tab updates
+            if (this.mapTabInterval) {
+                clearInterval(this.mapTabInterval);
+                this.mapTabInterval = null;
+            }
+        } else if (tabName === 'map') {
+            // Activate map tab
+            mapTab.className = 'tab active';
+            mapTab.style.backgroundColor = '#333';
+            mapTab.style.color = '#fff';
+            
+            mainTab.className = 'tab';
+            mainTab.style.backgroundColor = '#222';
+            mainTab.style.color = '#ccc';
+            
+            mainContent.style.display = 'none';
+            mapContent.style.display = 'block';
+            
+            this.mapTabActive = true;
+            
+            // Resize the canvas to fit the container
+            this.resizeMapCanvas();
+            
+            // Start map tab updates
+            this.startMapTabUpdates();
+        }
+    }
+
+    // Set up the map canvas
+    private setupMapCanvas(): void {
+        // Get the canvas element
+        this.mapCanvas = document.getElementById('mapCanvas') as HTMLCanvasElement;
+        if (this.mapCanvas) {
+            this.mapContext = this.mapCanvas.getContext('2d');
+            
+            // Add click event listener to the canvas
+            this.mapCanvas.addEventListener('click', (e) => this.handleMapCanvasClick(e));
+            
+            // Set up dropdown event listeners
+            const blueKeyOption = document.getElementById('mapBlueKeyOption');
+            const clearOption = document.getElementById('mapClearOption');
+            
+            if (blueKeyOption) {
+                blueKeyOption.addEventListener('click', () => {
+                    if (this.activeDropdown) {
+                        this.addIconToGrid(this.activeDropdown.row, this.activeDropdown.col, 'Blue');
+                        this.hideMapDropdown();
+                        this.updateMapCanvas();
+                    }
+                });
+            }
+            
+            if (clearOption) {
+                clearOption.addEventListener('click', () => {
+                    if (this.activeDropdown) {
+                        this.addIconToGrid(this.activeDropdown.row, this.activeDropdown.col, null);
+                        this.hideMapDropdown();
+                        this.updateMapCanvas();
+                    }
+                });
+            }
+            
+            // Add click listener to hide dropdown when clicking outside
+            document.addEventListener('click', (e) => {
+                const dropdown = document.getElementById('mapDropdown');
+                if (dropdown && e.target !== dropdown && !dropdown.contains(e.target as Node)) {
+                    this.hideMapDropdown();
+                }
+            });
+        }
+    }
+
+    // Resize the map canvas to fit its container
+    private resizeMapCanvas(): void {
+        if (!this.mapCanvas) return;
+        
+        // Get the map size based on the selected dungeon size
+        const size = MAP_SIZES[this.mapSize];
+        const outlineWidth = Math.floor(size.width + this.outlineWidth);
+        const outlineHeight = Math.floor(size.height + this.outlineHeight);
+        
+        // Set the canvas dimensions
+        this.mapCanvas.width = outlineWidth;
+        this.mapCanvas.height = outlineHeight;
+        
+        // Update the canvas
+        this.updateMapCanvas();
+    }
+
+    // Start the interval to update the map canvas
+    private startMapTabUpdates(): void {
+        if (this.mapTabInterval) {
+            clearInterval(this.mapTabInterval);
+        }
+        
+        // Update the map canvas immediately
+        this.updateMapCanvas();
+        
+        // Set up an interval to update the map canvas
+        this.mapTabInterval = window.setInterval(() => {
+            if (this.mapTabActive) {
+                this.updateMapCanvas();
+            }
+        }, 1000); // Update every second
+    }
+
+    // Update the map canvas
+    private updateMapCanvas(): void {
+        if (!this.mapCanvas || !this.mapContext || !this.markerLocation) return;
+        
+        // Get the map size based on the selected dungeon size
+        const size = MAP_SIZES[this.mapSize];
+        const outlineWidth = Math.floor(size.width + this.outlineWidth);
+        const outlineHeight = Math.floor(size.height + this.outlineHeight);
+        
+        // Clear the canvas
+        this.mapContext.clearRect(0, 0, this.mapCanvas.width, this.mapCanvas.height);
+        
+        // Draw a background
+        this.mapContext.fillStyle = 'rgba(0, 0, 0, 0.3)';
+        this.mapContext.fillRect(0, 0, outlineWidth, outlineHeight);
+        
+        // Draw grid based on dungeon size
+        let gridCols = this.getGridCols();
+        let gridRows = this.getGridRows();
+        
+        const cellWidth = outlineWidth / gridCols;
+        const cellHeight = outlineHeight / gridRows;
+        
+        // Draw grid lines
+        this.mapContext.strokeStyle = 'rgba(200, 200, 50, 0.8)';
+        this.mapContext.lineWidth = 2;
+        
+        // Draw vertical grid lines
+        for (let i = 1; i < gridCols; i++) {
+            const lineX = Math.floor(cellWidth * i);
+            this.mapContext.beginPath();
+            this.mapContext.moveTo(lineX, 0);
+            this.mapContext.lineTo(lineX, outlineHeight);
+            this.mapContext.stroke();
+        }
+        
+        // Draw horizontal grid lines
+        for (let i = 1; i < gridRows; i++) {
+            const lineY = Math.floor(cellHeight * i);
+            this.mapContext.beginPath();
+            this.mapContext.moveTo(0, lineY);
+            this.mapContext.lineTo(outlineWidth, lineY);
+            this.mapContext.stroke();
+        }
+        
+        // Draw the map outline
+        this.mapContext.strokeStyle = 'white';
+        this.mapContext.lineWidth = 2;
+        this.mapContext.strokeRect(0, 0, outlineWidth, outlineHeight);
+        
+        // Draw coordinate labels for the corners
+        this.mapContext.fillStyle = 'white';
+        this.mapContext.font = '10px Arial';
+        this.mapContext.fillText("(0,0)", 5, outlineHeight - 5);
+        this.mapContext.fillText(`(${gridCols-1},0)`, outlineWidth - 30, outlineHeight - 5);
+        this.mapContext.fillText(`(0,${gridRows-1})`, 5, 15);
+        this.mapContext.fillText(`(${gridCols-1},${gridRows-1})`, outlineWidth - 30, 15);
+        
+        // Draw icons on grid squares
+        this.drawMapCanvasIcons(cellWidth, cellHeight, gridRows, gridCols);
+        
+        // If we have a last clicked square, highlight it
+        if (this.lastClickedSquare) {
+            const row = this.lastClickedSquare.row;
+            const col = this.lastClickedSquare.col;
+            
+            // Make sure the row and column are valid
+            if (row >= 0 && row < gridRows && col >= 0 && col < gridCols) {
+                // Calculate the position of the grid square
+                const squareX = Math.floor(col * cellWidth);
+                const squareY = Math.floor((gridRows - 1 - row) * cellHeight); // Invert row to match bottom-left = 0,0
+                
+                // Draw a highlight around the square
+                this.mapContext.strokeStyle = 'rgba(255, 255, 0, 0.8)';
+                this.mapContext.lineWidth = 3;
+                this.mapContext.strokeRect(squareX + 2, squareY + 2, cellWidth - 4, cellHeight - 4);
+            }
+        }
+    }
+
+    // Draw icons on the map canvas
+    private drawMapCanvasIcons(cellWidth: number, cellHeight: number, rows: number, cols: number): void {
+        if (!this.mapContext) return;
+        
+        // Loop through all grid squares
+        for (let r = 0; r < rows; r++) {
+            for (let c = 0; c < cols; c++) {
+                // Check if this square has an icon
+                if (this.gridSquares[r] && this.gridSquares[r][c] && this.gridSquares[r][c].icon) {
+                    const icon = this.gridSquares[r][c].icon;
+                    if (icon) {
+                        // Calculate the center position of this grid square
+                        const centerX = Math.floor((c * cellWidth) + (cellWidth / 2));
+                        const centerY = Math.floor(((rows - 1 - r) * cellHeight) + (cellHeight / 2)); // Invert row to match bottom-left = 0,0
+                        
+                        // Get the image for this icon
+                        const img = this.keyImages.get(icon);
+                        
+                        if (img && img.complete) {
+                            // Draw the image on the canvas
+                            try {
+                                const iconSize = Math.min(cellWidth, cellHeight) * 0.7; // 70% of cell size
+                                this.mapContext.drawImage(
+                                    img, 
+                                    centerX - iconSize / 2, 
+                                    centerY - iconSize / 2, 
+                                    iconSize, 
+                                    iconSize
+                                );
+                            } catch (error) {
+                                console.error("Error drawing icon image on canvas:", error);
+                                
+                                // Fallback to text if image drawing fails
+                                this.mapContext.fillStyle = 'white';
+                                this.mapContext.font = '12px Arial';
+                                this.mapContext.fillText(icon, centerX - 10, centerY);
+                            }
+                        } else {
+                            // Fallback to text if image is not loaded
+                            this.mapContext.fillStyle = 'white';
+                            this.mapContext.font = '12px Arial';
+                            this.mapContext.fillText(icon, centerX - 10, centerY);
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    // Handle clicks on the map canvas
+    private handleMapCanvasClick(e: MouseEvent): void {
+        if (!this.mapCanvas || !this.mapContext) return;
+        
+        // Get the click position relative to the canvas
+        const rect = this.mapCanvas.getBoundingClientRect();
+        const clickX = e.clientX - rect.left;
+        const clickY = e.clientY - rect.top;
+        
+        // Get the grid dimensions
+        const gridCols = this.getGridCols();
+        const gridRows = this.getGridRows();
+        
+        const cellWidth = this.mapCanvas.width / gridCols;
+        const cellHeight = this.mapCanvas.height / gridRows;
+        
+        // Calculate which grid square was clicked
+        const col = Math.floor(clickX / cellWidth);
+        const row = gridRows - 1 - Math.floor(clickY / cellHeight); // Invert row to match bottom-left = 0,0
+        
+        // Log the click for debugging
+        console.log(`Map canvas click at (${clickX},${clickY}), grid square (${col},${row})`);
+        
+        // Update the coordinates display
+        this.updateMapCoordinates(row, col);
+        
+        // Ensure the row and column are valid
+        if (row >= 0 && row < gridRows && col >= 0 && col < gridCols) {
+            // Store the last clicked square
+            this.lastClickedSquare = { row, col };
+            
+            // Show the dropdown at this position
+            this.showMapDropdown(e.clientX, e.clientY, row, col);
+            
+            // Update the canvas to show the highlight
+            this.updateMapCanvas();
+        }
+    }
+
+    // Show the dropdown for the map canvas
+    private showMapDropdown(x: number, y: number, row: number, col: number): void {
+        // Hide any existing dropdown
+        this.hideMapDropdown();
+        
+        // Store the active dropdown position and grid coordinates
+        this.activeDropdown = { x, y, row, col };
+        
+        // Get the dropdown element
+        const dropdown = document.getElementById('mapDropdown');
+        if (!dropdown) return;
+        
+        // Update the dropdown title
+        const title = dropdown.querySelector('div:first-child');
+        if (title) {
+            title.textContent = `Add key to square (${col},${row})`;
+        }
+        
+        // Show or hide the clear option based on whether there's an icon
+        const clearOption = document.getElementById('mapClearOption');
+        if (clearOption) {
+            if (this.gridSquares[row] && this.gridSquares[row][col] && this.gridSquares[row][col].icon) {
+                clearOption.style.display = 'block';
+            } else {
+                clearOption.style.display = 'none';
+            }
+        }
+        
+        // Position the dropdown
+        dropdown.style.left = `${x}px`;
+        dropdown.style.top = `${y}px`;
+        
+        // Show the dropdown
+        dropdown.style.display = 'block';
+    }
+
+    // Hide the dropdown for the map canvas
+    private hideMapDropdown(): void {
+        const dropdown = document.getElementById('mapDropdown');
+        if (dropdown) {
+            dropdown.style.display = 'none';
+        }
+        
+        this.activeDropdown = null;
+    }
+
+    // Update the coordinates display for the map canvas
+    private updateMapCoordinates(row: number, col: number): void {
+        const coordinates = document.getElementById('mapCoordinates');
+        const timestamp = document.getElementById('mapTimestamp');
+        
+        if (coordinates) {
+            coordinates.textContent = `Last clicked square: (${col}, ${row})`;
+            
+            // Flash the coordinates to make them noticeable
+            coordinates.style.backgroundColor = '#333';
+            setTimeout(() => {
+                if (coordinates) {
+                    coordinates.style.backgroundColor = 'transparent';
+                }
+            }, 300);
+        }
+        
+        if (timestamp) {
+            timestamp.textContent = `Time: ${new Date().toLocaleTimeString()}`;
+        }
+    }
+
+    // Helper method to get the number of grid columns based on dungeon size
+    private getGridCols(): number {
+        if (this.mapSize === 'large') {
+            return 8;
+        }
+        return 4; // Small and medium dungeons have 4 columns
+    }
+
+    // Helper method to get the number of grid rows based on dungeon size
+    private getGridRows(): number {
+        if (this.mapSize === 'small') {
+            return 4;
+        }
+        return 8; // Medium and large dungeons have 8 rows
     }
 }
 
