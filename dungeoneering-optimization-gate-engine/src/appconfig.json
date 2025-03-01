@@ -1,7 +1,7 @@
 {
-    "appName": "Map Helper",
-    "description": "A small helper window for the Dungeoneering Gate Engine",
-    "appUrl": "./popup.html",
+    "appName": "Dungeon Grid",
+    "description": "Compact dungeon grid for mapping",
+    "appUrl": "./helper.html",
     "configUrl": "./appconfig.json",
     "iconUrl": "./icon.png",
     "defaultWidth": 140,

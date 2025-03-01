@@ -65,11 +65,7 @@ module.exports = {
                     from: "../assets",
                     to: "assets"
                 },
-                // Add our new files
-                {
-                    from: "popup.html",
-                    to: "popup.html"
-                },
+                // Add our files
                 {
                     from: "install.html",
                     to: "install.html"

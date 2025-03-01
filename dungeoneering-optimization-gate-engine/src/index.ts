@@ -444,12 +444,79 @@ export class DungeoneeringGateEngine {
     private mapTabInterval: number | null = null;
 
     constructor() {
+        // Initialize the door text reader
         this.doorTextReader = new DoorTextReader();
-        this.setupEventListeners();
+        
+        // Initialize grid squares
         this.initializeGridSquares();
+        
+        // Set up event listeners
+        this.setupEventListeners();
+        
+        // Preload key images
         this.preloadKeyImages();
+        
+        // Create the grid click info element
         this.createGridClickInfoElement();
+        
+        // Create the map tab interface
         this.createMapTabInterface();
+        
+        // Set up the map canvas
+        this.setupMapCanvas();
+        
+        // Set up message listener for helper window communication
+        window.addEventListener('message', this.handleHelperMessage.bind(this));
+        
+        // Make the engine available globally
+        window.DungeoneeringGateEngine = this;
+    }
+    
+    // Handle messages from the helper window
+    private handleHelperMessage(event: MessageEvent): void {
+        if (!event.data || !event.data.type) return;
+        
+        switch (event.data.type) {
+            case 'helper-loaded':
+                console.log('Helper window loaded, syncing grid state');
+                this.syncGridWithHelper();
+                break;
+                
+            case 'grid-click':
+                if (typeof event.data.row === 'number' && typeof event.data.col === 'number') {
+                    console.log(`Grid click from helper: (${event.data.col},${event.data.row})`);
+                    this.lastClickedSquare = { row: event.data.row, col: event.data.col };
+                    this.updateGridClickInfo(event.data.row, event.data.col);
+                    if (this.mapCanvas) {
+                        this.updateMapCanvas();
+                    }
+                }
+                break;
+                
+            case 'grid-update':
+                if (typeof event.data.row === 'number' && 
+                    typeof event.data.col === 'number' && 
+                    this.gridSquares[event.data.row] && 
+                    this.gridSquares[event.data.row][event.data.col]) {
+                    
+                    console.log(`Grid update from helper: (${event.data.col},${event.data.row}) = ${event.data.icon}`);
+                    this.gridSquares[event.data.row][event.data.col].icon = event.data.icon;
+                    
+                    if (this.mapCanvas) {
+                        this.updateMapCanvas();
+                    }
+                }
+                break;
+                
+            case 'grid-clear':
+                console.log('Grid clear from helper');
+                this.initializeGridSquares();
+                this.lastClickedSquare = null;
+                if (this.mapCanvas) {
+                    this.updateMapCanvas();
+                }
+                break;
+        }
     }
     
     // Initialize the grid squares array based on dungeon size
@@ -2032,7 +2099,7 @@ export class DungeoneeringGateEngine {
         return 8; // Medium and large dungeons have 8 rows
     }
 
-    // Open the Alt1 popup window
+    // Open the Alt1 popup window with the map grid
     private openAlt1Popup(): void {
         try {
             // Get the current URL
@@ -2064,8 +2131,13 @@ export class DungeoneeringGateEngine {
                     anchor.click();
                     document.body.removeChild(anchor);
                     
-                    console.log('Opened helper window using Alt1 protocol');
+                    console.log('Opened map grid window using Alt1 protocol');
                     windowOpened = true;
+                    
+                    // Send current grid state to the helper window after a short delay
+                    setTimeout(() => {
+                        this.syncGridWithHelper();
+                    }, 1000);
                 } catch (e) {
                     console.warn('Failed to open using anchor method:', e);
                     windowOpened = false;
@@ -2088,6 +2160,9 @@ export class DungeoneeringGateEngine {
                                     // Remove the iframe after a short delay
                                     setTimeout(() => {
                                         document.body.removeChild(iframe);
+                                        
+                                        // Send current grid state to the helper window
+                                        this.syncGridWithHelper();
                                     }, 1000);
                                 } catch (e) {
                                     console.warn('Failed to use iframe method:', e);
@@ -2107,6 +2182,11 @@ export class DungeoneeringGateEngine {
                                 console.log('Trying Alt1 API directly as fallback');
                                 window.alt1.openBrowser(helperUrl);
                                 windowOpened = true;
+                                
+                                // Send current grid state to the helper window
+                                setTimeout(() => {
+                                    this.syncGridWithHelper();
+                                }, 1000);
                             } catch (e) {
                                 console.warn('Failed to use Alt1 API directly:', e);
                             }
@@ -2115,18 +2195,67 @@ export class DungeoneeringGateEngine {
                         // Final fallback - only if all Alt1 methods failed and we haven't opened a window yet
                         if (!windowOpened) {
                             window.open(helperUrl, '_blank');
-                            console.log('Opened helper window using regular window.open as last resort');
+                            console.log('Opened map grid window using regular window.open as last resort');
+                            
+                            // Send current grid state to the helper window
+                            setTimeout(() => {
+                                this.syncGridWithHelper();
+                            }, 1000);
                         }
                     }, 500);
                 }
             } else {
                 // Fallback to regular window.open for testing outside Alt1
                 window.open(helperUrl, '_blank');
-                console.log('Opened helper window using regular window.open (Alt1 not detected)');
+                console.log('Opened map grid window using regular window.open (Alt1 not detected)');
+                
+                // Send current grid state to the helper window
+                setTimeout(() => {
+                    this.syncGridWithHelper();
+                }, 1000);
             }
         } catch (error) {
             console.error('Error opening Alt1 popup:', error);
             alert('Failed to open Alt1 popup. Please check the console for details.');
+        }
+    }
+    
+    // Sync grid state with the helper window
+    private syncGridWithHelper(): void {
+        // Find all windows that might be our helper
+        const windows = [];
+        for (let i = 0; i < window.frames.length; i++) {
+            try {
+                if (window.frames[i].location.href.includes('helper.html')) {
+                    windows.push(window.frames[i]);
+                }
+            } catch (e) {
+                // Ignore cross-origin errors
+            }
+        }
+        
+        // Send grid state to all potential helper windows
+        const message = {
+            type: 'grid-sync',
+            gridSquares: this.gridSquares,
+            mapSize: this.mapSize
+        };
+        
+        windows.forEach(w => {
+            try {
+                w.postMessage(message, '*');
+            } catch (e) {
+                console.warn('Failed to send grid state to helper window:', e);
+            }
+        });
+        
+        // Also broadcast to any opener windows
+        if (window.opener) {
+            try {
+                window.opener.postMessage(message, '*');
+            } catch (e) {
+                // Ignore cross-origin errors
+            }
         }
     }
 }

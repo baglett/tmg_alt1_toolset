@@ -3,151 +3,407 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Dungeoneering Map Helper</title>
+    <title>Dungeon Grid</title>
     <!-- Include Alt1 library -->
     <script src="https://runeapps.org/alt1/alt1.js"></script>
     <style>
         body {
-            font-family: Arial, sans-serif;
-            background-color: #111;
-            color: #eee;
             margin: 0;
-            padding: 15px;
+            padding: 0;
+            background-color: #111;
             overflow: hidden;
+            width: 140px;
+            height: 140px;
         }
-        .helper-container {
-            border: 2px solid #444;
-            border-radius: 5px;
-            padding: 10px;
-            background-color: #222;
+        #map-canvas {
+            width: 140px;
+            height: 140px;
+            background-color: rgba(0, 0, 0, 0.3);
         }
-        h1 {
-            margin-top: 0;
-            font-size: 18px;
-            color: #ffcc00;
-            border-bottom: 1px solid #444;
-            padding-bottom: 8px;
-        }
-        .section {
-            margin-bottom: 15px;
-        }
-        .section-title {
-            font-weight: bold;
-            color: #7cfc00;
-            margin-bottom: 5px;
-        }
-        .key-list {
-            display: grid;
-            grid-template-columns: repeat(2, 1fr);
-            gap: 5px;
-        }
-        .key-item {
-            display: flex;
-            align-items: center;
-            padding: 5px;
-            border: 1px solid #333;
-            border-radius: 3px;
-            background-color: #2a2a2a;
-        }
-        .key-icon {
-            width: 20px;
-            height: 20px;
-            margin-right: 8px;
-        }
-        .status-bar {
-            margin-top: 15px;
-            padding: 8px;
+        .dropdown {
+            position: absolute;
             background-color: #333;
-            border-radius: 3px;
-            font-size: 12px;
-            color: #aaa;
-        }
-        button {
-            background-color: #4CAF50;
-            color: white;
-            border: none;
-            padding: 8px 12px;
+            border: 1px solid #555;
             border-radius: 4px;
-            cursor: pointer;
-            font-size: 14px;
-            margin-top: 10px;
+            padding: 5px;
+            z-index: 100;
+            display: none;
+            font-family: Arial, sans-serif;
+            font-size: 11px;
+            color: #eee;
         }
-        button:hover {
-            background-color: #45a049;
+        .dropdown-item {
+            padding: 3px 6px;
+            cursor: pointer;
+            white-space: nowrap;
+        }
+        .dropdown-item:hover {
+            background-color: #444;
         }
     </style>
 </head>
 <body>
-    <div class="helper-container">
-        <h1>Dungeoneering Map Helper</h1>
-        
-        <div class="section">
-            <div class="section-title">Key Tracker</div>
-            <div class="key-list">
-                <div class="key-item">
-                    <img src="images/blue-key.png" alt="Blue Key" class="key-icon">
-                    <span>Blue Key</span>
-                </div>
-                <div class="key-item">
-                    <img src="images/red-key.png" alt="Red Key" class="key-icon">
-                    <span>Red Key</span>
-                </div>
-                <div class="key-item">
-                    <img src="images/green-key.png" alt="Green Key" class="key-icon">
-                    <span>Green Key</span>
-                </div>
-                <div class="key-item">
-                    <img src="images/yellow-key.png" alt="Yellow Key" class="key-icon">
-                    <span>Yellow Key</span>
-                </div>
-            </div>
-        </div>
-        
-        <div class="section">
-            <div class="section-title">Current Room</div>
-            <div id="current-room">No room detected</div>
-        </div>
-        
-        <div class="section">
-            <div class="section-title">Gate Status</div>
-            <div id="gate-status">No gate detected</div>
-        </div>
-        
-        <div class="status-bar">
-            Helper window active - <span id="timestamp">00:00:00</span>
-        </div>
-        
-        <button id="close-button">Close Helper</button>
-    </div>
+    <canvas id="map-canvas"></canvas>
+    <div id="map-dropdown" class="dropdown"></div>
 
     <script>
         // Check if running in Alt1
         const isAlt1 = window.alt1 && window.alt1.versionint;
         
-        // Update timestamp
-        function updateTimestamp() {
-            document.getElementById('timestamp').textContent = new Date().toLocaleTimeString();
+        // Map configuration
+        const MAP_SIZES = {
+            small: { width: 140, height: 140 },
+            medium: { width: 140, height: 140 },
+            large: { width: 140, height: 140 }
+        };
+        
+        // Grid state
+        let mapSize = 'small';
+        let gridSquares = [];
+        let lastClickedSquare = null;
+        let keyImages = new Map();
+        
+        // Canvas elements
+        const canvas = document.getElementById('map-canvas');
+        const ctx = canvas.getContext('2d');
+        const dropdown = document.getElementById('map-dropdown');
+        
+        // Initialize grid squares
+        function initializeGridSquares() {
+            gridSquares = [];
+            const rows = getGridRows();
+            const cols = getGridCols();
+            
+            for (let r = 0; r < rows; r++) {
+                gridSquares[r] = [];
+                for (let c = 0; c < cols; c++) {
+                    gridSquares[r][c] = { row: r, col: c, icon: null };
+                }
+            }
         }
         
-        // Update timestamp every second
-        setInterval(updateTimestamp, 1000);
-        updateTimestamp(); // Initial update
+        // Get grid dimensions based on map size
+        function getGridCols() {
+            if (mapSize === 'small') {
+                return 4;
+            }
+            return 8; // Medium and large dungeons have 8 columns
+        }
         
-        // Close button functionality
-        document.getElementById('close-button').addEventListener('click', function() {
-            window.close();
-        });
+        function getGridRows() {
+            if (mapSize === 'small') {
+                return 4;
+            }
+            return 8; // Medium and large dungeons have 8 rows
+        }
+        
+        // Resize canvas to fit container
+        function resizeCanvas() {
+            canvas.width = 140;
+            canvas.height = 140;
+            updateCanvas();
+        }
+        
+        // Update the canvas with the current grid state
+        function updateCanvas() {
+            if (!ctx) return;
+            
+            // Get the map size
+            const outlineWidth = canvas.width;
+            const outlineHeight = canvas.height;
+            
+            // Clear the canvas
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            
+            // Draw a background
+            ctx.fillStyle = 'rgba(0, 0, 0, 0.3)';
+            ctx.fillRect(0, 0, outlineWidth, outlineHeight);
+            
+            // Get grid dimensions
+            const gridCols = getGridCols();
+            const gridRows = getGridRows();
+            
+            const cellWidth = outlineWidth / gridCols;
+            const cellHeight = outlineHeight / gridRows;
+            
+            // Draw grid lines
+            ctx.strokeStyle = 'rgba(200, 200, 50, 0.8)';
+            ctx.lineWidth = 1;
+            
+            // Draw vertical grid lines
+            for (let i = 1; i < gridCols; i++) {
+                const lineX = Math.floor(cellWidth * i);
+                ctx.beginPath();
+                ctx.moveTo(lineX, 0);
+                ctx.lineTo(lineX, outlineHeight);
+                ctx.stroke();
+            }
+            
+            // Draw horizontal grid lines
+            for (let i = 1; i < gridRows; i++) {
+                const lineY = Math.floor(cellHeight * i);
+                ctx.beginPath();
+                ctx.moveTo(0, lineY);
+                ctx.lineTo(outlineWidth, lineY);
+                ctx.stroke();
+            }
+            
+            // Draw the map outline
+            ctx.strokeStyle = 'white';
+            ctx.lineWidth = 1;
+            ctx.strokeRect(0, 0, outlineWidth, outlineHeight);
+            
+            // Draw coordinate labels for the corners
+            ctx.fillStyle = 'white';
+            ctx.font = '9px Arial';
+            ctx.fillText("(0,0)", 2, outlineHeight - 2);
+            ctx.fillText(`(${gridCols-1},0)`, outlineWidth - 20, outlineHeight - 2);
+            ctx.fillText(`(0,${gridRows-1})`, 2, 10);
+            ctx.fillText(`(${gridCols-1},${gridRows-1})`, outlineWidth - 20, 10);
+            
+            // Draw icons on grid squares
+            drawGridIcons(cellWidth, cellHeight, gridRows, gridCols);
+            
+            // If we have a last clicked square, highlight it
+            if (lastClickedSquare) {
+                const row = lastClickedSquare.row;
+                const col = lastClickedSquare.col;
+                
+                // Make sure the row and column are valid
+                if (row >= 0 && row < gridRows && col >= 0 && col < gridCols) {
+                    // Calculate the position of the grid square
+                    const squareX = Math.floor(col * cellWidth);
+                    const squareY = Math.floor((gridRows - 1 - row) * cellHeight); // Invert row to match bottom-left = 0,0
+                    
+                    // Draw a highlight around the square
+                    ctx.strokeStyle = 'rgba(255, 255, 0, 0.8)';
+                    ctx.lineWidth = 2;
+                    ctx.strokeRect(squareX + 1, squareY + 1, cellWidth - 2, cellHeight - 2);
+                }
+            }
+        }
+        
+        // Draw icons on the grid
+        function drawGridIcons(cellWidth, cellHeight, rows, cols) {
+            if (!ctx) return;
+            
+            // Loop through all grid squares
+            for (let r = 0; r < rows; r++) {
+                for (let c = 0; c < cols; c++) {
+                    // Check if this square has an icon
+                    if (gridSquares[r] && gridSquares[r][c] && gridSquares[r][c].icon) {
+                        const icon = gridSquares[r][c].icon;
+                        if (icon) {
+                            // Calculate the center position of this grid square
+                            const centerX = Math.floor((c * cellWidth) + (cellWidth / 2));
+                            const centerY = Math.floor(((rows - 1 - r) * cellHeight) + (cellHeight / 2)); // Invert row to match bottom-left = 0,0
+                            
+                            // Get the image for this icon
+                            const img = keyImages.get(icon);
+                            
+                            if (img && img.complete) {
+                                // Draw the image on the canvas
+                                try {
+                                    const iconSize = Math.min(cellWidth, cellHeight) * 0.7; // 70% of cell size
+                                    ctx.drawImage(
+                                        img, 
+                                        centerX - iconSize / 2, 
+                                        centerY - iconSize / 2, 
+                                        iconSize, 
+                                        iconSize
+                                    );
+                                } catch (error) {
+                                    console.error("Error drawing icon image on canvas:", error);
+                                    
+                                    // Fallback to text if image drawing fails
+                                    ctx.fillStyle = 'white';
+                                    ctx.font = '10px Arial';
+                                    ctx.fillText(icon.charAt(0).toUpperCase(), centerX - 4, centerY + 4);
+                                }
+                            } else {
+                                // Fallback to text if image is not loaded
+                                ctx.fillStyle = 'white';
+                                ctx.font = '10px Arial';
+                                ctx.fillText(icon.charAt(0).toUpperCase(), centerX - 4, centerY + 4);
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        
+        // Handle clicks on the canvas
+        function handleCanvasClick(e) {
+            // Get the click position relative to the canvas
+            const rect = canvas.getBoundingClientRect();
+            const clickX = e.clientX - rect.left;
+            const clickY = e.clientY - rect.top;
+            
+            // Get the grid dimensions
+            const gridCols = getGridCols();
+            const gridRows = getGridRows();
+            
+            const cellWidth = canvas.width / gridCols;
+            const cellHeight = canvas.height / gridRows;
+            
+            // Calculate which grid square was clicked
+            const col = Math.floor(clickX / cellWidth);
+            const row = gridRows - 1 - Math.floor(clickY / cellHeight); // Invert row to match bottom-left = 0,0
+            
+            // Ensure the row and column are valid
+            if (row >= 0 && row < gridRows && col >= 0 && col < gridCols) {
+                // Store the last clicked square
+                lastClickedSquare = { row, col };
+                
+                // Show the dropdown at this position
+                showDropdown(e.clientX, e.clientY, row, col);
+                
+                // Update the canvas to show the highlight
+                updateCanvas();
+                
+                // Send message to parent window
+                if (window.opener) {
+                    window.opener.postMessage({
+                        type: 'grid-click',
+                        row: row,
+                        col: col
+                    }, '*');
+                }
+            }
+        }
+        
+        // Show dropdown menu for selecting icons
+        function showDropdown(x, y, row, col) {
+            // Position the dropdown
+            dropdown.style.left = `${x}px`;
+            dropdown.style.top = `${y}px`;
+            
+            // Clear previous content
+            dropdown.innerHTML = '';
+            
+            // Add dropdown items
+            const icons = ['blue-key', 'red-key', 'green-key', 'yellow-key', 'boss', 'start', 'gate', 'clear'];
+            
+            icons.forEach(icon => {
+                const item = document.createElement('div');
+                item.className = 'dropdown-item';
+                
+                if (icon === 'clear') {
+                    item.textContent = 'Clear';
+                    item.onclick = () => {
+                        addIconToGrid(row, col, null);
+                        hideDropdown();
+                    };
+                } else {
+                    item.textContent = icon.replace('-', ' ').charAt(0).toUpperCase() + icon.replace('-', ' ').slice(1);
+                    item.onclick = () => {
+                        addIconToGrid(row, col, icon);
+                        hideDropdown();
+                    };
+                }
+                
+                dropdown.appendChild(item);
+            });
+            
+            // Show the dropdown
+            dropdown.style.display = 'block';
+            
+            // Add click event listener to hide dropdown when clicking outside
+            setTimeout(() => {
+                document.addEventListener('click', hideDropdownOnClickOutside);
+            }, 10);
+        }
+        
+        // Hide dropdown when clicking outside
+        function hideDropdownOnClickOutside(e) {
+            if (!dropdown.contains(e.target)) {
+                hideDropdown();
+            }
+        }
+        
+        // Hide the dropdown
+        function hideDropdown() {
+            dropdown.style.display = 'none';
+            document.removeEventListener('click', hideDropdownOnClickOutside);
+        }
+        
+        // Add icon to grid
+        function addIconToGrid(row, col, icon) {
+            if (gridSquares[row] && gridSquares[row][col]) {
+                gridSquares[row][col].icon = icon;
+                updateCanvas();
+                
+                // Send update to parent window
+                if (window.opener) {
+                    window.opener.postMessage({
+                        type: 'grid-update',
+                        row: row,
+                        col: col,
+                        icon: icon
+                    }, '*');
+                }
+            }
+        }
+        
+        // Preload key images
+        function preloadKeyImages() {
+            const imagesToLoad = [
+                { name: 'blue-key', path: 'assets/blue-key.png' },
+                { name: 'red-key', path: 'assets/red-key.png' },
+                { name: 'green-key', path: 'assets/green-key.png' },
+                { name: 'yellow-key', path: 'assets/yellow-key.png' },
+                { name: 'boss', path: 'assets/boss.png' },
+                { name: 'start', path: 'assets/start.png' },
+                { name: 'gate', path: 'assets/gate.png' }
+            ];
+            
+            let loadedCount = 0;
+            
+            imagesToLoad.forEach(img => {
+                const image = new Image();
+                image.onload = () => {
+                    loadedCount++;
+                    if (loadedCount === imagesToLoad.length) {
+                        console.log('All images loaded');
+                        updateCanvas();
+                    }
+                };
+                image.onerror = () => {
+                    console.error(`Failed to load image: ${img.path}`);
+                    loadedCount++;
+                };
+                image.src = img.path;
+                keyImages.set(img.name, image);
+            });
+        }
+        
+        // Initialize the map
+        function initMap() {
+            initializeGridSquares();
+            preloadKeyImages();
+            resizeCanvas();
+            
+            // Set up event listeners
+            canvas.addEventListener('click', handleCanvasClick);
+            window.addEventListener('resize', resizeCanvas);
+        }
         
         // Communication with main window
         window.addEventListener('message', function(event) {
-            // Handle messages from the main window
             if (event.data && event.data.type) {
                 switch(event.data.type) {
-                    case 'room-update':
-                        document.getElementById('current-room').textContent = event.data.room || 'No room detected';
+                    case 'grid-sync':
+                        if (event.data.gridSquares) {
+                            gridSquares = event.data.gridSquares;
+                            updateCanvas();
+                        }
                         break;
-                    case 'gate-update':
-                        document.getElementById('gate-status').textContent = event.data.gate || 'No gate detected';
+                    case 'map-size':
+                        if (event.data.size) {
+                            mapSize = event.data.size;
+                            initializeGridSquares();
+                            updateCanvas();
+                        }
                         break;
                 }
             }
@@ -169,6 +425,9 @@
         } else {
             console.log("Not running in Alt1 environment");
         }
+        
+        // Initialize the map when the page loads
+        initMap();
     </script>
 </body>
 </html> 

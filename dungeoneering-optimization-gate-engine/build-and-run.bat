@@ -1,32 +1,29 @@
 @echo off
-echo Building and running the Dungeoneering Gate Engine...
+echo Building and running Dungeoneering Gate Engine...
 
-echo Creating icon.png...
+echo Creating icon...
 powershell -ExecutionPolicy Bypass -File create-icon.ps1
 
 echo Installing dependencies...
 call npm install
 
-echo Building the project...
+echo Building project...
 call npm run build
 
-echo Starting the development server...
+echo Starting development server...
+start "" http://localhost:9000
 call npm run dev
 
 echo.
-echo ======================================================
-echo IMPORTANT: First-time setup for Alt1 app
-echo ======================================================
+echo =====================================================================
+echo First-time setup for Alt1 app:
 echo 1. Navigate to http://localhost:9000/install.html
-echo 2. Click the "Install Map Helper" button to install the app in Alt1
-echo 3. Then go to the main app and use the "Open Helper Window" button
-echo    in the Map Interaction tab to open the helper window
+echo 2. Click the "Install Dungeon Grid" button
+echo 3. Use the "Open Helper Window" button in the Map Interaction tab
+echo    to open the compact 140x140 pixel grid in Alt1
 echo.
-echo NOTE: The helper window now uses an improved approach to open in Alt1:
-echo       - Uses multiple methods in sequence to ensure it opens in Alt1
-echo       - Prevents duplicate windows from opening
-echo       - Falls back to default browser only if Alt1 methods fail
-echo       Make sure Alt1 is running when you click the button.
-echo ======================================================
+echo The compact grid allows you to visualize and mark locations in the dungeon
+echo with minimal screen space usage.
+echo =====================================================================
 
 echo Done! 
