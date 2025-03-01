@@ -1618,6 +1618,9 @@ export class DungeoneeringGateEngine {
                 <div id="mapCoordinates" style="font-size: 16px; font-weight: bold; color: #7cfc00; margin-bottom: 5px;">No square clicked yet</div>
                 <div id="mapTimestamp" style="font-size: 11px; color: #999;"></div>
             </div>
+            <div style="margin-top: 10px; padding: 10px; background-color: #333; border: 1px solid #444; border-radius: 4px;">
+                <button id="openAlt1Popup" style="background-color: #4CAF50; color: white; padding: 8px 12px; border: none; border-radius: 4px; cursor: pointer; font-size: 14px;">Open Helper Window</button>
+            </div>
         `;
         
         // Add content containers to document
@@ -1635,6 +1638,16 @@ export class DungeoneeringGateEngine {
         
         // Set up the map canvas when the tab is first created
         this.setupMapCanvas();
+        
+        // Add event listener for the Alt1 popup button
+        setTimeout(() => {
+            const openAlt1PopupButton = document.getElementById('openAlt1Popup');
+            if (openAlt1PopupButton) {
+                openAlt1PopupButton.addEventListener('click', () => {
+                    this.openAlt1Popup();
+                });
+            }
+        }, 100);
     }
 
     // Switch between tabs
@@ -2017,6 +2030,104 @@ export class DungeoneeringGateEngine {
             return 4;
         }
         return 8; // Medium and large dungeons have 8 rows
+    }
+
+    // Open the Alt1 popup window
+    private openAlt1Popup(): void {
+        try {
+            // Get the current URL
+            const currentUrl = window.location.href;
+            
+            // Extract the base URL (up to the last directory)
+            const baseUrl = currentUrl.substring(0, currentUrl.lastIndexOf('/') + 1);
+            
+            // Create the URL for the helper page
+            const helperUrl = `${baseUrl}helper.html`;
+            
+            // Log the URL for debugging
+            console.log('Opening Alt1 popup with URL:', helperUrl);
+            
+            // Flag to track if a window has been successfully opened
+            let windowOpened = false;
+            
+            // Try different methods to open the Alt1 browser window
+            if (a1lib.hasAlt1) {
+                // Method 1: Use the Alt1 protocol directly
+                const alt1Url = `alt1://browser/${helperUrl}`;
+                console.log('Using Alt1 protocol URL:', alt1Url);
+                
+                try {
+                    // Create and click an anchor tag to open the Alt1 browser
+                    const anchor = document.createElement("a");
+                    anchor.href = alt1Url;
+                    document.body.appendChild(anchor);
+                    anchor.click();
+                    document.body.removeChild(anchor);
+                    
+                    console.log('Opened helper window using Alt1 protocol');
+                    windowOpened = true;
+                } catch (e) {
+                    console.warn('Failed to open using anchor method:', e);
+                    windowOpened = false;
+                }
+                
+                // Only try the fallback methods if the first method failed
+                if (!windowOpened) {
+                    try {
+                        // Method 2: Try using window.location in an iframe to avoid navigating away
+                        const iframe = document.createElement('iframe');
+                        iframe.style.display = 'none';
+                        document.body.appendChild(iframe);
+                        
+                        if (iframe.contentWindow) {
+                            // Use setTimeout to give time for the iframe to load
+                            setTimeout(() => {
+                                try {
+                                    iframe.contentWindow!.location.href = alt1Url;
+                                    console.log('Tried opening with iframe method');
+                                    // Remove the iframe after a short delay
+                                    setTimeout(() => {
+                                        document.body.removeChild(iframe);
+                                    }, 1000);
+                                } catch (e) {
+                                    console.warn('Failed to use iframe method:', e);
+                                    document.body.removeChild(iframe);
+                                }
+                            }, 100);
+                        }
+                    } catch (e) {
+                        console.warn('Failed to create iframe:', e);
+                    }
+                    
+                    // Method 3: Fallback to Alt1 API if the protocol methods fail
+                    // This is set on a timeout to give the protocol methods a chance to work first
+                    setTimeout(() => {
+                        if (!windowOpened && window.alt1 && typeof window.alt1.openBrowser === 'function') {
+                            try {
+                                console.log('Trying Alt1 API directly as fallback');
+                                window.alt1.openBrowser(helperUrl);
+                                windowOpened = true;
+                            } catch (e) {
+                                console.warn('Failed to use Alt1 API directly:', e);
+                            }
+                        }
+                        
+                        // Final fallback - only if all Alt1 methods failed and we haven't opened a window yet
+                        if (!windowOpened) {
+                            window.open(helperUrl, '_blank');
+                            console.log('Opened helper window using regular window.open as last resort');
+                        }
+                    }, 500);
+                }
+            } else {
+                // Fallback to regular window.open for testing outside Alt1
+                window.open(helperUrl, '_blank');
+                console.log('Opened helper window using regular window.open (Alt1 not detected)');
+            }
+        } catch (error) {
+            console.error('Error opening Alt1 popup:', error);
+            alert('Failed to open Alt1 popup. Please check the console for details.');
+        }
     }
 }
 

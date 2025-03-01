@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Install Map Helper</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 20px;
+            background-color: #222;
+            color: #fff;
+            font-family: Arial, sans-serif;
+            text-align: center;
+        }
+        h1 {
+            font-size: 24px;
+            margin: 0 0 20px 0;
+            color: #ffcc00;
+        }
+        p {
+            font-size: 16px;
+            margin: 0 0 20px 0;
+            color: #ccc;
+        }
+        .install-button {
+            display: inline-block;
+            background-color: #4CAF50;
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 16px;
+            text-decoration: none;
+        }
+        .install-button:hover {
+            background-color: #45a049;
+        }
+        .status {
+            margin-top: 20px;
+            font-size: 14px;
+            color: #999;
+        }
+    </style>
+</head>
+<body>
+    <h1>Map Helper Installation</h1>
+    <p>Click the button below to install the Map Helper app in Alt1 Toolkit.</p>
+    <a href="#" id="installButton" class="install-button">Install Map Helper</a>
+    <div id="status" class="status"></div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const installButton = document.getElementById('installButton');
+            const statusElement = document.getElementById('status');
+            
+            // Check if Alt1 is available
+            if (window.alt1) {
+                statusElement.textContent = 'Alt1 Toolkit detected. You can install the app.';
+            } else {
+                statusElement.textContent = 'Alt1 Toolkit not detected. Please install Alt1 Toolkit first.';
+            }
+            
+            // Set up the installation URL
+            installButton.addEventListener('click', function(e) {
+                e.preventDefault();
+                
+                try {
+                    // Get the current URL
+                    const currentUrl = window.location.href;
+                    
+                    // Extract the base URL (up to the last directory)
+                    const baseUrl = currentUrl.substring(0, currentUrl.lastIndexOf('/') + 1);
+                    
+                    // Create the full path to the appconfig.json file
+                    let configUrl;
+                    if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
+                        // We're running on the development server
+                        configUrl = `${window.location.protocol}//${window.location.hostname}:9000/appconfig.json`;
+                    } else {
+                        // We're running on a production server
+                        configUrl = new URL('appconfig.json', baseUrl).href;
+                    }
+                    
+                    // Create the Alt1 addapp URL
+                    const addAppUrl = `alt1://addapp/${configUrl}`;
+                    
+                    // Log the URL for debugging
+                    console.log('Installing Alt1 app with URL:', addAppUrl);
+                    statusElement.textContent = 'Installing app...';
+                    
+                    // Open the URL
+                    window.location.href = addAppUrl;
+                    
+                    // Update status after a short delay
+                    setTimeout(function() {
+                        statusElement.textContent = 'Installation request sent. If the app doesn\'t appear in Alt1, please check the console for errors.';
+                    }, 2000);
+                } catch (error) {
+                    console.error('Error installing Alt1 app:', error);
+                    statusElement.textContent = 'Failed to install app. Please check the console for errors.';
+                }
+            });
+        });
+    </script>
+</body>
+</html> 

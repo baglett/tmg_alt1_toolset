@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dungeoneering Map Helper</title>
+    <!-- Include Alt1 library -->
+    <script src="https://runeapps.org/alt1/alt1.js"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #111;
+            color: #eee;
+            margin: 0;
+            padding: 15px;
+            overflow: hidden;
+        }
+        .helper-container {
+            border: 2px solid #444;
+            border-radius: 5px;
+            padding: 10px;
+            background-color: #222;
+        }
+        h1 {
+            margin-top: 0;
+            font-size: 18px;
+            color: #ffcc00;
+            border-bottom: 1px solid #444;
+            padding-bottom: 8px;
+        }
+        .section {
+            margin-bottom: 15px;
+        }
+        .section-title {
+            font-weight: bold;
+            color: #7cfc00;
+            margin-bottom: 5px;
+        }
+        .key-list {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 5px;
+        }
+        .key-item {
+            display: flex;
+            align-items: center;
+            padding: 5px;
+            border: 1px solid #333;
+            border-radius: 3px;
+            background-color: #2a2a2a;
+        }
+        .key-icon {
+            width: 20px;
+            height: 20px;
+            margin-right: 8px;
+        }
+        .status-bar {
+            margin-top: 15px;
+            padding: 8px;
+            background-color: #333;
+            border-radius: 3px;
+            font-size: 12px;
+            color: #aaa;
+        }
+        button {
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            padding: 8px 12px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+            margin-top: 10px;
+        }
+        button:hover {
+            background-color: #45a049;
+        }
+    </style>
+</head>
+<body>
+    <div class="helper-container">
+        <h1>Dungeoneering Map Helper</h1>
+        
+        <div class="section">
+            <div class="section-title">Key Tracker</div>
+            <div class="key-list">
+                <div class="key-item">
+                    <img src="images/blue-key.png" alt="Blue Key" class="key-icon">
+                    <span>Blue Key</span>
+                </div>
+                <div class="key-item">
+                    <img src="images/red-key.png" alt="Red Key" class="key-icon">
+                    <span>Red Key</span>
+                </div>
+                <div class="key-item">
+                    <img src="images/green-key.png" alt="Green Key" class="key-icon">
+                    <span>Green Key</span>
+                </div>
+                <div class="key-item">
+                    <img src="images/yellow-key.png" alt="Yellow Key" class="key-icon">
+                    <span>Yellow Key</span>
+                </div>
+            </div>
+        </div>
+        
+        <div class="section">
+            <div class="section-title">Current Room</div>
+            <div id="current-room">No room detected</div>
+        </div>
+        
+        <div class="section">
+            <div class="section-title">Gate Status</div>
+            <div id="gate-status">No gate detected</div>
+        </div>
+        
+        <div class="status-bar">
+            Helper window active - <span id="timestamp">00:00:00</span>
+        </div>
+        
+        <button id="close-button">Close Helper</button>
+    </div>
+
+    <script>
+        // Check if running in Alt1
+        const isAlt1 = window.alt1 && window.alt1.versionint;
+        
+        // Update timestamp
+        function updateTimestamp() {
+            document.getElementById('timestamp').textContent = new Date().toLocaleTimeString();
+        }
+        
+        // Update timestamp every second
+        setInterval(updateTimestamp, 1000);
+        updateTimestamp(); // Initial update
+        
+        // Close button functionality
+        document.getElementById('close-button').addEventListener('click', function() {
+            window.close();
+        });
+        
+        // Communication with main window
+        window.addEventListener('message', function(event) {
+            // Handle messages from the main window
+            if (event.data && event.data.type) {
+                switch(event.data.type) {
+                    case 'room-update':
+                        document.getElementById('current-room').textContent = event.data.room || 'No room detected';
+                        break;
+                    case 'gate-update':
+                        document.getElementById('gate-status').textContent = event.data.gate || 'No gate detected';
+                        break;
+                }
+            }
+        });
+        
+        // Notify parent window that helper is loaded
+        if (window.opener) {
+            window.opener.postMessage({ type: 'helper-loaded' }, '*');
+        }
+        
+        // If in Alt1, set up additional functionality
+        if (isAlt1) {
+            // Let Alt1 detect when this page is fully loaded
+            if (window.alt1 && window.alt1.identifyAppUrl) {
+                window.alt1.identifyAppUrl('./appconfig.json');
+            }
+            
+            console.log("Running in Alt1 environment");
+        } else {
+            console.log("Not running in Alt1 environment");
+        }
+    </script>
+</body>
+</html> 

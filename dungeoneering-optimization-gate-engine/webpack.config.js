@@ -64,6 +64,28 @@ module.exports = {
                 {
                     from: "../assets",
                     to: "assets"
+                },
+                // Add our new files
+                {
+                    from: "popup.html",
+                    to: "popup.html"
+                },
+                {
+                    from: "install.html",
+                    to: "install.html"
+                },
+                {
+                    from: "helper.html",
+                    to: "helper.html"
+                },
+                {
+                    from: "appconfig.json",
+                    to: "appconfig.json"
+                },
+                {
+                    from: "icon.png",
+                    to: "icon.png",
+                    noErrorOnMissing: true
                 }
             ]
         })
