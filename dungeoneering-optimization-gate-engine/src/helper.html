@@ -40,6 +40,13 @@
         .dropdown-item:hover {
             background-color: #444;
         }
+        .color-item {
+            display: inline-block;
+            width: 12px;
+            height: 12px;
+            margin-right: 5px;
+            border: 1px solid #555;
+        }
     </style>
 </head>
 <body>
@@ -57,11 +64,16 @@
             large: { width: 140, height: 140 }
         };
         
+        // Key configuration
+        const KEY_COLORS = ['Crimson', 'Blue', 'Yellow', 'Gold', 'Orange', 'Green', 'Purple', 'Silver'];
+        const KEY_SHAPES = ['corner', 'shield', 'crescent', 'wedge', 'rectangle', 'triangle', 'diamond', 'pentagon'];
+        
         // Grid state
         let mapSize = 'small';
         let gridSquares = [];
         let lastClickedSquare = null;
         let keyImages = new Map();
+        let selectedColor = null;
         
         // Canvas elements
         const canvas = document.getElementById('map-canvas');
@@ -77,7 +89,7 @@
             for (let r = 0; r < rows; r++) {
                 gridSquares[r] = [];
                 for (let c = 0; c < cols; c++) {
-                    gridSquares[r][c] = { row: r, col: c, icon: null };
+                    gridSquares[r][c] = { row: r, col: c, icon: null, keyColor: null, keyShape: null };
                 }
             }
         }
@@ -190,10 +202,47 @@
             // Loop through all grid squares
             for (let r = 0; r < rows; r++) {
                 for (let c = 0; c < cols; c++) {
-                    // Check if this square has an icon
-                    if (gridSquares[r] && gridSquares[r][c] && gridSquares[r][c].icon) {
-                        const icon = gridSquares[r][c].icon;
-                        if (icon) {
+                    // Check if this square has a key (color and shape)
+                    if (gridSquares[r] && gridSquares[r][c]) {
+                        const square = gridSquares[r][c];
+                        
+                        if (square.keyColor && square.keyShape) {
+                            // Calculate the center position of this grid square
+                            const centerX = Math.floor((c * cellWidth) + (cellWidth / 2));
+                            const centerY = Math.floor(((rows - 1 - r) * cellHeight) + (cellHeight / 2)); // Invert row to match bottom-left = 0,0
+                            
+                            // Get the image for this key
+                            const keyName = `${square.keyColor}_${square.keyShape}_key`;
+                            const img = keyImages.get(keyName);
+                            
+                            if (img && img.complete) {
+                                // Draw the image on the canvas
+                                try {
+                                    const iconSize = Math.min(cellWidth, cellHeight) * 0.7; // 70% of cell size
+                                    ctx.drawImage(
+                                        img, 
+                                        centerX - iconSize / 2, 
+                                        centerY - iconSize / 2, 
+                                        iconSize, 
+                                        iconSize
+                                    );
+                                } catch (error) {
+                                    console.error("Error drawing key image on canvas:", error);
+                                    
+                                    // Fallback to text if image drawing fails
+                                    ctx.fillStyle = 'white';
+                                    ctx.font = '10px Arial';
+                                    ctx.fillText(square.keyColor.charAt(0), centerX - 4, centerY + 4);
+                                }
+                            } else {
+                                // Fallback to text if image is not loaded
+                                ctx.fillStyle = 'white';
+                                ctx.font = '10px Arial';
+                                ctx.fillText(square.keyColor.charAt(0), centerX - 4, centerY + 4);
+                            }
+                        } else if (square.icon) {
+                            // Legacy support for old icon system
+                            const icon = square.icon;
                             // Calculate the center position of this grid square
                             const centerX = Math.floor((c * cellWidth) + (cellWidth / 2));
                             const centerY = Math.floor(((rows - 1 - r) * cellHeight) + (cellHeight / 2)); // Invert row to match bottom-left = 0,0
@@ -234,45 +283,201 @@
         
         // Handle clicks on the canvas
         function handleCanvasClick(e) {
-            // Get the click position relative to the canvas
-            const rect = canvas.getBoundingClientRect();
-            const clickX = e.clientX - rect.left;
-            const clickY = e.clientY - rect.top;
-            
-            // Get the grid dimensions
-            const gridCols = getGridCols();
-            const gridRows = getGridRows();
-            
-            const cellWidth = canvas.width / gridCols;
-            const cellHeight = canvas.height / gridRows;
-            
-            // Calculate which grid square was clicked
-            const col = Math.floor(clickX / cellWidth);
-            const row = gridRows - 1 - Math.floor(clickY / cellHeight); // Invert row to match bottom-left = 0,0
-            
-            // Ensure the row and column are valid
-            if (row >= 0 && row < gridRows && col >= 0 && col < gridCols) {
-                // Store the last clicked square
-                lastClickedSquare = { row, col };
+            // Only process right clicks
+            if (e.button === 2) {
+                e.preventDefault();
                 
-                // Show the dropdown at this position
-                showDropdown(e.clientX, e.clientY, row, col);
+                // Get the click position relative to the canvas
+                const rect = canvas.getBoundingClientRect();
+                const clickX = e.clientX - rect.left;
+                const clickY = e.clientY - rect.top;
                 
-                // Update the canvas to show the highlight
-                updateCanvas();
+                // Get the grid dimensions
+                const gridCols = getGridCols();
+                const gridRows = getGridRows();
                 
-                // Send message to parent window
-                if (window.opener) {
-                    window.opener.postMessage({
-                        type: 'grid-click',
-                        row: row,
-                        col: col
-                    }, '*');
+                const cellWidth = canvas.width / gridCols;
+                const cellHeight = canvas.height / gridRows;
+                
+                // Calculate which grid square was clicked
+                const col = Math.floor(clickX / cellWidth);
+                const row = gridRows - 1 - Math.floor(clickY / cellHeight); // Invert row to match bottom-left = 0,0
+                
+                // Ensure the row and column are valid
+                if (row >= 0 && row < gridRows && col >= 0 && col < gridCols) {
+                    // Store the last clicked square
+                    lastClickedSquare = { row, col };
+                    
+                    // Reset selected color
+                    selectedColor = null;
+                    
+                    // Show the color dropdown at this position
+                    showColorDropdown(e.clientX, e.clientY, row, col);
+                    
+                    // Update the canvas to show the highlight
+                    updateCanvas();
+                    
+                    // Send message to parent window
+                    if (window.opener) {
+                        window.opener.postMessage({
+                            type: 'grid-click',
+                            row: row,
+                            col: col
+                        }, '*');
+                    }
+                }
+                
+                return false;
+            } else if (e.button === 0) {
+                // Left click - use original behavior
+                // Get the click position relative to the canvas
+                const rect = canvas.getBoundingClientRect();
+                const clickX = e.clientX - rect.left;
+                const clickY = e.clientY - rect.top;
+                
+                // Get the grid dimensions
+                const gridCols = getGridCols();
+                const gridRows = getGridRows();
+                
+                const cellWidth = canvas.width / gridCols;
+                const cellHeight = canvas.height / gridRows;
+                
+                // Calculate which grid square was clicked
+                const col = Math.floor(clickX / cellWidth);
+                const row = gridRows - 1 - Math.floor(clickY / cellHeight); // Invert row to match bottom-left = 0,0
+                
+                // Ensure the row and column are valid
+                if (row >= 0 && row < gridRows && col >= 0 && col < gridCols) {
+                    // Store the last clicked square
+                    lastClickedSquare = { row, col };
+                    
+                    // Show the original dropdown at this position
+                    showDropdown(e.clientX, e.clientY, row, col);
+                    
+                    // Update the canvas to show the highlight
+                    updateCanvas();
+                    
+                    // Send message to parent window
+                    if (window.opener) {
+                        window.opener.postMessage({
+                            type: 'grid-click',
+                            row: row,
+                            col: col
+                        }, '*');
+                    }
                 }
             }
         }
         
-        // Show dropdown menu for selecting icons
+        // Show color dropdown menu
+        function showColorDropdown(x, y, row, col) {
+            // Position the dropdown
+            dropdown.style.left = `${x}px`;
+            dropdown.style.top = `${y}px`;
+            
+            // Clear previous content
+            dropdown.innerHTML = '';
+            
+            // Add header
+            const header = document.createElement('div');
+            header.className = 'dropdown-item';
+            header.style.fontWeight = 'bold';
+            header.textContent = 'Select Color:';
+            dropdown.appendChild(header);
+            
+            // Add color options
+            KEY_COLORS.forEach(color => {
+                const item = document.createElement('div');
+                item.className = 'dropdown-item';
+                
+                // Create color swatch
+                const colorSwatch = document.createElement('span');
+                colorSwatch.className = 'color-item';
+                colorSwatch.style.backgroundColor = color.toLowerCase();
+                item.appendChild(colorSwatch);
+                
+                // Add color name
+                const colorName = document.createTextNode(color);
+                item.appendChild(colorName);
+                
+                item.onclick = () => {
+                    selectedColor = color;
+                    hideDropdown();
+                    showShapeDropdown(x, y, row, col);
+                };
+                
+                dropdown.appendChild(item);
+            });
+            
+            // Add clear option
+            const clearItem = document.createElement('div');
+            clearItem.className = 'dropdown-item';
+            clearItem.textContent = 'Clear';
+            clearItem.onclick = () => {
+                clearKeyFromGrid(row, col);
+                hideDropdown();
+            };
+            dropdown.appendChild(clearItem);
+            
+            // Show the dropdown
+            dropdown.style.display = 'block';
+            
+            // Add click event listener to hide dropdown when clicking outside
+            setTimeout(() => {
+                document.addEventListener('click', hideDropdownOnClickOutside);
+            }, 10);
+        }
+        
+        // Show shape dropdown menu after color selection
+        function showShapeDropdown(x, y, row, col) {
+            // Position the dropdown
+            dropdown.style.left = `${x}px`;
+            dropdown.style.top = `${y}px`;
+            
+            // Clear previous content
+            dropdown.innerHTML = '';
+            
+            // Add header
+            const header = document.createElement('div');
+            header.className = 'dropdown-item';
+            header.style.fontWeight = 'bold';
+            header.textContent = `Selected ${selectedColor} - Choose Shape:`;
+            dropdown.appendChild(header);
+            
+            // Add shape options
+            KEY_SHAPES.forEach(shape => {
+                const item = document.createElement('div');
+                item.className = 'dropdown-item';
+                item.textContent = shape.charAt(0).toUpperCase() + shape.slice(1);
+                
+                item.onclick = () => {
+                    addKeyToGrid(row, col, selectedColor, shape);
+                    hideDropdown();
+                };
+                
+                dropdown.appendChild(item);
+            });
+            
+            // Add back option
+            const backItem = document.createElement('div');
+            backItem.className = 'dropdown-item';
+            backItem.textContent = '← Back to Colors';
+            backItem.onclick = () => {
+                hideDropdown();
+                showColorDropdown(x, y, row, col);
+            };
+            dropdown.appendChild(backItem);
+            
+            // Show the dropdown
+            dropdown.style.display = 'block';
+            
+            // Add click event listener to hide dropdown when clicking outside
+            setTimeout(() => {
+                document.addEventListener('click', hideDropdownOnClickOutside);
+            }, 10);
+        }
+        
+        // Show dropdown menu for selecting icons (original functionality)
         function showDropdown(x, y, row, col) {
             // Position the dropdown
             dropdown.style.left = `${x}px`;
@@ -305,6 +510,17 @@
                 dropdown.appendChild(item);
             });
             
+            // Add option for new key system
+            const newKeyItem = document.createElement('div');
+            newKeyItem.className = 'dropdown-item';
+            newKeyItem.style.fontWeight = 'bold';
+            newKeyItem.textContent = 'Use Key System →';
+            newKeyItem.onclick = () => {
+                hideDropdown();
+                showColorDropdown(x, y, row, col);
+            };
+            dropdown.appendChild(newKeyItem);
+            
             // Show the dropdown
             dropdown.style.display = 'block';
             
@@ -327,10 +543,13 @@
             document.removeEventListener('click', hideDropdownOnClickOutside);
         }
         
-        // Add icon to grid
+        // Add icon to grid (original functionality)
         function addIconToGrid(row, col, icon) {
             if (gridSquares[row] && gridSquares[row][col]) {
                 gridSquares[row][col].icon = icon;
+                // Clear any key data
+                gridSquares[row][col].keyColor = null;
+                gridSquares[row][col].keyShape = null;
                 updateCanvas();
                 
                 // Send update to parent window
@@ -345,9 +564,54 @@
             }
         }
         
+        // Add key to grid (new functionality)
+        function addKeyToGrid(row, col, color, shape) {
+            if (gridSquares[row] && gridSquares[row][col]) {
+                gridSquares[row][col].keyColor = color;
+                gridSquares[row][col].keyShape = shape;
+                // Clear any old icon data
+                gridSquares[row][col].icon = null;
+                updateCanvas();
+                
+                // Send update to parent window
+                if (window.opener) {
+                    window.opener.postMessage({
+                        type: 'grid-update',
+                        row: row,
+                        col: col,
+                        keyColor: color,
+                        keyShape: shape
+                    }, '*');
+                }
+            }
+        }
+        
+        // Clear key from grid
+        function clearKeyFromGrid(row, col) {
+            if (gridSquares[row] && gridSquares[row][col]) {
+                gridSquares[row][col].keyColor = null;
+                gridSquares[row][col].keyShape = null;
+                gridSquares[row][col].icon = null;
+                updateCanvas();
+                
+                // Send update to parent window
+                if (window.opener) {
+                    window.opener.postMessage({
+                        type: 'grid-update',
+                        row: row,
+                        col: col,
+                        keyColor: null,
+                        keyShape: null,
+                        icon: null
+                    }, '*');
+                }
+            }
+        }
+        
         // Preload key images
         function preloadKeyImages() {
-            const imagesToLoad = [
+            // Load original icons
+            const originalIcons = [
                 { name: 'blue-key', path: 'assets/blue-key.png' },
                 { name: 'red-key', path: 'assets/red-key.png' },
                 { name: 'green-key', path: 'assets/green-key.png' },
@@ -357,6 +621,19 @@
                 { name: 'gate', path: 'assets/gate.png' }
             ];
             
+            // Load all color-shape combinations
+            const keyImages = [];
+            KEY_COLORS.forEach(color => {
+                KEY_SHAPES.forEach(shape => {
+                    keyImages.push({
+                        name: `${color}_${shape}_key`,
+                        path: `assets/keys/${color}_${shape}_key.png`
+                    });
+                });
+            });
+            
+            // Combine both sets of images to load
+            const imagesToLoad = [...originalIcons, ...keyImages];
             let loadedCount = 0;
             
             imagesToLoad.forEach(img => {
@@ -385,6 +662,7 @@
             
             // Set up event listeners
             canvas.addEventListener('click', handleCanvasClick);
+            canvas.addEventListener('contextmenu', handleCanvasClick);
             window.addEventListener('resize', resizeCanvas);
         }
         

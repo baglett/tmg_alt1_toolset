@@ -429,7 +429,7 @@ export class DungeoneeringGateEngine {
     private clickCaptureOverlay: HTMLDivElement | null = null;
     
     // Grid interaction properties
-    private gridSquares: { row: number, col: number, icon: string | null }[][] = [];
+    private gridSquares: { row: number, col: number, icon: string | null, keyColor?: string, keyShape?: string }[][] = [];
     private isListeningForGridClicks: boolean = false;
     private clickListenerInterval: number | null = null;
     private activeDropdown: { x: number, y: number, row: number, col: number } | null = null;
@@ -499,8 +499,21 @@ export class DungeoneeringGateEngine {
                     this.gridSquares[event.data.row] && 
                     this.gridSquares[event.data.row][event.data.col]) {
                     
-                    console.log(`Grid update from helper: (${event.data.col},${event.data.row}) = ${event.data.icon}`);
-                    this.gridSquares[event.data.row][event.data.col].icon = event.data.icon;
+                    // Handle key color and shape updates
+                    if (event.data.keyColor !== undefined && event.data.keyShape !== undefined) {
+                        console.log(`Key update from helper: (${event.data.col},${event.data.row}) = ${event.data.keyColor} ${event.data.keyShape}`);
+                        this.gridSquares[event.data.row][event.data.col].keyColor = event.data.keyColor;
+                        this.gridSquares[event.data.row][event.data.col].keyShape = event.data.keyShape;
+                        this.gridSquares[event.data.row][event.data.col].icon = null; // Clear any old icon
+                    } 
+                    // Handle legacy icon updates
+                    else if (event.data.icon !== undefined) {
+                        console.log(`Grid update from helper: (${event.data.col},${event.data.row}) = ${event.data.icon}`);
+                        this.gridSquares[event.data.row][event.data.col].icon = event.data.icon;
+                        // Clear any key data
+                        this.gridSquares[event.data.row][event.data.col].keyColor = null;
+                        this.gridSquares[event.data.row][event.data.col].keyShape = null;
+                    }
                     
                     if (this.mapCanvas) {
                         this.updateMapCanvas();
@@ -533,14 +546,21 @@ export class DungeoneeringGateEngine {
             cols = 8;
         }
         
-        // Create a 2D array to track grid squares
+        // Create a new grid squares array
         this.gridSquares = [];
+        
+        // Initialize each grid square
         for (let r = 0; r < rows; r++) {
-            const row = [];
+            this.gridSquares[r] = [];
             for (let c = 0; c < cols; c++) {
-                row.push({ row: r, col: c, icon: null });
+                this.gridSquares[r][c] = { 
+                    row: r, 
+                    col: c, 
+                    icon: null,
+                    keyColor: null,
+                    keyShape: null
+                };
             }
-            this.gridSquares.push(row);
         }
     }
 
@@ -1422,64 +1442,122 @@ export class DungeoneeringGateEngine {
 
     // Preload key images with better error handling
     private preloadKeyImages(): void {
-        // Preload the blue corner key image with multiple fallback paths
-        const blueKeyImg = new Image();
+        // Define key colors and shapes
+        const KEY_COLORS = ['Crimson', 'Blue', 'Yellow', 'Gold', 'Orange', 'Green', 'Purple', 'Silver'];
+        const KEY_SHAPES = ['corner', 'shield', 'crescent', 'wedge', 'rectangle', 'triangle', 'diamond', 'pentagon'];
         
-        // Define all possible paths to try
-        const paths = [
-            'assets/Blue_corner_key.png',
-            'Blue_corner_key.png',
-            '../assets/Blue_corner_key.png',
-            './assets/Blue_corner_key.png',
-            '/assets/Blue_corner_key.png'
+        // Load legacy icons
+        const legacyIcons = [
+            { name: 'blue-key', path: 'assets/blue-key.png' },
+            { name: 'red-key', path: 'assets/red-key.png' },
+            { name: 'green-key', path: 'assets/green-key.png' },
+            { name: 'yellow-key', path: 'assets/yellow-key.png' },
+            { name: 'boss', path: 'assets/boss.png' },
+            { name: 'start', path: 'assets/start.png' },
+            { name: 'gate', path: 'assets/gate.png' }
         ];
         
-        let pathIndex = 0;
+        // Load all color-shape combinations
+        const keyImages = [];
+        KEY_COLORS.forEach(color => {
+            KEY_SHAPES.forEach(shape => {
+                keyImages.push({
+                    name: `${color}_${shape}_key`,
+                    path: `assets/keys/${color}_${shape}_key.png`
+                });
+            });
+        });
         
-        // Function to try loading the image from the next path
-        const tryNextPath = () => {
-            if (pathIndex < paths.length) {
-                console.log(`Trying to load blue key image from: ${paths[pathIndex]}`);
-                blueKeyImg.src = paths[pathIndex];
-                pathIndex++;
-            } else {
-                console.error('Failed to load blue corner key image from all paths');
-                // Create a fallback colored square as the image
+        // Combine both sets of images to load
+        const imagesToLoad = [...legacyIcons, ...keyImages];
+        let loadedCount = 0;
+        
+        // Load each image
+        imagesToLoad.forEach(img => {
+            const image = new Image();
+            image.onload = () => {
+                loadedCount++;
+                console.log(`Loaded image: ${img.name} (${loadedCount}/${imagesToLoad.length})`);
+                
+                if (loadedCount === imagesToLoad.length) {
+                    console.log('All images loaded');
+                }
+            };
+            image.onerror = () => {
+                console.error(`Failed to load image: ${img.path}`);
+                loadedCount++;
+                
+                // Create a fallback colored square for the image
                 const canvas = document.createElement('canvas');
                 canvas.width = 32;
                 canvas.height = 32;
                 const ctx = canvas.getContext('2d');
                 if (ctx) {
-                    ctx.fillStyle = 'blue';
+                    // Extract color from name if possible
+                    let color = 'gray';
+                    if (img.name.includes('blue') || img.name.includes('Blue')) color = 'blue';
+                    if (img.name.includes('red') || img.name.includes('Crimson')) color = 'crimson';
+                    if (img.name.includes('green') || img.name.includes('Green')) color = 'green';
+                    if (img.name.includes('yellow') || img.name.includes('Yellow')) color = 'yellow';
+                    if (img.name.includes('gold') || img.name.includes('Gold')) color = 'gold';
+                    if (img.name.includes('orange') || img.name.includes('Orange')) color = 'orange';
+                    if (img.name.includes('purple') || img.name.includes('Purple')) color = 'purple';
+                    if (img.name.includes('silver') || img.name.includes('Silver')) color = 'silver';
+                    
+                    ctx.fillStyle = color;
                     ctx.fillRect(0, 0, 32, 32);
                     ctx.strokeStyle = 'white';
                     ctx.lineWidth = 2;
                     ctx.strokeRect(1, 1, 30, 30);
                     
+                    // Add a letter for the shape if possible
+                    if (img.name.includes('_')) {
+                        ctx.fillStyle = 'white';
+                        ctx.font = 'bold 16px Arial';
+                        ctx.textAlign = 'center';
+                        ctx.textBaseline = 'middle';
+                        
+                        let letter = 'K';
+                        if (img.name.includes('corner')) letter = 'C';
+                        if (img.name.includes('shield')) letter = 'S';
+                        if (img.name.includes('crescent')) letter = 'R';
+                        if (img.name.includes('wedge')) letter = 'W';
+                        if (img.name.includes('rectangle')) letter = 'E';
+                        if (img.name.includes('triangle')) letter = 'T';
+                        if (img.name.includes('diamond')) letter = 'D';
+                        if (img.name.includes('pentagon')) letter = 'P';
+                        
+                        ctx.fillText(letter, 16, 16);
+                    }
+                    
                     // Convert canvas to image
                     const fallbackImg = new Image();
                     fallbackImg.src = canvas.toDataURL();
                     fallbackImg.onload = () => {
-                        console.log('Using fallback blue key image');
-                        this.keyImages.set('Blue', fallbackImg);
+                        console.log(`Using fallback image for: ${img.name}`);
+                        this.keyImages.set(img.name, fallbackImg);
                     };
                 }
-            }
-        };
+            };
+            image.src = img.path;
+            this.keyImages.set(img.name, image);
+        });
         
-        // Set up event handlers
+        // Also add the legacy Blue key for backward compatibility
+        const blueKeyImg = new Image();
+        blueKeyImg.src = 'assets/Blue_corner_key.png';
         blueKeyImg.onload = () => {
-            console.log(`Blue corner key image loaded successfully from ${paths[pathIndex-1]}`);
+            console.log('Loaded legacy Blue key image');
             this.keyImages.set('Blue', blueKeyImg);
         };
-        
         blueKeyImg.onerror = () => {
-            console.error(`Failed to load blue corner key image from ${paths[pathIndex-1]}`);
-            tryNextPath();
+            console.error('Failed to load legacy Blue key image');
+            // Use the Blue_corner_key image as fallback if available
+            const fallbackImg = this.keyImages.get('Blue_corner_key');
+            if (fallbackImg) {
+                this.keyImages.set('Blue', fallbackImg);
+            }
         };
-        
-        // Start the loading process
-        tryNextPath();
     }
 
     // Create a UI element to display grid click information
@@ -1934,13 +2012,48 @@ export class DungeoneeringGateEngine {
         // Loop through all grid squares
         for (let r = 0; r < rows; r++) {
             for (let c = 0; c < cols; c++) {
-                // Check if this square has an icon
-                if (this.gridSquares[r] && this.gridSquares[r][c] && this.gridSquares[r][c].icon) {
-                    const icon = this.gridSquares[r][c].icon;
-                    if (icon) {
-                        // Calculate the center position of this grid square
-                        const centerX = Math.floor((c * cellWidth) + (cellWidth / 2));
-                        const centerY = Math.floor(((rows - 1 - r) * cellHeight) + (cellHeight / 2)); // Invert row to match bottom-left = 0,0
+                // Check if this square has a key (color and shape)
+                if (this.gridSquares[r] && this.gridSquares[r][c]) {
+                    const square = this.gridSquares[r][c];
+                    
+                    // Calculate the center position of this grid square
+                    const centerX = Math.floor((c * cellWidth) + (cellWidth / 2));
+                    const centerY = Math.floor(((rows - 1 - r) * cellHeight) + (cellHeight / 2)); // Invert row to match bottom-left = 0,0
+                    
+                    if (square.keyColor && square.keyShape) {
+                        // Get the image for this key combination
+                        const keyName = `${square.keyColor}_${square.keyShape}_key`;
+                        const img = this.keyImages.get(keyName);
+                        
+                        if (img && img.complete) {
+                            // Draw the image on the canvas
+                            try {
+                                const iconSize = Math.min(cellWidth, cellHeight) * 0.7; // 70% of cell size
+                                this.mapContext.drawImage(
+                                    img, 
+                                    centerX - iconSize / 2, 
+                                    centerY - iconSize / 2, 
+                                    iconSize, 
+                                    iconSize
+                                );
+                            } catch (error) {
+                                console.error(`Error drawing key image ${keyName} on canvas:`, error);
+                                
+                                // Fallback to text if image drawing fails
+                                this.mapContext.fillStyle = 'white';
+                                this.mapContext.font = '12px Arial';
+                                this.mapContext.fillText(square.keyColor.charAt(0), centerX - 5, centerY + 5);
+                            }
+                        } else {
+                            // Fallback to text if image is not loaded
+                            this.mapContext.fillStyle = 'white';
+                            this.mapContext.font = '12px Arial';
+                            this.mapContext.fillText(square.keyColor.charAt(0), centerX - 5, centerY + 5);
+                        }
+                    } 
+                    // Legacy support for old icon system
+                    else if (square.icon) {
+                        const icon = square.icon;
                         
                         // Get the image for this icon
                         const img = this.keyImages.get(icon);
