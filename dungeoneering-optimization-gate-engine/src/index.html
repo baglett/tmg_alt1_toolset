@@ -257,6 +257,19 @@
             border: 1px solid #ccc;
             border-radius: 4px;
         }
+        .map-preview-container {
+            margin-top: 10px;
+            padding: 10px;
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 4px;
+        }
+        #map-preview-canvas {
+            border: 1px solid #666;
+            background-color: #000;
+            margin: 10px auto;
+            display: block;
+            max-width: 100%;
+        }
     </style>
 </head>
 <body>
@@ -314,11 +327,11 @@
                 <div class="offset-inputs">
                     <div>
                         <label for="x-offset">Outer X Offset:</label>
-                        <input type="number" id="x-offset" value="15" min="-50" max="50">
+                        <input type="number" id="x-offset" value="6" min="-50" max="50">
                     </div>
                     <div>
                         <label for="y-offset">Outer Y Offset:</label>
-                        <input type="number" id="y-offset" value="0" min="-50" max="50">
+                        <input type="number" id="y-offset" value="-12" min="-50" max="50">
                     </div>
                 </div>
             </div>
@@ -328,11 +341,11 @@
                 <div class="outline-inputs">
                     <div>
                         <label for="outline-width">Width Adjustment:</label>
-                        <input type="number" id="outline-width" value="-15" min="-50" max="100">
+                        <input type="number" id="outline-width" value="-5" min="-50" max="100">
                     </div>
                     <div>
                         <label for="outline-height">Height Adjustment:</label>
-                        <input type="number" id="outline-height" value="-12" min="-50" max="100">
+                        <input type="number" id="outline-height" value="0" min="-50" max="100">
                     </div>
                 </div>
             </div>
@@ -345,7 +358,14 @@
             </div>
             
             <button id="update-map-button" class="button">Update Map Tracking</button>
+            <button id="open-helper-button" class="button">Open Helper Window</button>
             <div id="map-status">Set a marker position first to enable map tracking.</div>
+            
+            <div class="map-preview-container">
+                <div class="section-title">Map Preview</div>
+                <canvas id="map-preview-canvas" width="140" height="140"></canvas>
+                <div class="info-text">Live preview of the tracked minimap area</div>
+            </div>
         </div>
     </div>
 

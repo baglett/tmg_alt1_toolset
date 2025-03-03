@@ -6,6 +6,13 @@
     <title>Dungeon Grid</title>
     <!-- Include Alt1 library -->
     <script src="https://runeapps.org/alt1/alt1.js"></script>
+    <script>
+        // Identify to Alt1 as early as possible
+        if (window.alt1 && window.alt1.identifyAppUrl) {
+            window.alt1.identifyAppUrl('./appconfig.json');
+            console.log("Identified app to Alt1 early");
+        }
+    </script>
     <style>
         body {
             margin: 0;
@@ -16,8 +23,8 @@
             height: 140px;
         }
         #map-canvas {
-            width: 140px;
-            height: 140px;
+            width: 100%;
+            height: 100%;
             background-color: rgba(0, 0, 0, 0.3);
         }
         .dropdown {
@@ -54,14 +61,42 @@
     <div id="map-dropdown" class="dropdown"></div>
 
     <script>
-        // Check if running in Alt1
-        const isAlt1 = window.alt1 && window.alt1.versionint;
+        // Check if we're running in Alt1 - multiple detection methods
+        const isAlt1 = (function() {
+            // Method 1: Check for window.alt1
+            if (typeof window.alt1 !== 'undefined') {
+                console.log("Alt1 detected via window.alt1");
+                return true;
+            }
+            
+            // Method 2: Check for Alt1 API
+            if (typeof window.A1lib !== 'undefined') {
+                console.log("Alt1 detected via A1lib");
+                return true;
+            }
+            
+            // Method 3: Check URL parameters
+            const urlParams = new URLSearchParams(window.location.search);
+            if (urlParams.has('alt1')) {
+                console.log("Alt1 detected via URL parameter");
+                return true;
+            }
+            
+            // Method 4: Check if the URL contains alt1://
+            if (window.location.href.includes('alt1://')) {
+                console.log("Alt1 detected via URL protocol");
+                return true;
+            }
+            
+            console.log("Alt1 not detected");
+            return false;
+        })();
         
         // Map configuration
         const MAP_SIZES = {
             small: { width: 140, height: 140 },
-            medium: { width: 140, height: 140 },
-            large: { width: 140, height: 140 }
+            medium: { width: 140, height: 280 },
+            large: { width: 280, height: 280 }
         };
         
         // Key configuration
@@ -109,10 +144,18 @@
             return 8; // Medium and large dungeons have 8 rows
         }
         
+        // Update body size based on map size
+        function updateBodySize() {
+            const size = MAP_SIZES[mapSize];
+            document.body.style.width = `${size.width}px`;
+            document.body.style.height = `${size.height}px`;
+        }
+        
         // Resize canvas to fit container
         function resizeCanvas() {
-            canvas.width = 140;
-            canvas.height = 140;
+            const size = MAP_SIZES[mapSize];
+            canvas.width = size.width;
+            canvas.height = size.height;
             updateCanvas();
         }
         
@@ -131,11 +174,21 @@
             if (window.alt1 && window.alt1.capture) {
                 try {
                     // Get the map area relative to the anchor point
+                    // This will capture the screen area that corresponds to the tracked minimap
                     const mapImg = window.alt1.capture(0, 0, outlineWidth, outlineHeight);
                     if (mapImg) {
                         const imgData = ctx.createImageData(outlineWidth, outlineHeight);
                         imgData.data.set(mapImg.data);
                         ctx.putImageData(imgData, 0, 0);
+                        
+                        // Add a semi-transparent overlay to make the grid more visible
+                        ctx.fillStyle = 'rgba(0, 0, 0, 0.2)';
+                        ctx.fillRect(0, 0, outlineWidth, outlineHeight);
+                    } else {
+                        console.error('Failed to capture map background: capture returned null');
+                        // Draw fallback dark background
+                        ctx.fillStyle = 'rgba(0, 0, 0, 0.3)';
+                        ctx.fillRect(0, 0, outlineWidth, outlineHeight);
                     }
                 } catch (e) {
                     console.error('Failed to capture map background:', e);
@@ -182,6 +235,11 @@
             ctx.strokeStyle = 'white';
             ctx.lineWidth = 1;
             ctx.strokeRect(0, 0, outlineWidth, outlineHeight);
+            
+            // Draw map size info
+            ctx.fillStyle = 'white';
+            ctx.font = '10px Arial';
+            ctx.fillText(`${mapSize.toUpperCase()} MAP (${outlineWidth}x${outlineHeight})`, 5, 10);
             
             // Draw icons on grid squares
             drawGridIcons(cellWidth, cellHeight, gridRows, gridCols);
@@ -470,6 +528,7 @@
         function initMap() {
             preloadKeyImages();
             initializeGridSquares();
+            updateBodySize();
             resizeCanvas();
             
             // Set up event listeners
@@ -478,54 +537,150 @@
 
             // Start periodic updates of the background if in Alt1
             if (window.alt1) {
+                // Start periodic updates
                 setInterval(() => {
                     updateCanvas();
                 }, 500); // Update every 500ms
+            }
+            
+            // Request the current anchor point from the parent window
+            if (window.opener) {
+                console.log('Requesting anchor point from parent window');
+                window.opener.postMessage({ type: 'request-anchor' }, '*');
+                
+                // Also request grid state
+                window.opener.postMessage({ type: 'request-grid' }, '*');
             }
         }
         
         // Communication with main window
         window.addEventListener('message', function(event) {
-            if (event.data && event.data.type) {
-                switch(event.data.type) {
-                    case 'grid-sync':
-                        if (event.data.gridSquares) {
-                            gridSquares = event.data.gridSquares;
-                            updateCanvas();
-                        }
-                        break;
-                    case 'map-size':
-                        if (event.data.size) {
-                            mapSize = event.data.size;
-                            initializeGridSquares();
-                            updateCanvas();
-                        }
-                        break;
-                    case 'anchor-update':
-                        // Handle anchor point updates
-                        if (event.data.x !== undefined && event.data.y !== undefined) {
-                            updateCanvas();
-                        }
-                        break;
+            try {
+                if (event.data && event.data.type) {
+                    console.log(`Received message from parent: ${event.data.type}`);
+                    
+                    switch(event.data.type) {
+                        case 'grid-sync':
+                            if (event.data.gridSquares) {
+                                gridSquares = event.data.gridSquares;
+                                console.log('Updated grid squares from parent');
+                                updateCanvas();
+                            }
+                            break;
+                        case 'map-size':
+                            if (event.data.size) {
+                                mapSize = event.data.size;
+                                console.log(`Updated map size to: ${mapSize}`);
+                                initializeGridSquares();
+                                updateBodySize();
+                                resizeCanvas();
+                            }
+                            break;
+                        case 'anchor-update':
+                            // Handle anchor point updates
+                            if (event.data.x !== undefined && event.data.y !== undefined) {
+                                console.log(`Received anchor update: (${event.data.x}, ${event.data.y})`);
+                                
+                                // Store the anchor point coordinates for screen capture
+                                if (window.alt1 && window.alt1.setScreenCaptureBounds) {
+                                    try {
+                                        // Calculate the capture area based on the anchor point
+                                        const size = MAP_SIZES[mapSize];
+                                        
+                                        // Get offset and outline size values from the message or use defaults
+                                        const xOffset = event.data.xOffset !== undefined ? event.data.xOffset : 6;
+                                        const yOffset = event.data.yOffset !== undefined ? event.data.yOffset : -12;
+                                        const outlineWidth = event.data.outlineWidth !== undefined ? event.data.outlineWidth : -5;
+                                        const outlineHeight = event.data.outlineHeight !== undefined ? event.data.outlineHeight : 0;
+                                        
+                                        const width = size.width + outlineWidth;
+                                        const height = size.height + outlineHeight;
+                                        const x = Math.floor(event.data.x - width + xOffset);
+                                        const y = Math.floor(event.data.y + yOffset);
+                                        
+                                        // Set the capture bounds for Alt1
+                                        window.alt1.setScreenCaptureBounds(x, y, width, height);
+                                        console.log(`Set capture bounds to: ${x},${y},${width},${height}`);
+                                        
+                                        // Add debug info to the canvas
+                                        if (ctx) {
+                                            ctx.fillStyle = 'white';
+                                            ctx.font = '10px Arial';
+                                            ctx.fillText(`Capture: ${x},${y},${width}x${height}`, 5, 10);
+                                        }
+                                    } catch (e) {
+                                        console.error('Failed to set screen capture bounds:', e);
+                                    }
+                                } else {
+                                    console.warn('Alt1 screen capture API not available');
+                                }
+                                updateCanvas();
+                            }
+                            break;
+                        default:
+                            console.log(`Unhandled message type: ${event.data.type}`);
+                    }
                 }
+            } catch (error) {
+                console.error('Error handling message from parent:', error);
             }
         });
         
-        // Notify parent window that helper is loaded
-        if (window.opener) {
-            window.opener.postMessage({ type: 'helper-loaded' }, '*');
+        // Notify parent window that helper is loaded and request data
+        function requestDataFromParent() {
+            console.log('Attempting to connect to parent window...');
+            
+            if (window.opener) {
+                console.log('Parent window detected, sending helper-loaded message');
+                
+                try {
+                    // Notify parent that helper is loaded
+                    window.opener.postMessage({ type: 'helper-loaded' }, '*');
+                    
+                    // Request the anchor point and grid data
+                    console.log('Requesting data from parent window');
+                    window.opener.postMessage({ type: 'request-anchor' }, '*');
+                    window.opener.postMessage({ type: 'request-grid' }, '*');
+                    
+                    return true;
+                } catch (e) {
+                    console.error('Error communicating with parent window:', e);
+                    return false;
+                }
+            } else {
+                console.warn('No parent window detected');
+                return false;
+            }
+        }
+        
+        // Try to request data immediately
+        let dataRequested = requestDataFromParent();
+        
+        // If not successful, retry a few times with increasing delays
+        if (!dataRequested) {
+            let retryCount = 0;
+            const maxRetries = 10;
+            const retryInterval = setInterval(() => {
+                retryCount++;
+                console.log(`Retrying data request (${retryCount}/${maxRetries})...`);
+                dataRequested = requestDataFromParent();
+                
+                if (dataRequested || retryCount >= maxRetries) {
+                    clearInterval(retryInterval);
+                    if (!dataRequested) {
+                        console.warn('Failed to connect to parent window after multiple attempts');
+                    } else {
+                        console.log('Successfully connected to parent window on retry');
+                    }
+                }
+            }, 500 * retryCount); // Increasing delay between retries
         }
         
         // If in Alt1, set up additional functionality
         if (isAlt1) {
-            // Let Alt1 detect when this page is fully loaded
-            if (window.alt1 && window.alt1.identifyAppUrl) {
-                window.alt1.identifyAppUrl('./appconfig.json');
-            }
-            
             console.log("Running in Alt1 environment");
         } else {
-            console.log("Not running in Alt1 environment");
+            console.log("Not running in Alt1 environment - some features may not work properly");
         }
         
         // Initialize the map when the page loads
