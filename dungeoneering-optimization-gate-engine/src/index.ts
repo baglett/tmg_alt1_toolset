@@ -1132,7 +1132,12 @@ export class DungeoneeringGateEngine {
                         const centerY = Math.floor(gridY + (r * cellHeight) + (cellHeight / 2));
                         
                         // Get the image for this icon
-                        const img = this.keyImages.get(icon);
+                        let img = this.keyImages.get(icon);
+                        
+                        // If it's the legacy 'Blue' icon, try to use the Blue_corner_key image
+                        if (!img && icon === 'Blue') {
+                            img = this.keyImages.get('Blue_corner_key');
+                        }
                         
                         if (img && img.complete) {
                             // Draw the image on the overlay
@@ -1435,6 +1440,16 @@ export class DungeoneeringGateEngine {
         if (this.gridSquares[row] && this.gridSquares[row][col]) {
             this.gridSquares[row][col].icon = icon;
             
+            // If the icon is 'Blue', set the keyColor and keyShape properties
+            if (icon === 'Blue') {
+                this.gridSquares[row][col].keyColor = 'Blue';
+                this.gridSquares[row][col].keyShape = 'corner';
+            } else if (icon === null) {
+                // Clear keyColor and keyShape when removing an icon
+                delete this.gridSquares[row][col].keyColor;
+                delete this.gridSquares[row][col].keyShape;
+            }
+            
             // Redraw the map to show the updated icon
             this.drawMapOutline();
         }
@@ -1445,17 +1460,6 @@ export class DungeoneeringGateEngine {
         // Define key colors and shapes
         const KEY_COLORS = ['Crimson', 'Blue', 'Yellow', 'Gold', 'Orange', 'Green', 'Purple', 'Silver'];
         const KEY_SHAPES = ['corner', 'shield', 'crescent', 'wedge', 'rectangle', 'triangle', 'diamond', 'pentagon'];
-        
-        // Load legacy icons
-        const legacyIcons = [
-            { name: 'blue-key', path: 'assets/blue-key.png' },
-            { name: 'red-key', path: 'assets/red-key.png' },
-            { name: 'green-key', path: 'assets/green-key.png' },
-            { name: 'yellow-key', path: 'assets/yellow-key.png' },
-            { name: 'boss', path: 'assets/boss.png' },
-            { name: 'start', path: 'assets/start.png' },
-            { name: 'gate', path: 'assets/gate.png' }
-        ];
         
         // Load all color-shape combinations
         const keyImages = [];
@@ -1468,18 +1472,17 @@ export class DungeoneeringGateEngine {
             });
         });
         
-        // Combine both sets of images to load
-        const imagesToLoad = [...legacyIcons, ...keyImages];
-        let loadedCount = 0;
-        
         // Load each image
-        imagesToLoad.forEach(img => {
+        let loadedCount = 0;
+        const totalImages = keyImages.length;
+        
+        keyImages.forEach(img => {
             const image = new Image();
             image.onload = () => {
                 loadedCount++;
-                console.log(`Loaded image: ${img.name} (${loadedCount}/${imagesToLoad.length})`);
+                console.log(`Loaded image: ${img.name} (${loadedCount}/${totalImages})`);
                 
-                if (loadedCount === imagesToLoad.length) {
+                if (loadedCount === totalImages) {
                     console.log('All images loaded');
                 }
             };
@@ -1543,21 +1546,8 @@ export class DungeoneeringGateEngine {
             this.keyImages.set(img.name, image);
         });
         
-        // Also add the legacy Blue key for backward compatibility
-        const blueKeyImg = new Image();
-        blueKeyImg.src = 'assets/Blue_corner_key.png';
-        blueKeyImg.onload = () => {
-            console.log('Loaded legacy Blue key image');
-            this.keyImages.set('Blue', blueKeyImg);
-        };
-        blueKeyImg.onerror = () => {
-            console.error('Failed to load legacy Blue key image');
-            // Use the Blue_corner_key image as fallback if available
-            const fallbackImg = this.keyImages.get('Blue_corner_key');
-            if (fallbackImg) {
-                this.keyImages.set('Blue', fallbackImg);
-            }
-        };
+        // Add mapping for 'Blue' to 'Blue_corner_key' for backward compatibility
+        this.keyImages.set('Blue', this.keyImages.get('Blue_corner_key'));
     }
 
     // Create a UI element to display grid click information
@@ -2056,7 +2046,12 @@ export class DungeoneeringGateEngine {
                         const icon = square.icon;
                         
                         // Get the image for this icon
-                        const img = this.keyImages.get(icon);
+                        let img = this.keyImages.get(icon);
+                        
+                        // If it's the legacy 'Blue' icon, try to use the Blue_corner_key image
+                        if (!img && icon === 'Blue') {
+                            img = this.keyImages.get('Blue_corner_key');
+                        }
                         
                         if (img && img.complete) {
                             // Draw the image on the canvas

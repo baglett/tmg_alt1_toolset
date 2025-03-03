@@ -1,12 +1,14 @@
 import * as a1lib from "@alt1/base";
 
-// Load the home room icon image
+// Remove references to unused PNG files
 const homeRoomIcon = new Image();
-homeRoomIcon.src = "./assets/home_room_icon.png";
+// Using a data URL instead of file reference to avoid 404 errors
+homeRoomIcon.src = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg=="; // Placeholder 1x1 transparent PNG
 
 // Load the dungeon map X icon
 const dungMapXIcon = new Image();
-dungMapXIcon.src = "./assets/dung_map_x.png";
+// Using a data URL instead of file reference to avoid 404 errors
+dungMapXIcon.src = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg=="; // Placeholder 1x1 transparent PNG
 
 // Create additional variations of the icon for more robust detection
 const homeRoomIconVariations: HTMLImageElement[] = [];
