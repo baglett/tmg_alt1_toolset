@@ -89,7 +89,7 @@
             for (let r = 0; r < rows; r++) {
                 gridSquares[r] = [];
                 for (let c = 0; c < cols; c++) {
-                    gridSquares[r][c] = { row: r, col: c, icon: null, keyColor: null, keyShape: null };
+                    gridSquares[r][c] = { row: r, col: c, keyColor: null, keyShape: null };
                 }
             }
         }
@@ -127,9 +127,27 @@
             // Clear the canvas
             ctx.clearRect(0, 0, canvas.width, canvas.height);
             
-            // Draw a background
-            ctx.fillStyle = 'rgba(0, 0, 0, 0.3)';
-            ctx.fillRect(0, 0, outlineWidth, outlineHeight);
+            // If we have a background image from Alt1, draw it
+            if (window.alt1 && window.alt1.capture) {
+                try {
+                    // Get the map area relative to the anchor point
+                    const mapImg = window.alt1.capture(0, 0, outlineWidth, outlineHeight);
+                    if (mapImg) {
+                        const imgData = ctx.createImageData(outlineWidth, outlineHeight);
+                        imgData.data.set(mapImg.data);
+                        ctx.putImageData(imgData, 0, 0);
+                    }
+                } catch (e) {
+                    console.error('Failed to capture map background:', e);
+                    // Draw fallback dark background
+                    ctx.fillStyle = 'rgba(0, 0, 0, 0.3)';
+                    ctx.fillRect(0, 0, outlineWidth, outlineHeight);
+                }
+            } else {
+                // Draw fallback dark background
+                ctx.fillStyle = 'rgba(0, 0, 0, 0.3)';
+                ctx.fillRect(0, 0, outlineWidth, outlineHeight);
+            }
             
             // Get grid dimensions
             const gridCols = getGridCols();
@@ -165,14 +183,6 @@
             ctx.lineWidth = 1;
             ctx.strokeRect(0, 0, outlineWidth, outlineHeight);
             
-            // Draw coordinate labels for the corners
-            ctx.fillStyle = 'white';
-            ctx.font = '9px Arial';
-            ctx.fillText("(0,0)", 2, outlineHeight - 2);
-            ctx.fillText(`(${gridCols-1},0)`, outlineWidth - 20, outlineHeight - 2);
-            ctx.fillText(`(0,${gridRows-1})`, 2, 10);
-            ctx.fillText(`(${gridCols-1},${gridRows-1})`, outlineWidth - 20, 10);
-            
             // Draw icons on grid squares
             drawGridIcons(cellWidth, cellHeight, gridRows, gridCols);
             
@@ -195,6 +205,24 @@
             }
         }
         
+        // Preload key images
+        function preloadKeyImages() {
+            KEY_COLORS.forEach(color => {
+                KEY_SHAPES.forEach(shape => {
+                    const keyName = `${color.toLowerCase()}_${shape.toLowerCase()}_key`;
+                    const img = new Image();
+                    img.src = `assets/keys/${keyName}.png`;
+                    img.onload = () => {
+                        keyImages.set(keyName, img);
+                        console.log(`Loaded key image: ${keyName}`);
+                    };
+                    img.onerror = () => {
+                        console.error(`Failed to load key image: ${keyName}`);
+                    };
+                });
+            });
+        }
+        
         // Draw icons on the grid
         function drawGridIcons(cellWidth, cellHeight, rows, cols) {
             if (!ctx) return;
@@ -211,74 +239,54 @@
                             const centerX = Math.floor((c * cellWidth) + (cellWidth / 2));
                             const centerY = Math.floor(((rows - 1 - r) * cellHeight) + (cellHeight / 2)); // Invert row to match bottom-left = 0,0
                             
-                            // Get the image for this key
-                            const keyName = `${square.keyColor}_${square.keyShape}_key`;
+                            // Try to draw the key image
+                            const keyName = `${square.keyColor.toLowerCase()}_${square.keyShape.toLowerCase()}_key`;
                             const img = keyImages.get(keyName);
                             
                             if (img && img.complete) {
-                                // Draw the image on the canvas
                                 try {
                                     const iconSize = Math.min(cellWidth, cellHeight) * 0.7; // 70% of cell size
                                     ctx.drawImage(
-                                        img, 
-                                        centerX - iconSize / 2, 
-                                        centerY - iconSize / 2, 
-                                        iconSize, 
+                                        img,
+                                        centerX - iconSize / 2,
+                                        centerY - iconSize / 2,
+                                        iconSize,
                                         iconSize
                                     );
                                 } catch (error) {
-                                    console.error("Error drawing key image on canvas:", error);
-                                    
-                                    // Fallback to text if image drawing fails
-                                    ctx.fillStyle = 'white';
-                                    ctx.font = '10px Arial';
-                                    ctx.fillText(square.keyColor.charAt(0), centerX - 4, centerY + 4);
+                                    console.error(`Error drawing key image ${keyName}:`, error);
+                                    drawFallbackKey(ctx, centerX, centerY, square.keyColor, square.keyShape);
                                 }
                             } else {
-                                // Fallback to text if image is not loaded
-                                ctx.fillStyle = 'white';
-                                ctx.font = '10px Arial';
-                                ctx.fillText(square.keyColor.charAt(0), centerX - 4, centerY + 4);
-                            }
-                        } else if (square.icon) {
-                            // Legacy support for old icon system
-                            const icon = square.icon;
-                            // Calculate the center position of this grid square
-                            const centerX = Math.floor((c * cellWidth) + (cellWidth / 2));
-                            const centerY = Math.floor(((rows - 1 - r) * cellHeight) + (cellHeight / 2)); // Invert row to match bottom-left = 0,0
-                            
-                            // Get the image for this icon
-                            const img = keyImages.get(icon);
-                            
-                            if (img && img.complete) {
-                                // Draw the image on the canvas
-                                try {
-                                    const iconSize = Math.min(cellWidth, cellHeight) * 0.7; // 70% of cell size
-                                    ctx.drawImage(
-                                        img, 
-                                        centerX - iconSize / 2, 
-                                        centerY - iconSize / 2, 
-                                        iconSize, 
-                                        iconSize
-                                    );
-                                } catch (error) {
-                                    console.error("Error drawing icon image on canvas:", error);
-                                    
-                                    // Fallback to text if image drawing fails
-                                    ctx.fillStyle = 'white';
-                                    ctx.font = '10px Arial';
-                                    ctx.fillText(icon.charAt(0).toUpperCase(), centerX - 4, centerY + 4);
-                                }
-                            } else {
-                                // Fallback to text if image is not loaded
-                                ctx.fillStyle = 'white';
-                                ctx.font = '10px Arial';
-                                ctx.fillText(icon.charAt(0).toUpperCase(), centerX - 4, centerY + 4);
+                                // Use fallback if image isn't loaded
+                                drawFallbackKey(ctx, centerX, centerY, square.keyColor, square.keyShape);
                             }
                         }
                     }
                 }
             }
+        }
+        
+        // Helper function to draw fallback key
+        function drawFallbackKey(ctx, centerX, centerY, color, shape) {
+            // Draw colored background with semi-transparency
+            ctx.fillStyle = `${color.toLowerCase()}88`; // Add 88 for 50% transparency
+            const size = 24; // Slightly larger size
+            ctx.fillRect(centerX - size/2, centerY - size/2, size, size);
+            
+            // Draw white border
+            ctx.strokeStyle = 'white';
+            ctx.lineWidth = 2;
+            ctx.strokeRect(centerX - size/2, centerY - size/2, size, size);
+            
+            // Draw shape letter
+            ctx.fillStyle = 'white';
+            ctx.font = 'bold 14px Arial';
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            
+            let letter = shape.charAt(0).toUpperCase();
+            ctx.fillText(letter, centerX, centerY);
         }
         
         // Handle clicks on the canvas
@@ -328,44 +336,6 @@
                 }
                 
                 return false;
-            } else if (e.button === 0) {
-                // Left click - use original behavior
-                // Get the click position relative to the canvas
-                const rect = canvas.getBoundingClientRect();
-                const clickX = e.clientX - rect.left;
-                const clickY = e.clientY - rect.top;
-                
-                // Get the grid dimensions
-                const gridCols = getGridCols();
-                const gridRows = getGridRows();
-                
-                const cellWidth = canvas.width / gridCols;
-                const cellHeight = canvas.height / gridRows;
-                
-                // Calculate which grid square was clicked
-                const col = Math.floor(clickX / cellWidth);
-                const row = gridRows - 1 - Math.floor(clickY / cellHeight); // Invert row to match bottom-left = 0,0
-                
-                // Ensure the row and column are valid
-                if (row >= 0 && row < gridRows && col >= 0 && col < gridCols) {
-                    // Store the last clicked square
-                    lastClickedSquare = { row, col };
-                    
-                    // Show the original dropdown at this position
-                    showDropdown(e.clientX, e.clientY, row, col);
-                    
-                    // Update the canvas to show the highlight
-                    updateCanvas();
-                    
-                    // Send message to parent window
-                    if (window.opener) {
-                        window.opener.postMessage({
-                            type: 'grid-click',
-                            row: row,
-                            col: col
-                        }, '*');
-                    }
-                }
             }
         }
         
@@ -377,13 +347,6 @@
             
             // Clear previous content
             dropdown.innerHTML = '';
-            
-            // Add header
-            const header = document.createElement('div');
-            header.className = 'dropdown-item';
-            header.style.fontWeight = 'bold';
-            header.textContent = 'Select Color:';
-            dropdown.appendChild(header);
             
             // Add color options
             KEY_COLORS.forEach(color => {
@@ -409,16 +372,6 @@
                 dropdown.appendChild(item);
             });
             
-            // Add clear option
-            const clearItem = document.createElement('div');
-            clearItem.className = 'dropdown-item';
-            clearItem.textContent = 'Clear';
-            clearItem.onclick = () => {
-                clearKeyFromGrid(row, col);
-                hideDropdown();
-            };
-            dropdown.appendChild(clearItem);
-            
             // Show the dropdown
             dropdown.style.display = 'block';
             
@@ -437,13 +390,6 @@
             // Clear previous content
             dropdown.innerHTML = '';
             
-            // Add header
-            const header = document.createElement('div');
-            header.className = 'dropdown-item';
-            header.style.fontWeight = 'bold';
-            header.textContent = `Selected ${selectedColor} - Choose Shape:`;
-            dropdown.appendChild(header);
-            
             // Add shape options
             KEY_SHAPES.forEach(shape => {
                 const item = document.createElement('div');
@@ -457,69 +403,6 @@
                 
                 dropdown.appendChild(item);
             });
-            
-            // Add back option
-            const backItem = document.createElement('div');
-            backItem.className = 'dropdown-item';
-            backItem.textContent = '← Back to Colors';
-            backItem.onclick = () => {
-                hideDropdown();
-                showColorDropdown(x, y, row, col);
-            };
-            dropdown.appendChild(backItem);
-            
-            // Show the dropdown
-            dropdown.style.display = 'block';
-            
-            // Add click event listener to hide dropdown when clicking outside
-            setTimeout(() => {
-                document.addEventListener('click', hideDropdownOnClickOutside);
-            }, 10);
-        }
-        
-        // Show dropdown menu for selecting icons (original functionality)
-        function showDropdown(x, y, row, col) {
-            // Position the dropdown
-            dropdown.style.left = `${x}px`;
-            dropdown.style.top = `${y}px`;
-            
-            // Clear previous content
-            dropdown.innerHTML = '';
-            
-            // Add dropdown items
-            const icons = ['blue-key', 'red-key', 'green-key', 'yellow-key', 'boss', 'start', 'gate', 'clear'];
-            
-            icons.forEach(icon => {
-                const item = document.createElement('div');
-                item.className = 'dropdown-item';
-                
-                if (icon === 'clear') {
-                    item.textContent = 'Clear';
-                    item.onclick = () => {
-                        addIconToGrid(row, col, null);
-                        hideDropdown();
-                    };
-                } else {
-                    item.textContent = icon.replace('-', ' ').charAt(0).toUpperCase() + icon.replace('-', ' ').slice(1);
-                    item.onclick = () => {
-                        addIconToGrid(row, col, icon);
-                        hideDropdown();
-                    };
-                }
-                
-                dropdown.appendChild(item);
-            });
-            
-            // Add option for new key system
-            const newKeyItem = document.createElement('div');
-            newKeyItem.className = 'dropdown-item';
-            newKeyItem.style.fontWeight = 'bold';
-            newKeyItem.textContent = 'Use Key System →';
-            newKeyItem.onclick = () => {
-                hideDropdown();
-                showColorDropdown(x, y, row, col);
-            };
-            dropdown.appendChild(newKeyItem);
             
             // Show the dropdown
             dropdown.style.display = 'block';
@@ -543,34 +426,11 @@
             document.removeEventListener('click', hideDropdownOnClickOutside);
         }
         
-        // Add icon to grid (original functionality)
-        function addIconToGrid(row, col, icon) {
-            if (gridSquares[row] && gridSquares[row][col]) {
-                gridSquares[row][col].icon = icon;
-                // Clear any key data
-                gridSquares[row][col].keyColor = null;
-                gridSquares[row][col].keyShape = null;
-                updateCanvas();
-                
-                // Send update to parent window
-                if (window.opener) {
-                    window.opener.postMessage({
-                        type: 'grid-update',
-                        row: row,
-                        col: col,
-                        icon: icon
-                    }, '*');
-                }
-            }
-        }
-        
-        // Add key to grid (new functionality)
+        // Add key to grid
         function addKeyToGrid(row, col, color, shape) {
             if (gridSquares[row] && gridSquares[row][col]) {
                 gridSquares[row][col].keyColor = color;
                 gridSquares[row][col].keyShape = shape;
-                // Clear any old icon data
-                gridSquares[row][col].icon = null;
                 updateCanvas();
                 
                 // Send update to parent window
@@ -591,7 +451,6 @@
             if (gridSquares[row] && gridSquares[row][col]) {
                 gridSquares[row][col].keyColor = null;
                 gridSquares[row][col].keyShape = null;
-                gridSquares[row][col].icon = null;
                 updateCanvas();
                 
                 // Send update to parent window
@@ -601,69 +460,28 @@
                         row: row,
                         col: col,
                         keyColor: null,
-                        keyShape: null,
-                        icon: null
+                        keyShape: null
                     }, '*');
                 }
             }
         }
         
-        // Preload key images
-        function preloadKeyImages() {
-            // Load original icons
-            const originalIcons = [
-                { name: 'blue-key', path: 'assets/blue-key.png' },
-                { name: 'red-key', path: 'assets/red-key.png' },
-                { name: 'green-key', path: 'assets/green-key.png' },
-                { name: 'yellow-key', path: 'assets/yellow-key.png' },
-                { name: 'boss', path: 'assets/boss.png' },
-                { name: 'start', path: 'assets/start.png' },
-                { name: 'gate', path: 'assets/gate.png' }
-            ];
-            
-            // Load all color-shape combinations
-            const keyImages = [];
-            KEY_COLORS.forEach(color => {
-                KEY_SHAPES.forEach(shape => {
-                    keyImages.push({
-                        name: `${color}_${shape}_key`,
-                        path: `assets/keys/${color}_${shape}_key.png`
-                    });
-                });
-            });
-            
-            // Combine both sets of images to load
-            const imagesToLoad = [...originalIcons, ...keyImages];
-            let loadedCount = 0;
-            
-            imagesToLoad.forEach(img => {
-                const image = new Image();
-                image.onload = () => {
-                    loadedCount++;
-                    if (loadedCount === imagesToLoad.length) {
-                        console.log('All images loaded');
-                        updateCanvas();
-                    }
-                };
-                image.onerror = () => {
-                    console.error(`Failed to load image: ${img.path}`);
-                    loadedCount++;
-                };
-                image.src = img.path;
-                keyImages.set(img.name, image);
-            });
-        }
-        
         // Initialize the map
         function initMap() {
-            initializeGridSquares();
             preloadKeyImages();
+            initializeGridSquares();
             resizeCanvas();
             
             // Set up event listeners
-            canvas.addEventListener('click', handleCanvasClick);
             canvas.addEventListener('contextmenu', handleCanvasClick);
             window.addEventListener('resize', resizeCanvas);
+
+            // Start periodic updates of the background if in Alt1
+            if (window.alt1) {
+                setInterval(() => {
+                    updateCanvas();
+                }, 500); // Update every 500ms
+            }
         }
         
         // Communication with main window
@@ -680,6 +498,12 @@
                         if (event.data.size) {
                             mapSize = event.data.size;
                             initializeGridSquares();
+                            updateCanvas();
+                        }
+                        break;
+                    case 'anchor-update':
+                        // Handle anchor point updates
+                        if (event.data.x !== undefined && event.data.y !== undefined) {
                             updateCanvas();
                         }
                         break;
