@@ -1,0 +1,257 @@
+The following information is the output of the alt1.helpFull() function.
+
+OverlayBoundObject overlay
+No info available about this property.
+
+Int32 screenX
+Gets the left bound of all screens, usually 0, but can be negative with multiple screens.
+
+Int32 screenY
+Gets the Top bound of all screens, usually 0, but can be negative with multiple screens.
+
+Int32 screenWidth
+Gets the width of the union of all srceens.
+
+Int32 screenHeight
+Gets the height of the union of all srceens.
+
+String version
+Gets a string represention of the current version of Alt1.
+
+Int32 versionint
+Gets a integer that represents the current version. (major * 1000 * 1000 + minor * 1000 + build) 1.2.3 -> 1002003.
+
+Int32 maxtransfer
+Gets the maximum amount of bytes that can be transfered in a single function call. The wrapper library uses this to split up large image transfers.
+
+String skinName
+Gets the name of the current skin.
+
+String captureMethod
+Gets what capture methods is currently being used
+
+Int32 captureInterval
+Gets the adviced minimum time between screen captures
+
+Int32 rsX
+Gets the X-coord of the runescape client area when rs is linked. Use rsLinked to determine if rs is linked.
+
+Int32 rsY
+Gets the Y-coord of the runescape client area when rs is linked. Use rsLinked to determine if rs is linked.
+
+Int32 rsWidth
+Gets the width of the runescape client area when rs is linked. Use rsLinked to determine if rs is linked.
+
+Int32 rsHeight
+Gets the height of the runescape client area when rs is linked. Use rsLinked to determine if rs is linked.
+
+Single rsScaling
+Gets the DPI scaling level of the rs window in windows 8.1 or 10, returns 0 when the rs window is not linked.
+
+Boolean rsLinked
+Gets if the runescape window is currently detected by Alt1.
+
+Boolean permissionInstalled
+Gets if the current page is handled as an installed app.
+
+Boolean permissionGameState
+Gets is the current page has gamestate permission.
+
+Boolean permissionOverlay
+Gets is the current page has overlay permission.
+
+Boolean permissionPixel
+Gets is the current page has pixel permission
+
+Int32 mousePosition
+Gets the position of the mouse is it is inside the runescape client, use a1lib.mousePosition() for an object with {x,y}. (x=r>>16, y=r&0xFFFF)
+[Gamestate] permission required.
+
+Boolean rsActive
+Returns wether the runescape window is currently the active window.
+[Gamestate] permission required.
+
+Int64 rsLastActive
+Gets the time in milliseconds since the last click in the runescape window.
+[Gamestate] permission required.
+
+Int64 lastWorldHop
+Gets the timestamp of the last world hop recorded by Alt1.
+[Gamestate] permission required.
+
+Int32 currentWorld
+Gets the current world that the player is logged in to. Returns -1 when the player is not logged in or in the lobby. Some times also returns -1 on world with weird proxy setups (aus)
+[Gamestate] permission required.
+
+Double rsPing
+Gets the ping of the current connected game server.
+[Gamestate] permission required.
+
+Double rsFps
+Returns the detected fps of runescape
+[Gamestate] permission required.
+
+String openInfo
+Gets information about how the app was opened, this includes the recognised text and regex matches if opened by pressing alt+1.
+[Installed] permission required.
+
+Void userResize(Boolean left, Boolean top, Boolean right, Boolean bottom)
+This function simulates the user starting to drag the frame border. You can use this to add useable control area to the app.
+
+Void identifyAppUrl(String url)
+Tells Alt1 to fetch identification information from the given url. The file should contain a json encoded object with properties about the app.Most importantly it should have a configUrl property that links to itself and a appUrl property that links to the starting page of the app.There is a full appconfig in the example app.
+
+Boolean openBrowser(String url)
+Opens the specified link in the default browser.
+
+Void clearTooltip()
+Removes the tooltip.
+[Installed] permission required.
+
+Void clearBinds()
+Cleans up all tasks for this app on Alt1, it stops pixel event listeners and removes possible cursor tooltips.
+[Installed] permission required.
+
+Void registerStatusDaemon(String serverUrl, String state)
+Sets the status daemon of this app. The given server url is called periodicly with a POST request containing with the state string.The server should respond with a json object that contains the following properties: string state - the state string to use for the next request.int nextRun - time in milliseconds until the next run.Alert[] alerts - an array containing alerts: {string title, string body}Status[] status - an array containing the status: {string status}
+[Overlay] permission required.
+
+String getStatusDaemonState()
+Returns the current state string of the status daemon of ths app.
+[Overlay] permission required.
+
+Void showNotification(String title, String message, String icon)
+Shows a notification with the given title and message. The icon argument is reserved and ignored, you should pass an empty string.
+[Overlay] permission required.
+
+Void closeApp()
+Closes the app
+[Installed] permission required.
+
+Boolean setTooltip(String tooltip)
+Sets a tooltip with specified text that chases the cursor. It can be removed by calling this function again with an empty string or using the clearTooltip function.
+[Overlay] permission required.
+
+Void SetTaskbarProgress(Int32 type, Double progress)
+Changes the Runescape window in the task bar to show a progress bar. Type is the type of bar - 0: reset/normal, 1: in progress, 2: error (red bar), 3: unknown (animated bar), 4: paused (orange bar). Progress is the size of the bar. (0-100)
+[Overlay] permission required.
+
+Void setTitleBarText(String text)
+Adds a string to the title bar of the rs client. There can only be one per app and you can clear it by calling this function again with an empty string.
+[Overlay] permission required.
+
+Boolean overLayRect(Int32 color, Int32 x, Int32 y, Int32 w, Int32 h, Int32 time, Int32 lineWidth)
+Overlays a rectangle on the screen. Color is a 8bpp rgba int which can be created using the mixcolor function in the library. Time is in milliseconds.
+[Overlay] permission required.
+
+Boolean overLayText(String str, Int32 color, Int32 size, Int32 x, Int32 y, Int32 time)
+Overlays some text on the screen. Color is a 8bpp rgba int which can be created using the mixcolor function in the library. Time is in milliseconds.
+[Overlay] permission required.
+
+Boolean overLayTextEx(String str, Int32 color, Int32 size, Int32 x, Int32 y, Int32 time, String fontname, Boolean centered, Boolean shadow)
+Overlays some text, with extra options. Centered centers the text horizontally and vertically. Fontname is the name of the font to use, the default sans-serif font is used if this font can not be found.
+[Overlay] permission required.
+
+Boolean overLayLine(Int32 color, Int32 width, Int32 x1, Int32 y1, Int32 x2, Int32 y2, Int32 time)
+Overlays a line on the screen. Color is a 8bpp rgba int which can be created using the mixcolor function in the library. Time is in milliseconds.
+[Overlay] permission required.
+
+Boolean overLayImage(Int32 x, Int32 y, String imgstr, Int32 imgwidth, Int32 time)
+[Internal, use alt1lib] Overlays an image on the screen. imgstr is a base64 encoded 8bpp bgra image buffer. imgwidth is the width of the image, this is required to decode the image.
+[Overlay] permission required.
+
+Void overLayClearGroup(String group)
+Removes all overlay with given group name from screen. You can give overlays a group by calling the overlaySetGroup function before drawing
+[Overlay] permission required.
+
+Void overLaySetGroup(String group)
+Set the group name of all following draw overlay calls untill called again with a different name. Groups can be used remove overlays again.
+[Overlay] permission required.
+
+Void overLayFreezeGroup(String group)
+Stops all overlays in the current group from updating. You can use this to draw combined overlays without flickering. Call overLayContinueGroup when done to continue normal drawing, or overLayRefreshGroup to only redraw the overlay when specificly called. Frozen overlays have an extended timer, but still not unlimited.
+[Overlay] permission required.
+
+Void overLayContinueGroup(String group)
+Continues automatic redrawing of this overlay group.
+[Overlay] permission required.
+
+Void overLayRefreshGroup(String group)
+Does a single redraw of the current overlay group while leaving the group frozen.
+[Overlay] permission required.
+
+Void overLaySetGroupZIndex(String groupname, Int32 zIndex)
+Sets the z-index for an overlay group. Group with higher z-index are drawn over lower ones. The default value is 0.
+[Overlay] permission required.
+
+String getRegion(Int32 x, Int32 y, Int32 w, Int32 h)
+[Internal, use alt1lib] Returns a string containing pixel data about the specified region inside the rs window. The string is base64 encoded 8bpp argb buffer of the requested image.
+[Pixel] permission required.
+
+String getRegionMulti(String rectsjson)
+[Internal, use alt1lib] Returns a string containing pixel data about the specified regions inside the rs window. The string is base64 encoded 8bpp argb buffer of the requested images concatenated after eachother.
+[Pixel] permission required.
+
+Int32 bindRegion(Int32 x, Int32 y, Int32 w, Int32 h)
+[Internal, use alt1lib] Binds a region of the rs window in memory to apply functions to it without having to transfer it to the browser. Returns a non-zero integer on success or 0 on failure. This function returns a identifier to be used in subsequent 'bind-' calls. This id is currently always 1 on succes as only one bound image is allowed.
+[Pixel] permission required.
+
+Int32 bindScreenRegion(Int32 x, Int32 y, Int32 w, Int32 h)
+[depricated] Capture outside of the rs frame is no longer supported, this function maps to bindRegion.
+[Pixel] permission required.
+
+String bindGetRegion(Int32 id, Int32 x, Int32 y, Int32 w, Int32 h)
+[Internal, use alt1lib] Returns a rubregion of the bound image as base64 encoded 8bpp abgr buffer.
+[Pixel] permission required.
+
+String bindReadString(Int32 id, String fontname, Int32 x, Int32 y)
+Tries to read a antialised string on the bound image, with the given font. The color of text will be detected and chosen from a set of preset colors. Valid font names are currently 'chat','chatmono' and 'xpcounter'. This function returns an empty string on failure.
+[Pixel] permission required.
+
+String bindReadColorString(Int32 id, String fontname, Int32 color, Int32 x, Int32 y)
+Same as bindReadString, however requires an extra color argument. The color is a 8bpp rgba color int that can be mixed with the a1lib.mixcolor function. The should be the base color, or brightest color in the to be detected text.
+[Pixel] permission required.
+
+String bindReadStringEx(Int32 id, Int32 x, Int32 y, String args)
+Same as bindReadString, however allows extra arguments in an object. Possible arguments and default values:
+bool allowgap=false - scan empty space for more text after reading text
+string fontname=chatfont - the font to detect
+int[] colors=[~20 standard colors] - array of color ints to detect
+[Pixel] permission required.
+
+Boolean addOCRFont(String name, String jsonFont)
+[Incomplete] Adds a font for ocr, this font can be used in the bindReadString functions. The jsonfont can be generated from an image using a generator, please contant me if you plan to use this.
+[Pixel] permission required.
+
+String bindReadRightClickString(Int32 id, Int32 x, Int32 y)
+Reads rightlcick menu text, this function is very fragile and is different from the other readText functions. It requires an exact baseline y coord.
+[Pixel] permission required.
+
+Int32 bindGetPixel(Int32 id, Int32 x, Int32 y)
+Retrieves a single pixel from the bound image, this is not a recommended method as it is very slow
+[Pixel] permission required.
+
+String bindFindSubImg(Int32 id, String imgstr, Int32 imgwidth, Int32 x, Int32 y, Int32 w, Int32 h)
+[Internal, use alt1lib] Finds the given subimage in the bound image. This function is way quicker than possible in js. imgstr is a base64 encoded 8bpp bgra image buffer. imgwidth is the width of the image, this is required to decode the image. x,y,w,h defines the area in the bound image to be searched.
+[Pixel] permission required.
+
+String help()
+Simple info about how the API works.
+
+String helpProp(String propname)
+This function returns information about a single property with the given name.
+
+String helpFull()
+Returns a html document with documentation about every function and property exposed.
+
+String helpIntelliSense()
+Returns a file that can be used to add the alt1 api to Visual Studio IntelliSense.
+
+String helpTypescript()
+Returns a types.d.ts file that represents the alt1 api and can be used to get working code completion in typescript.
+
+String helpJSDoc()
+Returns a file that can be used to add the alt1 api to editors using the JSDoc format
+
+Type GetType()
+No info available about this method.

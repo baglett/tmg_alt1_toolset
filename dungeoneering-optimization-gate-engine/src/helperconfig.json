@@ -1,0 +1,16 @@
+{
+    "appName": "Dungeon Grid",
+    "description": "Compact dungeon grid for mapping",
+    "appUrl": "./helper.html",
+    "configUrl": "./helperconfig.json",
+    "iconUrl": "./icon.png",
+    "defaultWidth": 140,
+    "defaultHeight": 140,
+    "minWidth": 140,
+    "minHeight": 140,
+    "maxWidth": 140,
+    "maxHeight": 140,
+    "requestHandlers": [],
+    "activators": [],
+    "permissions": "pixel,overlay"
+} 

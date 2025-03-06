@@ -278,6 +278,11 @@
         <span class="version" id="version">v1.0.0</span>
     </div>
 
+    <div id="alt1-install-container" class="container" style="margin-bottom: 15px;">
+        <div class="section-title">Alt1 Toolkit Integration</div>
+        <div id="output"></div>
+    </div>
+
     <div id="loading-indicator" class="loading-indicator">
         <div class="spinner"></div>
         <div>Initializing text recognition engine...</div>
@@ -374,5 +379,26 @@
     </footer>
 
     <script src="index.bundle.js"></script>
+    
+    <script>
+        // Check if Alt1 is available and identify the app
+        if (window.alt1) {
+            alt1.identifyAppUrl("./appconfig.json");
+            document.getElementById('output').insertAdjacentHTML("beforeend", `
+                <div>Alt1 detected! Click to capture if on alt1</div>
+            `);
+        } else {
+            // Create the installation URL for the main application
+            const currentUrl = window.location.href;
+            const baseUrl = currentUrl.substring(0, currentUrl.lastIndexOf('/') + 1);
+            let addappurl = `alt1://addapp/${baseUrl}appconfig.json`;
+            
+            console.log('Alt1 installation URL:', addappurl);
+            
+            document.getElementById('output').insertAdjacentHTML("beforeend", `
+                <div>Alt1 not detected, click <a href='${addappurl}'>here</a> to add this app to Alt1</div>
+            `);
+        }
+    </script>
 </body>
 </html> 

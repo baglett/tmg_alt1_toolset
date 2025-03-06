@@ -16,7 +16,7 @@ let toolsconfig = {
     },
     devServer: {
         static: "./dist",
-        open: "/tests/index.html"
+        open: "/tests/install.html"
     }
 }
 

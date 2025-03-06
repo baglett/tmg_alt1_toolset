@@ -9,8 +9,8 @@
     <script>
         // Identify to Alt1 as early as possible
         if (window.alt1 && window.alt1.identifyAppUrl) {
-            window.alt1.identifyAppUrl('./appconfig.json');
-            console.log("Identified app to Alt1 early");
+            window.alt1.identifyAppUrl('./helperconfig.json');
+            console.log("Identified helper app to Alt1 early");
         }
     </script>
     <style>
@@ -23,9 +23,21 @@
             height: 140px;
         }
         #map-canvas {
-            width: 100%;
-            height: 100%;
+            width: 140px;
+            height: 140px;
             background-color: rgba(0, 0, 0, 0.3);
+            position: absolute;
+            top: 0;
+            left: 0;
+        }
+        #preview-canvas {
+            width: 140px;
+            height: 140px;
+            background-color: rgba(0, 0, 0, 0.3);
+            position: absolute;
+            top: 0;
+            left: 0;
+            display: none; /* Hidden by default */
         }
         .dropdown {
             position: absolute;
@@ -54,10 +66,25 @@
             margin-right: 5px;
             border: 1px solid #555;
         }
+        .toggle-button {
+            position: absolute;
+            top: 5px;
+            right: 5px;
+            background-color: rgba(50, 50, 50, 0.7);
+            color: white;
+            border: 1px solid #555;
+            border-radius: 3px;
+            padding: 2px 5px;
+            font-size: 10px;
+            cursor: pointer;
+            z-index: 10;
+        }
     </style>
 </head>
 <body>
     <canvas id="map-canvas"></canvas>
+    <canvas id="preview-canvas"></canvas>
+    <button id="toggle-view" class="toggle-button">Show Preview</button>
     <div id="map-dropdown" class="dropdown"></div>
 
     <script>
@@ -109,11 +136,164 @@
         let lastClickedSquare = null;
         let keyImages = new Map();
         let selectedColor = null;
+        let anchorPoint = null;
+        let xOffset = 6;
+        let yOffset = -12;
+        let outlineWidth = -5;
+        let outlineHeight = 0;
+        let showPreview = false;
+        let previewInterval = null;
         
         // Canvas elements
         const canvas = document.getElementById('map-canvas');
         const ctx = canvas.getContext('2d');
+        const previewCanvas = document.getElementById('preview-canvas');
+        const previewCtx = previewCanvas.getContext('2d');
         const dropdown = document.getElementById('map-dropdown');
+        const toggleButton = document.getElementById('toggle-view');
+        
+        // Toggle between grid view and preview view
+        toggleButton.addEventListener('click', function() {
+            showPreview = !showPreview;
+            if (showPreview) {
+                canvas.style.display = 'none';
+                previewCanvas.style.display = 'block';
+                toggleButton.textContent = 'Show Grid';
+                startPreviewInterval();
+            } else {
+                canvas.style.display = 'block';
+                previewCanvas.style.display = 'none';
+                toggleButton.textContent = 'Show Preview';
+                stopPreviewInterval();
+            }
+        });
+        
+        // Start the preview update interval
+        function startPreviewInterval() {
+            // Stop any existing interval
+            stopPreviewInterval();
+            
+            // Update the preview immediately
+            updatePreview();
+            
+            // Start a new interval to update the preview
+            previewInterval = window.setInterval(() => {
+                updatePreview();
+            }, 500); // Update every 500ms
+        }
+        
+        // Stop the preview update interval
+        function stopPreviewInterval() {
+            if (previewInterval) {
+                window.clearInterval(previewInterval);
+                previewInterval = null;
+            }
+        }
+        
+        // Update the preview canvas with the current screen capture
+        function updatePreview() {
+            if (!previewCtx || !anchorPoint) {
+                drawFallbackPreview('Waiting for anchor point...');
+                return;
+            }
+            
+            // Instead of capturing directly, request the capture from the main window
+            if (window.opener) {
+                try {
+                    // Request a capture from the main window
+                    console.log('Requesting capture from main window');
+                    window.opener.postMessage({
+                        type: 'request-capture',
+                        x: Math.floor(anchorPoint.x + xOffset),
+                        y: Math.floor(anchorPoint.y + yOffset),
+                        width: previewCanvas.width,
+                        height: previewCanvas.height
+                    }, '*');
+                    
+                    // The actual drawing will happen when we receive the capture data
+                    // in the message event handler
+                } catch (e) {
+                    console.error('Failed to request capture from main window:', e);
+                    drawFallbackPreview('Failed to request capture');
+                }
+            } else {
+                drawFallbackPreview('No parent window available');
+            }
+        }
+        
+        // Draw grid lines on the preview
+        function drawGridOnPreview() {
+            if (!previewCtx) return;
+            
+            const width = previewCanvas.width;
+            const height = previewCanvas.height;
+            
+            // Get grid dimensions
+            const gridCols = mapSize === 'small' ? 4 : 8;
+            const gridRows = mapSize === 'small' ? 4 : 8;
+            
+            const cellWidth = width / gridCols;
+            const cellHeight = height / gridRows;
+            
+            // Draw grid lines
+            previewCtx.strokeStyle = 'rgba(200, 200, 50, 0.8)';
+            previewCtx.lineWidth = 1;
+            
+            // Draw vertical grid lines
+            for (let i = 1; i < gridCols; i++) {
+                const lineX = Math.floor(cellWidth * i);
+                previewCtx.beginPath();
+                previewCtx.moveTo(lineX, 0);
+                previewCtx.lineTo(lineX, height);
+                previewCtx.stroke();
+            }
+            
+            // Draw horizontal grid lines
+            for (let i = 1; i < gridRows; i++) {
+                const lineY = Math.floor(cellHeight * i);
+                previewCtx.beginPath();
+                previewCtx.moveTo(0, lineY);
+                previewCtx.lineTo(width, lineY);
+                previewCtx.stroke();
+            }
+            
+            // Draw the map outline
+            previewCtx.strokeStyle = 'white';
+            previewCtx.lineWidth = 1;
+            previewCtx.strokeRect(0, 0, width, height);
+            
+            // Draw map size info
+            previewCtx.fillStyle = 'white';
+            previewCtx.font = '10px Arial';
+            previewCtx.textAlign = 'left';
+            previewCtx.fillText(`${mapSize.toUpperCase()} MAP (${width}x${height})`, 5, 10);
+        }
+        
+        // Draw fallback preview
+        function drawFallbackPreview(message) {
+            if (!previewCtx) return;
+            
+            // Clear the canvas
+            previewCtx.clearRect(0, 0, previewCanvas.width, previewCanvas.height);
+            
+            // Draw a dark background
+            previewCtx.fillStyle = 'rgba(0, 0, 0, 0.3)';
+            previewCtx.fillRect(0, 0, previewCanvas.width, previewCanvas.height);
+            
+            // Draw the message
+            previewCtx.fillStyle = 'white';
+            previewCtx.font = '12px Arial';
+            previewCtx.textAlign = 'center';
+            previewCtx.textBaseline = 'middle';
+            previewCtx.fillText(message, previewCanvas.width / 2, previewCanvas.height / 2);
+            
+            // If we're in development mode, add additional help text
+            if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
+                previewCtx.font = '10px Arial';
+                previewCtx.fillText('Local development requires Alt1 permissions', previewCanvas.width / 2, previewCanvas.height / 2 + 20);
+                previewCtx.fillText('Try loading as an Alt1 app', previewCanvas.width / 2, previewCanvas.height / 2 + 35);
+            }
+        }
         
         // Initialize grid squares
         function initializeGridSquares() {
@@ -149,6 +329,12 @@
             const size = MAP_SIZES[mapSize];
             document.body.style.width = `${size.width}px`;
             document.body.style.height = `${size.height}px`;
+            
+            // Also update canvas element styles to match
+            canvas.style.width = `${size.width}px`;
+            canvas.style.height = `${size.height}px`;
+            previewCanvas.style.width = `${size.width}px`;
+            previewCanvas.style.height = `${size.height}px`;
         }
         
         // Resize canvas to fit container
@@ -156,7 +342,12 @@
             const size = MAP_SIZES[mapSize];
             canvas.width = size.width;
             canvas.height = size.height;
+            previewCanvas.width = size.width;
+            previewCanvas.height = size.height;
             updateCanvas();
+            if (showPreview) {
+                updatePreview();
+            }
         }
         
         // Update the canvas with the current grid state
@@ -164,103 +355,57 @@
             if (!ctx) return;
             
             // Get the map size
-            const outlineWidth = canvas.width;
-            const outlineHeight = canvas.height;
+            const canvasWidth = canvas.width;
+            const canvasHeight = canvas.height;
             
             // Clear the canvas
-            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            ctx.clearRect(0, 0, canvasWidth, canvasHeight);
             
-            // If we have a background image from Alt1, draw it
-            if (window.alt1 && window.alt1.capture) {
+            // Instead of capturing directly, request the background from the main window
+            if (window.opener && anchorPoint) {
                 try {
-                    // Get the map area relative to the anchor point
-                    // This will capture the screen area that corresponds to the tracked minimap
-                    const mapImg = window.alt1.capture(0, 0, outlineWidth, outlineHeight);
-                    if (mapImg) {
-                        const imgData = ctx.createImageData(outlineWidth, outlineHeight);
-                        imgData.data.set(mapImg.data);
-                        ctx.putImageData(imgData, 0, 0);
-                        
-                        // Add a semi-transparent overlay to make the grid more visible
-                        ctx.fillStyle = 'rgba(0, 0, 0, 0.2)';
-                        ctx.fillRect(0, 0, outlineWidth, outlineHeight);
-                    } else {
-                        console.error('Failed to capture map background: capture returned null');
-                        // Draw fallback dark background
-                        ctx.fillStyle = 'rgba(0, 0, 0, 0.3)';
-                        ctx.fillRect(0, 0, outlineWidth, outlineHeight);
-                    }
+                    // Request a background capture from the main window
+                    console.log('Requesting background from main window');
+                    window.opener.postMessage({
+                        type: 'request-background',
+                        x: Math.floor(anchorPoint.x + xOffset),
+                        y: Math.floor(anchorPoint.y + yOffset),
+                        width: canvasWidth,
+                        height: canvasHeight
+                    }, '*');
+                    
+                    // The actual drawing will happen when we receive the background data
+                    // in the message event handler
                 } catch (e) {
-                    console.error('Failed to capture map background:', e);
+                    console.error('Failed to request background from main window:', e);
                     // Draw fallback dark background
                     ctx.fillStyle = 'rgba(0, 0, 0, 0.3)';
-                    ctx.fillRect(0, 0, outlineWidth, outlineHeight);
+                    ctx.fillRect(0, 0, canvasWidth, canvasHeight);
                 }
             } else {
                 // Draw fallback dark background
                 ctx.fillStyle = 'rgba(0, 0, 0, 0.3)';
-                ctx.fillRect(0, 0, outlineWidth, outlineHeight);
-            }
-            
-            // Get grid dimensions
-            const gridCols = getGridCols();
-            const gridRows = getGridRows();
-            
-            const cellWidth = outlineWidth / gridCols;
-            const cellHeight = outlineHeight / gridRows;
-            
-            // Draw grid lines
-            ctx.strokeStyle = 'rgba(200, 200, 50, 0.8)';
-            ctx.lineWidth = 1;
-            
-            // Draw vertical grid lines
-            for (let i = 1; i < gridCols; i++) {
-                const lineX = Math.floor(cellWidth * i);
-                ctx.beginPath();
-                ctx.moveTo(lineX, 0);
-                ctx.lineTo(lineX, outlineHeight);
-                ctx.stroke();
-            }
-            
-            // Draw horizontal grid lines
-            for (let i = 1; i < gridRows; i++) {
-                const lineY = Math.floor(cellHeight * i);
-                ctx.beginPath();
-                ctx.moveTo(0, lineY);
-                ctx.lineTo(outlineWidth, lineY);
-                ctx.stroke();
-            }
-            
-            // Draw the map outline
-            ctx.strokeStyle = 'white';
-            ctx.lineWidth = 1;
-            ctx.strokeRect(0, 0, outlineWidth, outlineHeight);
-            
-            // Draw map size info
-            ctx.fillStyle = 'white';
-            ctx.font = '10px Arial';
-            ctx.fillText(`${mapSize.toUpperCase()} MAP (${outlineWidth}x${outlineHeight})`, 5, 10);
-            
-            // Draw icons on grid squares
-            drawGridIcons(cellWidth, cellHeight, gridRows, gridCols);
-            
-            // If we have a last clicked square, highlight it
-            if (lastClickedSquare) {
-                const row = lastClickedSquare.row;
-                const col = lastClickedSquare.col;
+                ctx.fillRect(0, 0, canvasWidth, canvasHeight);
                 
-                // Make sure the row and column are valid
-                if (row >= 0 && row < gridRows && col >= 0 && col < gridCols) {
-                    // Calculate the position of the grid square
-                    const squareX = Math.floor(col * cellWidth);
-                    const squareY = Math.floor((gridRows - 1 - row) * cellHeight); // Invert row to match bottom-left = 0,0
-                    
-                    // Draw a highlight around the square
-                    ctx.strokeStyle = 'rgba(255, 255, 0, 0.8)';
-                    ctx.lineWidth = 2;
-                    ctx.strokeRect(squareX + 1, squareY + 1, cellWidth - 2, cellHeight - 2);
+                if (!anchorPoint) {
+                    console.warn('No anchor point available for map background');
+                } else if (!window.opener) {
+                    console.warn('No parent window available');
                 }
             }
+            
+            // Draw capture info for debugging
+            ctx.fillStyle = 'rgba(0, 0, 0, 0.5)';
+            ctx.fillRect(0, canvasHeight - 40, canvasWidth, 40);
+            ctx.fillStyle = 'white';
+            ctx.font = '10px Arial';
+            ctx.textAlign = 'left';
+            const captureX = Math.floor(anchorPoint ? anchorPoint.x + xOffset : 0);
+            const captureY = Math.floor(anchorPoint ? anchorPoint.y + yOffset : 0);
+            ctx.fillText(`Capture: (${captureX}, ${captureY}, ${canvasWidth}x${canvasHeight})`, 5, canvasHeight - 25);
+            ctx.fillText(`Anchor: (${anchorPoint ? anchorPoint.x : 'N/A'}, ${anchorPoint ? anchorPoint.y : 'N/A'})`, 5, canvasHeight - 10);
+            
+            // Don't draw grid lines or icons since we want to see just the raw image
         }
         
         // Preload key images
@@ -530,6 +675,7 @@
             initializeGridSquares();
             updateBodySize();
             resizeCanvas();
+            initPreview();
             
             // Set up event listeners
             canvas.addEventListener('contextmenu', handleCanvasClick);
@@ -540,6 +686,9 @@
                 // Start periodic updates
                 setInterval(() => {
                     updateCanvas();
+                    if (showPreview) {
+                        updatePreview();
+                    }
                 }, 500); // Update every 500ms
             }
             
@@ -553,11 +702,26 @@
             }
         }
         
+        // Initialize the preview
+        function initPreview() {
+            // Set initial state - start with preview visible by default
+            showPreview = true;
+            canvas.style.display = 'none';
+            previewCanvas.style.display = 'block';
+            toggleButton.textContent = 'Show Grid';
+            
+            // Start the preview interval
+            startPreviewInterval();
+            
+            // Draw fallback preview initially
+            drawFallbackPreview('Waiting for anchor point...');
+        }
+        
         // Communication with main window
         window.addEventListener('message', function(event) {
             try {
                 if (event.data && event.data.type) {
-                    console.log(`Received message from parent: ${event.data.type}`);
+                    console.log(`Received message from parent: ${event.data.type}`, JSON.stringify(event.data));
                     
                     switch(event.data.type) {
                         case 'grid-sync':
@@ -581,40 +745,107 @@
                             if (event.data.x !== undefined && event.data.y !== undefined) {
                                 console.log(`Received anchor update: (${event.data.x}, ${event.data.y})`);
                                 
-                                // Store the anchor point coordinates for screen capture
-                                if (window.alt1 && window.alt1.setScreenCaptureBounds) {
-                                    try {
-                                        // Calculate the capture area based on the anchor point
-                                        const size = MAP_SIZES[mapSize];
-                                        
-                                        // Get offset and outline size values from the message or use defaults
-                                        const xOffset = event.data.xOffset !== undefined ? event.data.xOffset : 6;
-                                        const yOffset = event.data.yOffset !== undefined ? event.data.yOffset : -12;
-                                        const outlineWidth = event.data.outlineWidth !== undefined ? event.data.outlineWidth : -5;
-                                        const outlineHeight = event.data.outlineHeight !== undefined ? event.data.outlineHeight : 0;
-                                        
-                                        const width = size.width + outlineWidth;
-                                        const height = size.height + outlineHeight;
-                                        const x = Math.floor(event.data.x - width + xOffset);
-                                        const y = Math.floor(event.data.y + yOffset);
-                                        
-                                        // Set the capture bounds for Alt1
-                                        window.alt1.setScreenCaptureBounds(x, y, width, height);
-                                        console.log(`Set capture bounds to: ${x},${y},${width},${height}`);
-                                        
-                                        // Add debug info to the canvas
-                                        if (ctx) {
-                                            ctx.fillStyle = 'white';
-                                            ctx.font = '10px Arial';
-                                            ctx.fillText(`Capture: ${x},${y},${width}x${height}`, 5, 10);
-                                        }
-                                    } catch (e) {
-                                        console.error('Failed to set screen capture bounds:', e);
-                                    }
-                                } else {
-                                    console.warn('Alt1 screen capture API not available');
-                                }
+                                // Store the anchor point coordinates
+                                anchorPoint = { x: event.data.x, y: event.data.y };
+                                
+                                // Store offset values
+                                xOffset = event.data.xOffset !== undefined ? event.data.xOffset : 6;
+                                yOffset = event.data.yOffset !== undefined ? event.data.yOffset : -12;
+                                outlineWidth = event.data.outlineWidth !== undefined ? event.data.outlineWidth : -5;
+                                outlineHeight = event.data.outlineHeight !== undefined ? event.data.outlineHeight : 0;
+                                
+                                console.log(`Using offsets: xOffset=${xOffset}, yOffset=${yOffset}, outlineWidth=${outlineWidth}, outlineHeight=${outlineHeight}`);
+                                
+                                // Force an immediate update of both canvases
                                 updateCanvas();
+                                if (showPreview) {
+                                    updatePreview();
+                                }
+                            }
+                            break;
+                        case 'capture-data':
+                            // Handle capture data from the main window
+                            if (event.data.imageData && previewCtx) {
+                                console.log('Received capture data from main window');
+                                
+                                try {
+                                    // Convert the base64 image data to an image
+                                    const img = new Image();
+                                    img.onload = function() {
+                                        // Clear the canvas
+                                        previewCtx.clearRect(0, 0, previewCanvas.width, previewCanvas.height);
+                                        
+                                        // Draw the image to the canvas
+                                        previewCtx.drawImage(img, 0, 0, previewCanvas.width, previewCanvas.height);
+                                        
+                                        // Draw capture info for debugging
+                                        previewCtx.fillStyle = 'rgba(0, 0, 0, 0.5)';
+                                        previewCtx.fillRect(0, previewCanvas.height - 40, previewCanvas.width, 40);
+                                        previewCtx.fillStyle = 'white';
+                                        previewCtx.font = '10px Arial';
+                                        previewCtx.textAlign = 'left';
+                                        previewCtx.fillText(`Capture: (${event.data.x}, ${event.data.y}, ${event.data.width}x${event.data.height})`, 5, previewCanvas.height - 25);
+                                        previewCtx.fillText(`From main window`, 5, previewCanvas.height - 10);
+                                        
+                                        console.log('Successfully drew capture from main window');
+                                    };
+                                    
+                                    img.onerror = function() {
+                                        console.error('Failed to load image from capture data');
+                                        drawFallbackPreview('Failed to load capture image');
+                                    };
+                                    
+                                    img.src = event.data.imageData;
+                                } catch (e) {
+                                    console.error('Error processing capture data:', e);
+                                    drawFallbackPreview('Error processing capture');
+                                }
+                            } else if (event.data.error) {
+                                console.error('Capture error from main window:', event.data.error);
+                                drawFallbackPreview(`Capture error: ${event.data.error}`);
+                            }
+                            break;
+                        case 'background-data':
+                            // Handle background data from the main window for the grid view
+                            if (event.data.imageData && ctx) {
+                                console.log('Received background data from main window');
+                                
+                                try {
+                                    // Convert the base64 image data to an image
+                                    const img = new Image();
+                                    img.onload = function() {
+                                        // Clear the canvas
+                                        ctx.clearRect(0, 0, canvas.width, canvas.height);
+                                        
+                                        // Draw the image to the canvas
+                                        ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+                                        
+                                        // Draw capture info for debugging
+                                        ctx.fillStyle = 'rgba(0, 0, 0, 0.5)';
+                                        ctx.fillRect(0, canvas.height - 40, canvas.width, 40);
+                                        ctx.fillStyle = 'white';
+                                        ctx.font = '10px Arial';
+                                        ctx.textAlign = 'left';
+                                        ctx.fillText(`Capture: (${event.data.x}, ${event.data.y}, ${event.data.width}x${event.data.height})`, 5, canvas.height - 25);
+                                        ctx.fillText(`From main window`, 5, canvas.height - 10);
+                                        
+                                        console.log('Successfully drew background from main window');
+                                    };
+                                    
+                                    img.onerror = function() {
+                                        console.error('Failed to load image from background data');
+                                        // Draw fallback dark background
+                                        ctx.fillStyle = 'rgba(0, 0, 0, 0.3)';
+                                        ctx.fillRect(0, 0, canvas.width, canvas.height);
+                                    };
+                                    
+                                    img.src = event.data.imageData;
+                                } catch (e) {
+                                    console.error('Error processing background data:', e);
+                                    // Draw fallback dark background
+                                    ctx.fillStyle = 'rgba(0, 0, 0, 0.3)';
+                                    ctx.fillRect(0, 0, canvas.width, canvas.height);
+                                }
                             }
                             break;
                         default:
@@ -630,17 +861,49 @@
         function requestDataFromParent() {
             console.log('Attempting to connect to parent window...');
             
+            // Try to get the parent window
+            let parentWindow = null;
+            
+            // Check if we have an opener
             if (window.opener) {
+                console.log('Found window.opener');
+                parentWindow = window.opener;
+            } 
+            // Check if we're in an iframe
+            else if (window.parent && window.parent !== window) {
+                console.log('Found window.parent');
+                parentWindow = window.parent;
+            }
+            // Check if we're in Alt1
+            else if (window.alt1 && window.alt1.openedByAlt1) {
+                console.log('Opened by Alt1, using window.alt1.userBrowser.window as parent');
+                try {
+                    // This is a special case for Alt1
+                    parentWindow = window;
+                } catch (e) {
+                    console.error('Error accessing Alt1 parent window:', e);
+                }
+            }
+            
+            if (parentWindow) {
                 console.log('Parent window detected, sending helper-loaded message');
                 
                 try {
                     // Notify parent that helper is loaded
-                    window.opener.postMessage({ type: 'helper-loaded' }, '*');
+                    parentWindow.postMessage({ type: 'helper-loaded' }, '*');
                     
                     // Request the anchor point and grid data
                     console.log('Requesting data from parent window');
-                    window.opener.postMessage({ type: 'request-anchor' }, '*');
-                    window.opener.postMessage({ type: 'request-grid' }, '*');
+                    parentWindow.postMessage({ type: 'request-anchor' }, '*');
+                    parentWindow.postMessage({ type: 'request-grid' }, '*');
+                    
+                    // Also try broadcasting to document.referrer if available
+                    if (document.referrer) {
+                        console.log('Also broadcasting to referrer:', document.referrer);
+                        window.parent.postMessage({ type: 'helper-loaded' }, document.referrer);
+                        window.parent.postMessage({ type: 'request-anchor' }, document.referrer);
+                        window.parent.postMessage({ type: 'request-grid' }, document.referrer);
+                    }
                     
                     return true;
                 } catch (e) {
@@ -649,7 +912,25 @@
                 }
             } else {
                 console.warn('No parent window detected');
-                return false;
+                
+                // Try broadcasting to all potential parent windows
+                try {
+                    console.log('Broadcasting to all potential parent windows');
+                    window.parent.postMessage({ type: 'helper-loaded' }, '*');
+                    window.parent.postMessage({ type: 'request-anchor' }, '*');
+                    window.parent.postMessage({ type: 'request-grid' }, '*');
+                    
+                    if (window.opener) {
+                        window.opener.postMessage({ type: 'helper-loaded' }, '*');
+                        window.opener.postMessage({ type: 'request-anchor' }, '*');
+                        window.opener.postMessage({ type: 'request-grid' }, '*');
+                    }
+                    
+                    return true;
+                } catch (e) {
+                    console.error('Error broadcasting to potential parent windows:', e);
+                    return false;
+                }
             }
         }
         
@@ -676,6 +957,124 @@
             }, 500 * retryCount); // Increasing delay between retries
         }
         
+        // Fallback: If we don't get an anchor point after 5 seconds, try to use a default one
+        setTimeout(() => {
+            if (!anchorPoint) {
+                console.warn('No anchor point received after timeout, attempting to use default capture');
+                
+                // Create a dummy anchor point
+                anchorPoint = { x: 100, y: 100 };
+                xOffset = 0;
+                yOffset = 0;
+                
+                console.log('Using dummy anchor point:', anchorPoint);
+                
+                // Force an update
+                updateCanvas();
+                if (showPreview) {
+                    updatePreview();
+                }
+                
+                // Try one more time to request data
+                requestDataFromParent();
+            }
+        }, 5000);
+        
+        // Add a debug button to manually trigger data request
+        const debugButton = document.createElement('button');
+        debugButton.textContent = 'Request Data';
+        debugButton.style.position = 'absolute';
+        debugButton.style.top = '5px';
+        debugButton.style.right = '5px';
+        debugButton.style.zIndex = '1000';
+        debugButton.style.padding = '5px';
+        debugButton.style.fontSize = '10px';
+        debugButton.style.backgroundColor = '#4CAF50';
+        debugButton.style.color = 'white';
+        debugButton.style.border = 'none';
+        debugButton.style.borderRadius = '4px';
+        debugButton.style.cursor = 'pointer';
+        
+        debugButton.addEventListener('click', function() {
+            console.log('Manual data request triggered');
+            requestDataFromParent();
+        });
+        
+        document.body.appendChild(debugButton);
+        
+        // Add a debug display for anchor point
+        const debugDisplay = document.createElement('div');
+        debugDisplay.style.position = 'absolute';
+        debugDisplay.style.top = '35px';
+        debugDisplay.style.right = '5px';
+        debugDisplay.style.zIndex = '1000';
+        debugDisplay.style.padding = '5px';
+        debugDisplay.style.fontSize = '10px';
+        debugDisplay.style.backgroundColor = 'rgba(0, 0, 0, 0.7)';
+        debugDisplay.style.color = 'white';
+        debugDisplay.style.border = 'none';
+        debugDisplay.style.borderRadius = '4px';
+        debugDisplay.style.maxWidth = '200px';
+        debugDisplay.style.overflow = 'hidden';
+        debugDisplay.style.wordWrap = 'break-word';
+        
+        // Update the debug display every second
+        setInterval(function() {
+            // List all methods available in the Alt1 API
+            let alt1Methods = '';
+            let alt1Permissions = 'None';
+            
+            if (window.alt1) {
+                // Get methods
+                alt1Methods = Object.getOwnPropertyNames(window.alt1)
+                    .filter(prop => {
+                        try {
+                            return typeof window.alt1[prop] === 'function';
+                        } catch (e) {
+                            // Some properties might throw when accessed
+                            return false;
+                        }
+                    })
+                    .join(', ');
+                
+                if (alt1Methods.length > 100) {
+                    alt1Methods = alt1Methods.substring(0, 100) + '...';
+                }
+                
+                // Get permissions
+                const permInfo = getAlt1PermissionInfo();
+                alt1Permissions = Object.entries(permInfo)
+                    .map(([key, value]) => `${key}: ${value}`)
+                    .join(', ');
+                
+                if (alt1Permissions.length > 100) {
+                    alt1Permissions = alt1Permissions.substring(0, 100) + '...';
+                }
+            }
+            
+            // Check for A1lib
+            const a1libAvailable = typeof window.A1lib !== 'undefined';
+            
+            // Check if we're in development mode
+            const isDevelopment = window.location.hostname === 'localhost' || 
+                                 window.location.hostname === '127.0.0.1' ||
+                                 window.location.protocol === 'file:';
+            
+            debugDisplay.innerHTML = `
+                Anchor: ${anchorPoint ? `(${anchorPoint.x}, ${anchorPoint.y})` : 'None'}<br>
+                Offsets: x=${xOffset}, y=${yOffset}<br>
+                Outline: w=${outlineWidth}, h=${outlineHeight}<br>
+                Map Size: ${mapSize}<br>
+                Alt1: ${window.alt1 ? 'Available' : 'Not Available'}<br>
+                A1lib: ${a1libAvailable ? 'Available' : 'Not Available'}<br>
+                Dev Mode: ${isDevelopment ? 'Yes' : 'No'}<br>
+                Permissions: ${alt1Permissions}<br>
+                Alt1 Methods: ${alt1Methods || 'None'}
+            `;
+        }, 1000);
+        
+        document.body.appendChild(debugDisplay);
+        
         // If in Alt1, set up additional functionality
         if (isAlt1) {
             console.log("Running in Alt1 environment");
@@ -685,6 +1084,29 @@
         
         // Initialize the map when the page loads
         initMap();
+        
+        // Get Alt1 permission information
+        function getAlt1PermissionInfo() {
+            if (!window.alt1) return 'Alt1 not available';
+            
+            const permissions = {};
+            
+            // Check for known permission properties
+            const permissionProps = [
+                'permissionGameState',
+                'permissionOverlay',
+                'permissionGameChat',
+                'permissionPixel'
+            ];
+            
+            permissionProps.forEach(prop => {
+                if (prop in window.alt1) {
+                    permissions[prop] = window.alt1[prop];
+                }
+            });
+            
+            return permissions;
+        }
     </script>
 </body>
 </html> 

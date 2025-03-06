@@ -91,22 +91,22 @@
     </style>
 </head>
 <body>
-    <h1>Dungeon Grid Installation</h1>
-    <p>Click the button below to install the compact Dungeon Grid app in Alt1 Toolkit.</p>
+    <h1>Dungeoneering Gate Engine Installation</h1>
+    <p>Click the button below to install the Dungeoneering Gate Engine app in Alt1 Toolkit.</p>
     
     <div class="grid-preview"></div>
     
     <div class="features">
         <h2>Features:</h2>
         <ul>
-            <li>Compact 140x140 pixel grid for minimal screen space usage</li>
+            <li>Automatically read door text by hovering your mouse over it</li>
+            <li>Track your position in the dungeon with minimap integration</li>
             <li>Interactive grid for mapping dungeoneering layouts</li>
             <li>Place markers for important locations (keys, boss, start, gates)</li>
-            <li>Synchronizes with the main application</li>
         </ul>
     </div>
     
-    <a href="#" id="installButton" class="install-button">Install Dungeon Grid</a>
+    <a href="#" id="installButton" class="install-button">Install Dungeoneering Gate Engine</a>
     <div id="status" class="status"></div>
 
     <script>
@@ -116,51 +116,28 @@
             
             // Check if Alt1 is available
             if (window.alt1) {
+                // Tell alt1 about the app
+                // This makes alt1 show the add app button when running inside the embedded browser
+                // Also updates app settings if they are changed
+                alt1.identifyAppUrl("./appconfig.json");
                 statusElement.textContent = 'Alt1 Toolkit detected. You can install the app.';
             } else {
-                statusElement.textContent = 'Alt1 Toolkit not detected. Please install Alt1 Toolkit first.';
-            }
-            
-            // Set up the installation URL
-            installButton.addEventListener('click', function(e) {
-                e.preventDefault();
+                statusElement.textContent = 'Alt1 Toolkit not detected.';
                 
-                try {
-                    // Get the current URL
-                    const currentUrl = window.location.href;
-                    
-                    // Extract the base URL (up to the last directory)
-                    const baseUrl = currentUrl.substring(0, currentUrl.lastIndexOf('/') + 1);
-                    
-                    // Create the full path to the appconfig.json file
-                    let configUrl;
-                    if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
-                        // We're running on the development server
-                        configUrl = `${window.location.protocol}//${window.location.hostname}:9000/appconfig.json`;
-                    } else {
-                        // We're running on a production server
-                        configUrl = new URL('appconfig.json', baseUrl).href;
-                    }
-                    
-                    // Create the Alt1 addapp URL
-                    const addAppUrl = `alt1://addapp/${configUrl}`;
-                    
-                    // Log the URL for debugging
-                    console.log('Installing Alt1 app with URL:', addAppUrl);
-                    statusElement.textContent = 'Installing app...';
-                    
-                    // Open the URL
-                    window.location.href = addAppUrl;
-                    
-                    // Update status after a short delay
-                    setTimeout(function() {
-                        statusElement.textContent = 'Installation request sent. If the app doesn\'t appear in Alt1, please check the console for errors.';
-                    }, 2000);
-                } catch (error) {
-                    console.error('Error installing Alt1 app:', error);
-                    statusElement.textContent = 'Failed to install app. Please check the console for errors.';
-                }
-            });
+                // Create the installation URL for the main application
+                // Use the absolute path to ensure we're installing the correct app
+                const currentUrl = window.location.href;
+                const baseUrl = currentUrl.substring(0, currentUrl.lastIndexOf('/') + 1);
+                let addappurl = `alt1://addapp/${baseUrl}appconfig.json`;
+                
+                console.log('Alt1 installation URL:', addappurl);
+                
+                // Set up the installation URL
+                installButton.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    window.location.href = addappurl;
+                });
+            }
         });
     </script>
 </body>

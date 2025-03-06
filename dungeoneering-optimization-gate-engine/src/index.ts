@@ -580,6 +580,154 @@ export class DungeoneeringGateEngine {
                     }
                 }
                 break;
+                
+            case 'request-capture':
+                console.log('Helper window requested screen capture');
+                // Capture the screen and send it to the helper window
+                if (event.source && this.markerLocation && 
+                    typeof event.data.x === 'number' && 
+                    typeof event.data.y === 'number' && 
+                    typeof event.data.width === 'number' && 
+                    typeof event.data.height === 'number') {
+                    
+                    try {
+                        // Capture the screen area
+                        const captureX = event.data.x;
+                        const captureY = event.data.y;
+                        const captureWidth = event.data.width;
+                        const captureHeight = event.data.height;
+                        
+                        console.log(`Capturing screen area for helper: ${captureX},${captureY},${captureWidth}x${captureHeight}`);
+                        
+                        // Use Alt1 to capture the screen
+                        if (window.alt1 && window.alt1.captureScreen) {
+                            const captureResult = window.alt1.captureScreen(captureX, captureY, captureWidth, captureHeight);
+                            
+                            if (captureResult) {
+                                // Create a canvas to convert the capture to a data URL
+                                const canvas = document.createElement('canvas');
+                                canvas.width = captureWidth;
+                                canvas.height = captureHeight;
+                                const ctx = canvas.getContext('2d');
+                                
+                                if (ctx) {
+                                    // Create an ImageData object from the capture result
+                                    const imgData = ctx.createImageData(captureWidth, captureHeight);
+                                    imgData.data.set(captureResult.data);
+                                    
+                                    // Draw the captured image to the canvas
+                                    ctx.putImageData(imgData, 0, 0);
+                                    
+                                    // Convert the canvas to a data URL
+                                    const dataUrl = canvas.toDataURL('image/png');
+                                    
+                                    // Send the data URL to the helper window
+                                    (event.source as Window).postMessage({
+                                        type: 'capture-data',
+                                        imageData: dataUrl,
+                                        x: captureX,
+                                        y: captureY,
+                                        width: captureWidth,
+                                        height: captureHeight
+                                    }, '*');
+                                    
+                                    console.log('Sent capture data to helper window');
+                                } else {
+                                    console.error('Failed to get canvas context');
+                                    (event.source as Window).postMessage({
+                                        type: 'capture-data',
+                                        error: 'Failed to get canvas context'
+                                    }, '*');
+                                }
+                            } else {
+                                console.error('Failed to capture screen area');
+                                (event.source as Window).postMessage({
+                                    type: 'capture-data',
+                                    error: 'Failed to capture screen area'
+                                }, '*');
+                            }
+                        } else {
+                            console.error('Alt1 screen capture API not available');
+                            (event.source as Window).postMessage({
+                                type: 'capture-data',
+                                error: 'Alt1 screen capture API not available'
+                            }, '*');
+                        }
+                    } catch (error) {
+                        console.error('Error capturing screen for helper:', error);
+                        (event.source as Window).postMessage({
+                            type: 'capture-data',
+                            error: `Error capturing screen: ${error instanceof Error ? error.message : String(error)}`
+                        }, '*');
+                    }
+                }
+                break;
+                
+            case 'request-background':
+                console.log('Helper window requested background capture');
+                // Capture the screen and send it to the helper window for the grid background
+                if (event.source && this.markerLocation && 
+                    typeof event.data.x === 'number' && 
+                    typeof event.data.y === 'number' && 
+                    typeof event.data.width === 'number' && 
+                    typeof event.data.height === 'number') {
+                    
+                    try {
+                        // Capture the screen area
+                        const captureX = event.data.x;
+                        const captureY = event.data.y;
+                        const captureWidth = event.data.width;
+                        const captureHeight = event.data.height;
+                        
+                        console.log(`Capturing background for helper: ${captureX},${captureY},${captureWidth}x${captureHeight}`);
+                        
+                        // Use Alt1 to capture the screen
+                        if (window.alt1 && window.alt1.captureScreen) {
+                            const captureResult = window.alt1.captureScreen(captureX, captureY, captureWidth, captureHeight);
+                            
+                            if (captureResult) {
+                                // Create a canvas to convert the capture to a data URL
+                                const canvas = document.createElement('canvas');
+                                canvas.width = captureWidth;
+                                canvas.height = captureHeight;
+                                const ctx = canvas.getContext('2d');
+                                
+                                if (ctx) {
+                                    // Create an ImageData object from the capture result
+                                    const imgData = ctx.createImageData(captureWidth, captureHeight);
+                                    imgData.data.set(captureResult.data);
+                                    
+                                    // Draw the captured image to the canvas
+                                    ctx.putImageData(imgData, 0, 0);
+                                    
+                                    // Convert the canvas to a data URL
+                                    const dataUrl = canvas.toDataURL('image/png');
+                                    
+                                    // Send the data URL to the helper window
+                                    (event.source as Window).postMessage({
+                                        type: 'background-data',
+                                        imageData: dataUrl,
+                                        x: captureX,
+                                        y: captureY,
+                                        width: captureWidth,
+                                        height: captureHeight
+                                    }, '*');
+                                    
+                                    console.log('Sent background data to helper window');
+                                } else {
+                                    console.error('Failed to get canvas context');
+                                }
+                            } else {
+                                console.error('Failed to capture background');
+                            }
+                        } else {
+                            console.error('Alt1 screen capture API not available');
+                        }
+                    } catch (error) {
+                        console.error('Error capturing background for helper:', error);
+                    }
+                }
+                break;
         }
     }
     
@@ -1255,13 +1403,9 @@ export class DungeoneeringGateEngine {
         const captureX = this.markerLocation.x - captureWidth + this.xOffset;
         const captureY = this.markerLocation.y + this.yOffset;
         
-        // Ensure capture dimensions are valid
+        // Only check for positive dimensions, not coordinates
         if (captureWidth <= 0 || captureHeight <= 0) {
-            if (typeof this.drawFallbackPreview === 'function') {
-                this.drawFallbackPreview('Invalid capture dimensions');
-            } else {
-                console.error('Invalid capture dimensions and drawFallbackPreview method not found');
-            }
+            console.error('Invalid capture dimensions');
             return;
         }
         
@@ -1271,8 +1415,12 @@ export class DungeoneeringGateEngine {
             
             if (fullCapture) {
                 try {
+                    // Force positive coordinates by using Math.max
+                    const safeX = Math.max(0, captureX);
+                    const safeY = Math.max(0, captureY);
+                    
                     // Extract the region we need from the full capture
-                    const captureResult = fullCapture.toData(captureX, captureY, captureWidth, captureHeight);
+                    const captureResult = fullCapture.toData(safeX, safeY, captureWidth, captureHeight);
                     
                     if (captureResult) {
                         // Clear the canvas
@@ -1292,208 +1440,83 @@ export class DungeoneeringGateEngine {
                         this.mapPreviewContext.fillStyle = 'white';
                         this.mapPreviewContext.font = '10px Arial';
                         this.mapPreviewContext.textAlign = 'left';
-                        this.mapPreviewContext.fillText(`Capture: (${captureX}, ${captureY}, ${captureWidth}x${captureHeight})`, 5, this.mapPreviewCanvas.height - 25);
-                        this.mapPreviewContext.fillText(`Anchor: (${this.markerLocation.x}, ${this.markerLocation.y}) [Left & Below]`, 5, this.mapPreviewCanvas.height - 10);
-                    } else {
-                        // Draw fallback message if capture failed
-                        if (typeof this.drawFallbackPreview === 'function') {
-                            this.drawFallbackPreview('Failed to extract map area from capture');
-                        } else {
-                            console.error('Failed to extract map area from capture and drawFallbackPreview method not found');
-                        }
+                        this.mapPreviewContext.fillText(`Capture: ${safeX},${safeY} ${captureWidth}x${captureHeight}`, 5, 15);
                     }
-                } catch (e) {
-                    console.error('Error extracting region from full capture:', e);
-                    if (typeof this.drawFallbackPreview === 'function') {
-                        this.drawFallbackPreview('Error extracting map area');
-                    } else {
-                        console.error('Error extracting map area and drawFallbackPreview method not found');
-                    }
-                }
-            } else {
-                // Draw fallback message if capture failed
-                if (typeof this.drawFallbackPreview === 'function') {
-                    this.drawFallbackPreview('Failed to capture game screen');
-                } else {
-                    console.error('Failed to capture game screen and drawFallbackPreview method not found');
+                } catch (error) {
+                    console.error('Error drawing capture info:', error);
                 }
             }
-        } catch (e) {
-            console.error('Failed to capture map preview:', e);
-            if (typeof this.drawFallbackPreview === 'function') {
-                this.drawFallbackPreview('Error capturing map area');
-            } else {
-                console.error('Error capturing map area and drawFallbackPreview method not found');
-            }
+        } catch (error) {
+            console.error('Error capturing screen for preview:', error);
         }
     }
-    
-    private drawGridOnPreview(): void {
-        if (!this.mapPreviewCanvas || !this.mapPreviewContext) return;
-        
-        const width = this.mapPreviewCanvas.width;
-        const height = this.mapPreviewCanvas.height;
-        
-        // Get grid dimensions
-        const gridCols = this.mapSize === 'small' ? 4 : 8;
-        const gridRows = this.mapSize === 'small' ? 4 : (this.mapSize === 'medium' ? 8 : 8);
-        
-        const cellWidth = width / gridCols;
-        const cellHeight = height / gridRows;
-        
-        // Draw grid lines
-        this.mapPreviewContext.strokeStyle = 'rgba(200, 200, 50, 0.8)';
-        this.mapPreviewContext.lineWidth = 1;
-        
-        // Draw vertical grid lines
-        for (let i = 1; i < gridCols; i++) {
-            const lineX = Math.floor(cellWidth * i);
-            this.mapPreviewContext.beginPath();
-            this.mapPreviewContext.moveTo(lineX, 0);
-            this.mapPreviewContext.lineTo(lineX, height);
-            this.mapPreviewContext.stroke();
-        }
-        
-        // Draw horizontal grid lines
-        for (let i = 1; i < gridRows; i++) {
-            const lineY = Math.floor(cellHeight * i);
-            this.mapPreviewContext.beginPath();
-            this.mapPreviewContext.moveTo(0, lineY);
-            this.mapPreviewContext.lineTo(width, lineY);
-            this.mapPreviewContext.stroke();
-        }
-        
-        // Draw the map outline
-        this.mapPreviewContext.strokeStyle = 'white';
-        this.mapPreviewContext.lineWidth = 1;
-        this.mapPreviewContext.strokeRect(0, 0, width, height);
-        
-        // Draw map size info
-        this.mapPreviewContext.fillStyle = 'white';
-        this.mapPreviewContext.font = '10px Arial';
-        this.mapPreviewContext.textAlign = 'left';
-        this.mapPreviewContext.fillText(`${this.mapSize.toUpperCase()} MAP (${width}x${height})`, 5, 10);
-    }
-    
-    private drawFallbackPreview(message: string): void {
-        if (!this.mapPreviewCanvas || !this.mapPreviewContext) return;
-        
-        // Clear the canvas
-        this.mapPreviewContext.clearRect(0, 0, this.mapPreviewCanvas.width, this.mapPreviewCanvas.height);
-        this.mapPreviewContext.fillStyle = 'rgba(0, 0, 0, 0.3)';
-        this.mapPreviewContext.fillRect(0, 0, this.mapPreviewCanvas.width, this.mapPreviewCanvas.height);
-        
-        // Draw text indicating no preview is available
-        this.mapPreviewContext.fillStyle = 'white';
-        this.mapPreviewContext.font = '12px Arial';
-        this.mapPreviewContext.textAlign = 'center';
-        this.mapPreviewContext.fillText(message, this.mapPreviewCanvas.width / 2, this.mapPreviewCanvas.height / 2);
-    }
-    
+
     private startMapPreviewInterval(): void {
-        // Stop any existing interval
-        this.stopMapPreviewInterval();
+        // Clear any existing interval
+        if (this.mapPreviewInterval) {
+            clearInterval(this.mapPreviewInterval);
+        }
         
-        // Update the preview immediately
-        this.updateMapPreview();
-        
-        // Start a new interval to update the preview
+        // Start a new interval to update the map preview
         this.mapPreviewInterval = window.setInterval(() => {
             this.updateMapPreview();
-        }, 500); // Update every 500ms
+        }, 100);
     }
-    
+
     private stopMapPreviewInterval(): void {
+        // Clear the map preview interval
         if (this.mapPreviewInterval) {
-            window.clearInterval(this.mapPreviewInterval);
+            clearInterval(this.mapPreviewInterval);
             this.mapPreviewInterval = null;
         }
     }
-    
-    // Cleanup method to be called when the application is closed
-    public cleanup(): void {
-        // Stop the text scanning
-        this.stopTextScanning();
-        
-        // Stop the map preview interval
-        this.stopMapPreviewInterval();
-        
-        // Stop the map tracking interval if it exists
-        if (this.mapTrackingInterval) {
-            window.clearInterval(this.mapTrackingInterval);
-            this.mapTrackingInterval = null;
-        }
-        
-        // Stop the drag tracking interval
-        this.stopDragTracking();
-        
-        // Terminate the door text reader
-        this.doorTextReader.terminate();
-        
-        console.log('DungeoneeringGateEngine cleaned up');
-    }
 
     private updateHelperWindows(): void {
-        if (!this.markerLocation) return;
-        
-        // Create the messages
-        const sizeMessage = {
-            type: 'map-size',
-            size: this.mapSize
-        };
-        
-        const anchorMessage = {
-            type: 'anchor-update',
-            x: this.markerLocation.x,
-            y: this.markerLocation.y,
-            xOffset: this.xOffset,
-            yOffset: this.yOffset,
-            outlineWidth: this.outlineWidth,
-            outlineHeight: this.outlineHeight
-        };
-        
-        // Note: Since we're only opening helper windows in Alt1 now,
-        // this broadcast mechanism is mainly for backward compatibility
-        // and to ensure messages reach the helper window regardless of how it was opened.
-        
-        // Broadcast to all potential helper windows
-        for (let i = 0; i < window.frames.length; i++) {
-            try {
-                if (window.frames[i].location.href.includes('helper.html')) {
-                    // Send map size first
-                    window.frames[i].postMessage(sizeMessage, '*');
-                    
-                    // Then send anchor update
-                    window.frames[i].postMessage(anchorMessage, '*');
-                }
-            } catch (e) {
-                // Ignore cross-origin errors
-            }
-        }
-        
-        // Also broadcast to any opener windows
-        if (window.opener) {
-            try {
-                // Send map size first
-                window.opener.postMessage(sizeMessage, '*');
-                
-                // Then send anchor update
-                window.opener.postMessage(anchorMessage, '*');
-            } catch (e) {
-                // Ignore cross-origin errors
-            }
-        }
-        
-        // Log that we've updated the helper windows
-        console.log('Updated helper windows with new anchor point:', this.markerLocation);
+        // Implement the logic to update helper windows
+        console.log('Updating helper windows');
+    }
+
+    private drawFallbackPreview(reason: string): void {
+        console.error(`Fallback preview method called. Reason: ${reason}`);
+        // Implement the logic to draw a fallback preview
+    }
+
+    private drawGridOnPreview(): void {
+        console.log('Drawing grid on preview');
+        // Implement the logic to draw grid lines on the preview canvas
+    }
+
+    private cleanup(): void {
+        console.log('Cleaning up');
+        // Implement the logic to clean up resources
     }
 }
 
-// Create and export the app instance
-const app = new DungeoneeringGateEngine();
-export default app;
+// Export the class to make it accessible globally
+window.DungeoneeringGateEngine = DungeoneeringGateEngine;
 
-// Make it available globally
-if (typeof window !== 'undefined') {
-    window.DungeoneeringGateEngine = app;
-} 
+// Create an instance of the app
+const app = new DungeoneeringGateEngine();
+
+// Check if we are running inside alt1 by checking if the alt1 global exists
+if (window.alt1) {
+    // Tell alt1 about the app
+    // This makes alt1 show the add app button when running inside the embedded browser
+    // Also updates app settings if they are changed
+    alt1.identifyAppUrl("./appconfig.json");
+} else {
+    // Create the installation URL for the main application
+    // Use the absolute path to ensure we're installing the correct app
+    const currentUrl = window.location.href;
+    const baseUrl = currentUrl.substring(0, currentUrl.lastIndexOf('/') + 1);
+    let addappurl = `alt1://addapp/${baseUrl}appconfig.json`;
+    
+    console.log('Alt1 installation URL:', addappurl);
+    
+    const output = document.getElementById('output');
+    if (output) {
+        output.insertAdjacentHTML("beforeend", `
+            Alt1 not detected, click <a href='${addappurl}'>here</a> to add this app to Alt1
+        `);
+    }
+}

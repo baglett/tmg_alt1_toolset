@@ -57,10 +57,6 @@ module.exports = {
                     from: "index.html",
                     to: "index.html"
                 },
-                { 
-                    from: "../appconfig.json",
-                    to: "appconfig.json"
-                },
                 {
                     from: "../assets",
                     to: "assets"
@@ -77,6 +73,10 @@ module.exports = {
                 {
                     from: "appconfig.json",
                     to: "appconfig.json"
+                },
+                {
+                    from: "helperconfig.json",
+                    to: "helperconfig.json"
                 },
                 {
                     from: "icon.png",
