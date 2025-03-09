@@ -512,6 +512,22 @@
             justify-content: center;
         }
         
+        .screen-capture-controls {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-top: 2px;
+        }
+        
+        .capture-active {
+            color: #4CAF50;
+            font-weight: bold;
+        }
+        
+        .capture-inactive {
+            color: #aaaaaa;
+        }
+        
         #capturePreviewCanvas {
             border: 2px solid #43b581;
             background-color: #000;
@@ -648,6 +664,10 @@
                     <!-- Screen Capture Preview Section -->
                     <div class="form-group">
                         <label>Screen Capture:</label>
+                        <div class="screen-capture-controls">
+                            <button id="toggle-capture-button" class="btn" onclick="toggleCapturePreview()">Stop Capture</button>
+                            <span id="capture-status" class="status-text capture-active">Active</span>
+                        </div>
                         <div class="screen-capture-preview">
                             <canvas id="capturePreviewCanvas" width="280" height="280"></canvas>
                         </div>
@@ -815,7 +835,8 @@
         let settings = {
             dungeonSize: "small", // Default value
             mapState: {}, // Store cell states here
-            anchorPoint: null // Store anchor point coordinates
+            anchorPoint: null, // Store anchor point coordinates
+            captureActive: true // Default to active
         };
 
         // Function to save a specific setting
@@ -1518,6 +1539,54 @@
         
         // Screen capture preview functions
         let capturePreviewInterval = null;
+        let isCaptureActive = true;
+        
+        // Function to toggle capture preview on/off
+        function toggleCapturePreview() {
+            isCaptureActive = !isCaptureActive;
+            
+            // Update UI
+            const captureStatus = document.getElementById('capture-status');
+            const toggleButton = document.getElementById('toggle-capture-button');
+            
+            if (captureStatus) {
+                captureStatus.textContent = isCaptureActive ? "Active" : "Inactive";
+                captureStatus.className = "status-text " + (isCaptureActive ? "capture-active" : "capture-inactive");
+            }
+            
+            if (toggleButton) {
+                toggleButton.textContent = isCaptureActive ? "Stop Capture" : "Start Capture";
+            }
+            
+            // Start or stop the capture preview
+            if (isCaptureActive) {
+                startCapturePreview();
+            } else {
+                stopCapturePreview();
+                
+                // Clear the canvas and show "Capture stopped" message
+                const canvas = document.getElementById('capturePreviewCanvas');
+                if (canvas) {
+                    const ctx = canvas.getContext('2d');
+                    ctx.clearRect(0, 0, canvas.width, canvas.height);
+                    ctx.fillStyle = '#202225';
+                    ctx.fillRect(0, 0, canvas.width, canvas.height);
+                    ctx.fillStyle = '#dcddde';
+                    ctx.font = '14px Arial';
+                    ctx.textAlign = 'center';
+                    ctx.textBaseline = 'middle';
+                    ctx.fillText('Capture stopped', canvas.width / 2, canvas.height / 2);
+                    
+                    // Draw a border
+                    ctx.strokeStyle = '#43b581';
+                    ctx.lineWidth = 2;
+                    ctx.strokeRect(0, 0, canvas.width, canvas.height);
+                }
+            }
+            
+            // Save the capture state in settings
+            saveSetting('captureActive', isCaptureActive);
+        }
         
         // Function to initialize screen capture preview
         function initScreenCapturePreview() {
@@ -1527,8 +1596,42 @@
             // Set initial canvas size based on dungeon size
             updateCapturePreviewSize();
             
-            // Start the preview update interval
-            startCapturePreview();
+            // Load capture active state from settings
+            isCaptureActive = settings.captureActive !== undefined ? settings.captureActive : true;
+            
+            // Update UI to match the current state
+            const captureStatus = document.getElementById('capture-status');
+            const toggleButton = document.getElementById('toggle-capture-button');
+            
+            if (captureStatus) {
+                captureStatus.textContent = isCaptureActive ? "Active" : "Inactive";
+                captureStatus.className = "status-text " + (isCaptureActive ? "capture-active" : "capture-inactive");
+            }
+            
+            if (toggleButton) {
+                toggleButton.textContent = isCaptureActive ? "Stop Capture" : "Start Capture";
+            }
+            
+            // Start the preview if active
+            if (isCaptureActive) {
+                startCapturePreview();
+            } else {
+                // Show "Capture stopped" message
+                const ctx = canvas.getContext('2d');
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+                ctx.fillStyle = '#202225';
+                ctx.fillRect(0, 0, canvas.width, canvas.height);
+                ctx.fillStyle = '#dcddde';
+                ctx.font = '14px Arial';
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'middle';
+                ctx.fillText('Capture stopped', canvas.width / 2, canvas.height / 2);
+                
+                // Draw a border
+                ctx.strokeStyle = '#43b581';
+                ctx.lineWidth = 2;
+                ctx.strokeRect(0, 0, canvas.width, canvas.height);
+            }
         }
         
         // Function to start capture preview updates
@@ -1582,6 +1685,9 @@
         
         // Function to update the capture preview
         function updateCapturePreview() {
+            // Skip if capture is not active
+            if (!isCaptureActive) return;
+            
             if (!window.alt1 || !window.alt1.permissionPixel) {
                 console.log("Alt1 not available or pixel permission not granted");
                 return;
@@ -1660,6 +1766,9 @@
         
         // Function to update game overlay
         function updateGameOverlay(region) {
+            // Skip if capture is not active
+            if (!isCaptureActive) return;
+            
             if (!window.alt1 || !window.alt1.permissionOverlay) {
                 return;
             }
