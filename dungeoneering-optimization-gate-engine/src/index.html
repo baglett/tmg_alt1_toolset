@@ -597,7 +597,7 @@
                     <div class="form-group">
                         <label>Anchor Point:</label>
                         <div class="anchor-point-controls">
-                            <button id="set-anchor-button" class="btn" onclick="startAnchorPointPlacement()">Set Anchor Point</button>
+                            <button id="set-anchor-button" class="btn" onclick="startAnchorPointPlacement()">Set Anchor</button>
                             <span id="anchor-status" class="status-text">Not set</span>
                         </div>
                         <div id="anchor-coordinates" class="coordinates-display"></div>
@@ -1356,7 +1356,7 @@
             }
             
             if (setAnchorButton) {
-                setAnchorButton.textContent = "Set Anchor Point";
+                setAnchorButton.textContent = "Set Anchor";
                 setAnchorButton.onclick = startAnchorPointPlacement;
             }
             
