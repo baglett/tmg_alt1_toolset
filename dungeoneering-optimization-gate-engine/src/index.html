@@ -288,19 +288,16 @@
         }
         .alt1-install-link {
             display: inline-block;
-            background-color: #5865f2;
+            background-color: #7289da;
             color: white;
-            padding: 3px 6px;
+            padding: 5px 10px;
             border-radius: 3px;
             text-decoration: none;
             font-weight: bold;
-            margin-top: 3px;
-            transition: background-color 0.3s;
-            font-size: 11px;
+            transition: background-color 0.2s;
         }
         .alt1-install-link:hover {
-            background-color: #4752c4;
-            text-decoration: none;
+            background-color: #5b6eae;
         }
         
         /* Context Menu Styles */
@@ -498,18 +495,68 @@
 
         /* Settings form styles */
         .settings-form {
-            max-width: 500px;
-            margin-top: 5px;
-            padding: 0 5px;
+            padding: 15px;
+            background-color: #2f3136;
+            border-radius: 5px;
+            margin-bottom: 20px;
         }
-
+        
+        /* Screen Capture Preview styles */
+        .screen-capture-preview {
+            margin-top: 10px;
+            border: 1px solid #4f545c;
+            border-radius: 4px;
+            padding: 10px;
+            background-color: #202225;
+            display: flex;
+            justify-content: center;
+        }
+        
+        #capturePreviewCanvas {
+            border: 2px solid #43b581;
+            background-color: #000;
+            max-width: 100%;
+            height: auto;
+        }
+        
+        /* Alt1 Status styles */
+        #alt1-status-indicator {
+            margin-top: 5px;
+        }
+        
+        .status-item {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 4px;
+        }
+        
+        .status-label {
+            font-weight: bold;
+        }
+        
+        .status-value {
+            padding: 2px 6px;
+            border-radius: 3px;
+        }
+        
+        .status-ok {
+            background-color: #43b581;
+            color: #fff;
+        }
+        
+        .status-error {
+            background-color: #f04747;
+            color: #fff;
+        }
+        
+        /* Form group styles */
         .form-group {
             margin-bottom: 6px;
             padding: 5px;
             background-color: #2f3136;
             border-radius: 3px;
         }
-
+        
         .form-group label {
             display: block;
             margin-bottom: 2px;
@@ -517,7 +564,7 @@
             font-size: 12px;
             color: #b9bbbe;
         }
-
+        
         .form-group select {
             width: 100%;
             padding: 4px;
@@ -527,12 +574,12 @@
             border-radius: 3px;
             font-size: 12px;
         }
-
+        
         .form-group select:focus {
             outline: none;
             border-color: #5865f2;
         }
-
+        
         .btn {
             padding: 4px 8px;
             background-color: #5865f2;
@@ -545,14 +592,9 @@
             min-width: 90px;
             text-align: center;
         }
-
+        
         .btn:hover {
             background-color: #4752c4;
-        }
-
-        /* Alt1 Status styles */
-        #alt1-status-section {
-            margin-bottom: 2px;
         }
     </style>
 </head>
@@ -602,6 +644,15 @@
                         </div>
                         <div id="anchor-coordinates" class="coordinates-display"></div>
                     </div>
+                    
+                    <!-- Screen Capture Preview Section -->
+                    <div class="form-group">
+                        <label>Screen Capture:</label>
+                        <div class="screen-capture-preview">
+                            <canvas id="capturePreviewCanvas" width="280" height="280"></canvas>
+                        </div>
+                    </div>
+                    
                     <div class="form-group" id="alt1-status-section">
                         <label>Alt1 Status:</label>
                         <div id="alt1-status-indicator">
@@ -690,10 +741,7 @@
                 
                 // Update the status indicator
                 statusIndicatorDiv.innerHTML = `
-                    <div class="status-row">
-                        <span class="status-indicator detected"></span>
-                        <span class="status-text detected">Detected</span>
-                    </div>
+                    <div class="status-item"><span class="status-label">Alt1:</span> <span class="status-value status-ok">Detected</span></div>
                 `;
             } else {
                 // Alt1 not detected, create installation link
@@ -703,11 +751,7 @@
                 
                 // Update the status indicator
                 statusIndicatorDiv.innerHTML = `
-                    <div class="status-row">
-                        <span class="status-indicator not-detected"></span>
-                        <span class="status-text not-detected">Not Detected</span>
-                        <a href='${addappurl}' class="alt1-install-link">Install</a>
-                    </div>
+                    <div class="status-item"><span class="status-label">Alt1:</span> <span class="status-value status-error">Not Detected</span></div>
                 `;
             }
         }
@@ -809,6 +853,7 @@
         // Function to update dungeon size
         function updateDungeonSize(value) {
             saveSetting('dungeonSize', value);
+            updateCapturePreviewSize();
         }
 
         // Function to update map size based on settings
@@ -1399,24 +1444,25 @@
         }
 
         // Load settings and initialize the app on page load
-        window.onload = function() {
-            console.log("Page fully loaded");
-            
+        document.addEventListener('DOMContentLoaded', function() {
             // Try to load saved settings
             loadSettings();
             
             // Update anchor point display
             updateAnchorPointDisplay();
             
+            // Initialize Alt1 status
+            updateAlt1Status();
+            
+            // Initialize screen capture preview
+            initScreenCapturePreview();
+            
             // Check if we're running in Alt1
             if (window.alt1) {
                 console.log("Running in Alt1 browser");
                 document.body.classList.add('alt1-mode');
             }
-        };
-
-        // Add this at the end of the script section to ensure event listeners are properly set up
-        document.addEventListener('DOMContentLoaded', function() {
+            
             console.log("Re-initializing context menu event listeners");
             
             // Add right-click event listeners to all grid cells
@@ -1429,6 +1475,221 @@
                 });
             });
         });
+        
+        // Function to update Alt1 status
+        function updateAlt1Status() {
+            const statusIndicator = document.getElementById('alt1-status-indicator');
+            if (!statusIndicator) return;
+            
+            if (window.alt1) {
+                let statusHTML = '<div class="status-item"><span class="status-label">Alt1:</span> <span class="status-value status-ok">Detected</span></div>';
+                
+                // Check pixel permission
+                statusHTML += '<div class="status-item"><span class="status-label">Pixel Permission:</span> ';
+                statusHTML += window.alt1.permissionPixel ? 
+                    '<span class="status-value status-ok">Granted</span>' : 
+                    '<span class="status-value status-error">Not Granted</span>';
+                statusHTML += '</div>';
+                
+                // Check overlay permission
+                statusHTML += '<div class="status-item"><span class="status-label">Overlay Permission:</span> ';
+                statusHTML += window.alt1.permissionOverlay ? 
+                    '<span class="status-value status-ok">Granted</span>' : 
+                    '<span class="status-value status-error">Not Granted</span>';
+                statusHTML += '</div>';
+                
+                statusIndicator.innerHTML = statusHTML;
+            } else {
+                // Generate Alt1 install URL
+                const appUrl = encodeURIComponent(window.location.href);
+                const addappurl = `alt1://addapp/${appUrl}`;
+                
+                statusIndicator.innerHTML = `
+                    <div class="status-item">
+                        <span class="status-label">Alt1:</span> 
+                        <span class="status-value status-error">Not Detected</span>
+                    </div>
+                    <div class="status-item">
+                        <a href='${addappurl}' class="alt1-install-link">Install in Alt1</a>
+                    </div>
+                `;
+            }
+        }
+        
+        // Screen capture preview functions
+        let capturePreviewInterval = null;
+        
+        // Function to initialize screen capture preview
+        function initScreenCapturePreview() {
+            const canvas = document.getElementById('capturePreviewCanvas');
+            if (!canvas) return;
+            
+            // Set initial canvas size based on dungeon size
+            updateCapturePreviewSize();
+            
+            // Start the preview update interval
+            startCapturePreview();
+        }
+        
+        // Function to start capture preview updates
+        function startCapturePreview() {
+            if (capturePreviewInterval) {
+                clearInterval(capturePreviewInterval);
+            }
+            
+            capturePreviewInterval = setInterval(updateCapturePreview, 1000); // Update every second
+            updateCapturePreview(); // Initial update
+        }
+        
+        // Function to stop capture preview updates
+        function stopCapturePreview() {
+            if (capturePreviewInterval) {
+                clearInterval(capturePreviewInterval);
+                capturePreviewInterval = null;
+            }
+        }
+        
+        // Function to update capture preview size based on dungeon size
+        function updateCapturePreviewSize() {
+            const canvas = document.getElementById('capturePreviewCanvas');
+            if (!canvas) return;
+            
+            // Set canvas size based on dungeon size
+            switch(settings.dungeonSize) {
+                case 'small':
+                    canvas.width = 140;
+                    canvas.height = 140;
+                    break;
+                case 'medium':
+                    canvas.width = 140;
+                    canvas.height = 280;
+                    break;
+                case 'large':
+                    canvas.width = 280;
+                    canvas.height = 280;
+                    break;
+            }
+            
+            // Clear the canvas
+            const ctx = canvas.getContext('2d');
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            
+            // Draw a border
+            ctx.strokeStyle = '#43b581';
+            ctx.lineWidth = 2;
+            ctx.strokeRect(0, 0, canvas.width, canvas.height);
+        }
+        
+        // Function to update the capture preview
+        function updateCapturePreview() {
+            if (!window.alt1 || !window.alt1.permissionPixel) {
+                console.log("Alt1 not available or pixel permission not granted");
+                return;
+            }
+            
+            const canvas = document.getElementById('capturePreviewCanvas');
+            if (!canvas) return;
+            
+            // Check if anchor point is set
+            if (!settings.anchorPoint) {
+                const ctx = canvas.getContext('2d');
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+                ctx.fillStyle = '#202225';
+                ctx.fillRect(0, 0, canvas.width, canvas.height);
+                ctx.fillStyle = '#dcddde';
+                ctx.font = '14px Arial';
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'middle';
+                ctx.fillText('Set anchor point first', canvas.width / 2, canvas.height / 2);
+                return;
+            }
+            
+            try {
+                // Calculate capture region (anchor point is top-right corner)
+                const captureRegion = getCaptureRegion();
+                
+                // Capture the screen
+                const img = window.a1lib.captureHoldFullRs();
+                if (!img) {
+                    console.error("Failed to capture screen");
+                    return;
+                }
+                
+                // Extract the region
+                const imgData = img.toData(
+                    captureRegion.x, 
+                    captureRegion.y, 
+                    captureRegion.width, 
+                    captureRegion.height
+                );
+                
+                // Draw to canvas
+                const ctx = canvas.getContext('2d');
+                ctx.putImageData(imgData, 0, 0);
+                
+                // Draw a border
+                ctx.strokeStyle = '#43b581';
+                ctx.lineWidth = 2;
+                ctx.strokeRect(0, 0, canvas.width, canvas.height);
+                
+                // Draw overlay in game
+                updateGameOverlay(captureRegion);
+            } catch (error) {
+                console.error("Error updating capture preview:", error);
+            }
+        }
+        
+        // Function to calculate capture region based on anchor point
+        function getCaptureRegion() {
+            // Get canvas dimensions
+            const canvas = document.getElementById('capturePreviewCanvas');
+            const width = canvas.width;
+            const height = canvas.height;
+            
+            // Anchor point is top-right corner of capture area
+            const x = settings.anchorPoint.x - width;
+            const y = settings.anchorPoint.y;
+            
+            return {
+                x: x,
+                y: y,
+                width: width,
+                height: height
+            };
+        }
+        
+        // Function to update game overlay
+        function updateGameOverlay(region) {
+            if (!window.alt1 || !window.alt1.permissionOverlay) {
+                return;
+            }
+            
+            try {
+                // Clear previous overlay
+                window.alt1.overLayClearGroup("capture_preview_overlay");
+                
+                // Set overlay group
+                window.alt1.overLaySetGroup("capture_preview_overlay");
+                
+                // Draw rectangle overlay
+                window.alt1.overLayRect(
+                    0x00FF00, // Green color
+                    region.x,
+                    region.y,
+                    region.width,
+                    region.height,
+                    2000, // Duration in ms
+                    2 // Line thickness
+                );
+                
+                // Refresh the overlay
+                window.alt1.overLayRefreshGroup("capture_preview_overlay");
+            } catch (error) {
+                console.warn("Error updating game overlay:", error);
+            }
+        }
     </script>
+    <!-- Include the bundled JavaScript file -->
+    <script src="index.bundle.js"></script>
 </body>
 </html>

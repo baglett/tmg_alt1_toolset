@@ -1,6 +1,8 @@
 // Import Alt1 dependencies
 import * as a1lib from "@alt1/base";
 
+// Expose a1lib to the window object
+(window as any).a1lib = a1lib;
 
 // Initialize Alt1 detection
 if (window.alt1) {
@@ -15,8 +17,6 @@ if (window.alt1) {
     console.log("Alt1 not detected. The app will still function but cannot interact with the game.");
     document.body.classList.add("alt1-missing");
 }
-
-
 
 // Log when TypeScript is loaded
 console.log("TypeScript module loaded");
