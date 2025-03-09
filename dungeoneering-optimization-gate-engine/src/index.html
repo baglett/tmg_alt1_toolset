@@ -1,404 +1,1434 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-    <title>Dungeoneering Gate Engine</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dungeoneering Optimization Gate Engine</title>
     <style>
         body {
             font-family: Arial, sans-serif;
             margin: 0;
-            padding: 15px;
-            background: #2b2b2b;
-            color: #ffffff;
-            text-align: center;
-            max-width: 500px;
-            margin: 0 auto;
+            padding: 0;
+            background-color: #36393f;
+            color: #dcddde;
+            overflow: hidden; /* Prevent scrollbars */
         }
-        .title-container {
-            margin-bottom: 15px;
-        }
-        .title {
-            font-size: 20px;
-            display: inline;
-            margin-right: 5px;
-        }
-        .version {
-            background: #4CAF50;
-            color: white;
-            padding: 2px 6px;
-            border-radius: 3px;
-            font-size: 12px;
-        }
+        
+        /* Main container */
         .container {
-            margin: 10px auto;
-            padding: 10px;
-            background: rgba(0, 0, 0, 0.3);
-            border-radius: 4px;
-            width: 100%;
-            box-sizing: border-box;
+            display: flex;
+            height: 100vh;
+            width: 100vw;
+            overflow: hidden;
         }
-        #text-output {
-            margin: 10px auto;
-            padding: 10px;
-            background: rgba(0, 0, 0, 0.3);
-            border-radius: 4px;
-            min-height: 30px;
-            white-space: pre-wrap;
-            font-size: 16px;
-            width: 100%;
-            box-sizing: border-box;
-            text-align: left;
+        
+        /* Sidebar styles */
+        .sidebar {
+            width: 30px;
+            background-color: #2f3136;
+            border-right: 1px solid #202225;
+            flex-shrink: 0;
         }
-        .button {
-            background: #4CAF50;
-            color: white;
-            padding: 10px 20px;
-            border: none;
-            border-radius: 4px;
-            cursor: pointer;
-            font-size: 16px;
-            margin: 10px auto;
-            display: block;
-            width: 200px;
-            transition: background-color 0.3s;
+        
+        /* Header section of sidebar */
+        .sidebar-header {
+            padding: 6px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            border-bottom: 1px solid #202225;
         }
-        .button:hover {
-            background: #45a049;
-        }
-        .button:disabled {
-            background: #cccccc;
-            cursor: not-allowed;
-        }
-        .button.active {
-            background: #ff4444;
-        }
-        .button.active:hover {
-            background: #e53935;
-        }
-        .section-title {
-            font-size: 16px;
-            margin-top: 10px;
-            margin-bottom: 5px;
-            text-align: left;
-        }
-        .info-text {
-            font-size: 14px;
-            color: #aaaaaa;
-            margin-bottom: 5px;
-            text-align: left;
-        }
-        footer {
-            margin-top: 20px;
-            font-size: 12px;
-            color: #888888;
-        }
-        .loading-indicator {
+        
+        /* App title in sidebar */
+        .sidebar-title {
             display: none;
-            margin: 10px auto;
+        }
+        
+        /* Navigation links container */
+        .nav-links {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+        
+        /* Individual nav items */
+        .nav-item {
+            padding: 6px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .nav-item:hover {
+            background-color: #40444b;
+        }
+        
+        .nav-item.active {
+            background-color: #5865f2;
+        }
+        
+        /* Icon in nav items */
+        .nav-icon {
+            font-size: 12px;
+            min-width: 12px;
             text-align: center;
         }
-        .loading-indicator.visible {
-            display: block;
+        
+        /* Text in nav items */
+        .nav-text {
+            display: none;
         }
-        .spinner {
-            border: 4px solid rgba(0, 0, 0, 0.1);
-            width: 36px;
-            height: 36px;
-            border-radius: 50%;
-            border-left-color: #4CAF50;
-            animation: spin 1s linear infinite;
-            margin: 0 auto 10px;
+        
+        /* Main content area */
+        .content {
+            flex: 1;
+            padding: 5px;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
         }
-        @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
+        
+        /* Content area in compact mode */
+        .compact-mode .content {
+            padding: 0;
         }
-        @keyframes pulse {
-            0% { opacity: 0.5; }
-            50% { opacity: 1; }
-            100% { opacity: 0.5; }
+        
+        /* View containers */
+        .view {
+            display: none;
+            overflow: hidden;
+        }
+        
+        .view.active {
+            display: flex;
+            flex-direction: column;
+            height: 100%;
+        }
+        
+        /* Map view in compact mode */
+        .compact-mode #map-view {
+            padding: 0;
+            margin: 0;
+        }
+
+        /* Map wrapper in compact mode */
+        .compact-mode .map-wrapper {
+            padding: 0;
+            margin: 0;
+        }
+
+        /* View header styles */
+        .view-header {
+            margin: 0 0 5px 0;
+            font-size: 16px;
+            text-align: center;
+            padding-bottom: 3px;
+            border-bottom: 1px solid #40444b;
+        }
+
+        .map-wrapper {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            flex: 1;
+            overflow: hidden;
+            padding: 0;
+            margin: 0;
+        }
+
+        .map-container {
+            background-color: #202225;
+            border: 1px solid #40444b;
+            position: relative;
+            overflow: hidden;
+            transition: width 0.3s, height 0.3s;
+            cursor: pointer;
+            flex-shrink: 0;
+            flex-grow: 0;
+            padding: 0;
+            margin: 0;
+        }
+
+        /* In compact mode, remove border */
+        .compact-mode .map-container {
+            border: none;
+        }
+
+        .map-container.small {
+            width: 140px;
+            height: 140px;
+            min-width: 140px;
+            min-height: 140px;
+            max-width: 140px;
+            max-height: 140px;
+        }
+
+        .map-container.medium {
+            width: 140px;
+            height: 280px;
+            min-width: 140px;
+            min-height: 280px;
+            max-width: 140px;
+            max-height: 280px;
+        }
+
+        .map-container.large {
+            width: 280px;
+            height: 280px;
+            min-width: 280px;
+            min-height: 280px;
+            max-width: 280px;
+            max-height: 280px;
+        }
+
+        .map-grid {
+            display: grid;
+            width: 100%;
+            height: 100%;
+            padding: 0;
+            margin: 0;
+            gap: 0;
+        }
+
+        .map-grid.small {
+            grid-template-columns: repeat(4, 35px);
+            grid-template-rows: repeat(4, 35px);
+        }
+
+        .map-grid.medium {
+            grid-template-columns: repeat(4, 35px);
+            grid-template-rows: repeat(8, 35px);
+        }
+
+        .map-grid.large {
+            grid-template-columns: repeat(8, 35px);
+            grid-template-rows: repeat(8, 35px);
+        }
+
+        .grid-cell {
+            border: 1px solid #40444b;
+            background-color: #2f3136;
+            width: 35px;
+            height: 35px;
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        /* Alt1 specific styles */
+        .alt1-info {
+            font-size: 12px;
+            color: #a0a0a0;
+            margin-top: 5px;
+            text-align: center;
+        }
+
+        /* Save feedback message */
+        .save-feedback {
+            font-size: 12px;
+            color: #4CAF50;
+            margin-top: 5px;
+            height: 16px;
+            transition: opacity 0.5s;
+            opacity: 0;
+            text-align: center;
+        }
+        
+        .save-feedback.visible {
+            opacity: 1;
+        }
+
+        /* Compact mode for small windows */
+        .compact-mode .view-header {
+            font-size: 14px;
+            margin-bottom: 3px;
+        }
+
+        .compact-mode .map-info {
+            font-size: 11px;
+            margin-top: 3px;
+        }
+
+        .compact-mode .alt1-info {
+            display: none;
+        }
+        
+        /* Alt1 Status Indicator Styles */
+        .status-row {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            margin-top: 2px;
         }
         .status-indicator {
             display: inline-block;
-            width: 10px;
-            height: 10px;
+            width: 8px;
+            height: 8px;
             border-radius: 50%;
-            margin-right: 8px;
         }
-        .status-indicator.found {
+        .status-indicator.detected {
             background-color: #4CAF50;
+            box-shadow: 0 0 3px #4CAF50;
         }
-        .status-indicator.not-found {
+        .status-indicator.not-detected {
             background-color: #ff4444;
+            box-shadow: 0 0 3px #ff4444;
         }
-        .status-indicator.searching {
-            background-color: #FFA500;
-            animation: pulse 1s infinite;
+        .status-text {
+            font-weight: bold;
+            font-size: 11px;
         }
-        #marker-status {
-            margin: 10px 0;
-            padding: 10px;
-            background: rgba(0, 0, 0, 0.3);
-            border-radius: 4px;
-            text-align: left;
+        .status-text.detected {
+            color: #4CAF50;
         }
-        #marker-status.success {
+        .status-text.not-detected {
+            color: #ff4444;
+        }
+        .alt1-install-link {
+            display: inline-block;
+            background-color: #5865f2;
+            color: white;
+            padding: 3px 6px;
+            border-radius: 3px;
+            text-decoration: none;
+            font-weight: bold;
+            margin-top: 3px;
+            transition: background-color 0.3s;
+            font-size: 11px;
+        }
+        .alt1-install-link:hover {
+            background-color: #4752c4;
+            text-decoration: none;
+        }
+        
+        /* Context Menu Styles */
+        .context-menu {
+            position: absolute;
+            background-color: #36393f;
+            border: 1px solid #202225;
+            border-radius: 3px;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.5);
+            z-index: 1000;
+            display: none;
+            overflow: hidden;
+            max-width: 140px; /* Reduced from 160px */
+            font-size: 11px; /* Smaller font size */
+            width: auto; /* Allow menu to shrink to content */
+        }
+        
+        .context-menu.visible {
+            display: block;
+        }
+        
+        .context-menu-section {
+            padding: 1px; /* Minimal padding */
+            border-bottom: 1px solid #202225;
+        }
+        
+        .context-menu-section:last-child {
+            border-bottom: none;
+        }
+        
+        .context-menu-title {
+            font-size: 10px; /* Smaller title */
+            color: #b9bbbe;
+            margin: 1px 0; /* Minimal margin */
+            font-weight: bold;
+            text-align: center; /* Center the title */
+        }
+        
+        .color-options {
+            display: flex;
+            flex-direction: column; /* Stack rows vertically */
+            gap: 1px; /* Minimal gap */
+            align-items: center; /* Center items */
+        }
+        
+        .color-row {
+            display: flex;
+            flex-direction: row;
+            gap: 2px;
+            width: 100%;
+        }
+        
+        .color-option {
+            width: 60px; /* Reduced from 70px */
+            height: 16px; /* Reduced from 18px */
+            border-radius: 2px;
+            cursor: pointer;
+            border: 1px solid #202225;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            margin: 1px 0; /* Vertical margin only */
+            font-size: 9px; /* Reduced from 10px */
+            padding: 0; /* No padding */
+            text-align: center; /* Center text */
+            flex: 1; /* Make options take equal width */
+        }
+        
+        .color-option:hover {
+            transform: scale(1.02);
+            box-shadow: 0 0 3px rgba(255, 255, 255, 0.3);
+        }
+        
+        .shape-options {
+            display: flex;
+            flex-direction: column; /* Stack rows vertically */
+            gap: 1px; /* Minimal gap */
+            align-items: center; /* Center items */
+        }
+        
+        .shape-row {
+            display: flex;
+            flex-direction: row;
+            gap: 2px;
+            width: 100%;
+        }
+        
+        .shape-option {
+            width: 60px; /* Reduced from 70px */
+            height: 16px; /* Reduced from 18px */
+            display: flex;
+            align-items: center;
+            justify-content: flex-start;
+            padding: 0 1px; /* Minimal horizontal padding */
+            cursor: pointer;
+            background-color: #40444b;
+            border-radius: 2px;
+            font-size: 9px; /* Reduced from 10px */
+            margin: 1px 0; /* Vertical margin only */
+            flex: 1; /* Make options take equal width */
+        }
+        
+        .shape-option:hover {
+            background-color: #5865f2;
+        }
+        
+        .shape-preview {
+            width: 10px; /* Reduced from 12px */
+            height: 10px; /* Reduced from 12px */
+            margin-right: 2px; /* Minimal margin */
+        }
+        
+        /* Grid cell with key image */
+        .grid-cell img {
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+        }
+
+        /* Shape menu specific styles to match color menu width */
+        #shape-menu {
+            width: 140px; /* Match the max-width of context-menu */
+        }
+
+        /* Anchor point styles */
+        .anchor-point-controls {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-top: 2px;
+        }
+
+        .coordinates-display {
+            font-family: monospace;
+            font-size: 11px;
+            color: #aaaaaa;
+            margin-top: 4px;
+            min-height: 14px;
+            background-color: #202225;
+            padding: 2px 4px;
+            border-radius: 2px;
+        }
+
+        /* Crosshair styles for anchor point placement */
+        .crosshair {
+            position: absolute;
+            pointer-events: none;
+            z-index: 9999;
+            display: none;
+        }
+
+        .crosshair.active {
+            display: block;
+        }
+
+        .crosshair-h, .crosshair-v {
+            position: absolute;
+            background-color: rgba(255, 255, 0, 0.7);
+        }
+
+        .crosshair-h {
+            height: 1px;
+            width: 100%;
+            top: 50%;
+            left: 0;
+        }
+
+        .crosshair-v {
+            width: 1px;
+            height: 100%;
+            left: 50%;
+            top: 0;
+        }
+
+        .crosshair-center {
+            position: absolute;
+            width: 5px;
+            height: 5px;
+            background-color: rgba(255, 255, 0, 0.9);
+            border-radius: 50%;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+        }
+
+        .anchor-active {
             color: #4CAF50;
             font-weight: bold;
         }
-        .coordinates {
-            font-family: monospace;
-            font-size: 14px;
-            color: #4CAF50;
+
+        .anchor-inactive {
+            color: #aaaaaa;
         }
-        .debug-options {
+
+        /* Settings form styles */
+        .settings-form {
+            max-width: 500px;
             margin-top: 5px;
-            text-align: left;
+            padding: 0 5px;
         }
-        .debug-options label {
+
+        .form-group {
+            margin-bottom: 6px;
+            padding: 5px;
+            background-color: #2f3136;
+            border-radius: 3px;
+        }
+
+        .form-group label {
             display: block;
-            margin-bottom: 5px;
+            margin-bottom: 2px;
+            font-weight: bold;
+            font-size: 12px;
+            color: #b9bbbe;
         }
-        .debug-options input[type="checkbox"] {
-            margin-right: 5px;
-        }
-        /* Map tracking styles */
-        .section {
-            margin: 15px 0;
-            padding: 10px;
-            background: rgba(0, 0, 0, 0.3);
-            border-radius: 4px;
-            text-align: left;
-        }
-        .section h2 {
-            font-size: 18px;
-            margin-top: 0;
-            margin-bottom: 10px;
-        }
-        .radio-group {
-            display: flex;
-            flex-direction: column;
-            gap: 8px;
-            margin-bottom: 15px;
-        }
-        .radio-group label {
-            display: flex;
-            align-items: center;
-            cursor: pointer;
-        }
-        .radio-group input[type="radio"] {
-            margin-right: 8px;
-        }
-        .offset-inputs {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 10px;
-            margin-top: 10px;
-            margin-bottom: 10px;
-        }
-        
-        .offset-inputs div {
-            display: flex;
-            flex-direction: column;
-        }
-        
-        .offset-inputs label {
-            margin-bottom: 5px;
+
+        .form-group select {
+            width: 100%;
+            padding: 4px;
+            background-color: #40444b;
+            color: #dcddde;
+            border: 1px solid #202225;
+            border-radius: 3px;
             font-size: 12px;
         }
-        
-        .offset-inputs input {
-            width: 100%;
-            padding: 5px;
-            border: 1px solid #ccc;
-            border-radius: 4px;
+
+        .form-group select:focus {
+            outline: none;
+            border-color: #5865f2;
         }
-        .map-visibility-toggle {
-            margin-bottom: 15px;
-        }
-        .map-visibility-toggle label {
-            display: flex;
-            align-items: center;
+
+        .btn {
+            padding: 4px 8px;
+            background-color: #5865f2;
+            color: #ffffff;
+            border: none;
+            border-radius: 3px;
             cursor: pointer;
+            font-size: 11px;
+            font-weight: bold;
+            min-width: 90px;
+            text-align: center;
         }
-        .map-visibility-toggle input[type="checkbox"] {
-            margin-right: 8px;
+
+        .btn:hover {
+            background-color: #4752c4;
         }
-        #map-status {
-            margin: 10px 0;
-            padding: 10px;
-            background: rgba(0, 0, 0, 0.3);
-            border-radius: 4px;
-        }
-        #map-status.active {
-            color: #4CAF50;
-        }
-        .inner-outline-controls {
-            margin-top: 15px;
-            text-align: left;
-        }
-        .outline-inputs {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 10px;
-            margin-top: 10px;
-            margin-bottom: 10px;
-        }
-        .outline-inputs div {
-            display: flex;
-            flex-direction: column;
-        }
-        .outline-inputs label {
-            margin-bottom: 5px;
-            font-size: 12px;
-        }
-        .outline-inputs input {
-            width: 100%;
-            padding: 5px;
-            border: 1px solid #ccc;
-            border-radius: 4px;
-        }
-        .map-preview-container {
-            margin-top: 10px;
-            padding: 10px;
-            background: rgba(0, 0, 0, 0.3);
-            border-radius: 4px;
-        }
-        #map-preview-canvas {
-            border: 1px solid #666;
-            background-color: #000;
-            margin: 10px auto;
-            display: block;
-            max-width: 100%;
+
+        /* Alt1 Status styles */
+        #alt1-status-section {
+            margin-bottom: 2px;
         }
     </style>
 </head>
 <body>
-    <div class="title-container">
-        <div class="title">Dungeoneering Gate Engine</div>
-        <span class="version" id="version">v1.0.0</span>
-    </div>
-
-    <div id="alt1-install-container" class="container" style="margin-bottom: 15px;">
-        <div class="section-title">Alt1 Toolkit Integration</div>
-        <div id="output"></div>
-    </div>
-
-    <div id="loading-indicator" class="loading-indicator">
-        <div class="spinner"></div>
-        <div>Initializing text recognition engine...</div>
-    </div>
-
     <div class="container">
-        <div class="section-title">Door Text</div>
-        <div class="info-text">Hover your mouse over door text in-game</div>
-        <div id="text-output">Waiting for text...</div>
-        <button id="start-button" class="button">Start Text Scanning</button>
-        <button id="stop-button" class="button" disabled>Stop Text Scanning</button>
-    </div>
-
-    <div class="section" id="minimap-marker-section">
-        <h2>Minimap X Marker</h2>
-        <div class="content">
-            <div class="button-group">
-                <button id="place-marker-button" class="button">Place Marker on X</button>
+        <!-- Sidebar -->
+        <div class="sidebar" id="sidebar">
+            <div class="sidebar-header">
+                <div class="nav-icon">🔍</div>
             </div>
-            <div id="marker-status">No X marker set. Click "Place Marker on X" to set it.</div>
+            <ul class="nav-links">
+                <li class="nav-item active" data-view="settings-view" onclick="showView('settings-view', this)">
+                    <div class="nav-icon">⚙️</div>
+                </li>
+                <li class="nav-item" data-view="map-view" onclick="showView('map-view', this)">
+                    <div class="nav-icon">🗺️</div>
+                </li>
+            </ul>
         </div>
-    </div>
-
-    <div class="section" id="map-tracking-section">
-        <h2>Dungeon Map Tracking</h2>
+        
+        <!-- Content area -->
         <div class="content">
-            <div class="map-size-selection">
-                <div class="section-title">Dungeon Size</div>
-                <div class="radio-group">
-                    <label>
-                        <input type="radio" name="map-size" value="small" checked>
-                        Small (140x140)
-                    </label>
-                    <label>
-                        <input type="radio" name="map-size" value="medium">
-                        Medium (140x280)
-                    </label>
-                    <label>
-                        <input type="radio" name="map-size" value="large">
-                        Large (280x280)
-                    </label>
-                </div>
-            </div>
-            
-            <div class="map-offset-controls">
-                <div class="section-title">Map Offset Adjustment</div>
-                <div class="offset-inputs">
-                    <div>
-                        <label for="x-offset">Outer X Offset:</label>
-                        <input type="number" id="x-offset" value="6" min="-50" max="50">
-                    </div>
-                    <div>
-                        <label for="y-offset">Outer Y Offset:</label>
-                        <input type="number" id="y-offset" value="-12" min="-50" max="50">
+            <div class="view" id="map-view">
+                <div class="map-wrapper">
+                    <div id="map-container" class="map-container small">
+                        <div id="map-grid" class="map-grid small"></div>
                     </div>
                 </div>
             </div>
             
-            <div class="inner-outline-controls">
-                <div class="section-title">Outline Size Adjustment</div>
-                <div class="outline-inputs">
-                    <div>
-                        <label for="outline-width">Width Adjustment:</label>
-                        <input type="number" id="outline-width" value="-5" min="-50" max="100">
+            <div class="view active" id="settings-view">
+                <h2 class="view-header">Settings</h2>
+                <div class="settings-form">
+                    <div class="form-group">
+                        <label for="dungeon-size">Dungeon Size:</label>
+                        <select id="dungeon-size" onchange="updateDungeonSize(this.value)">
+                            <option value="small">Small (4x4)</option>
+                            <option value="medium">Medium (4x8)</option>
+                            <option value="large">Large (8x8)</option>
+                        </select>
                     </div>
-                    <div>
-                        <label for="outline-height">Height Adjustment:</label>
-                        <input type="number" id="outline-height" value="0" min="-50" max="100">
+                    <div class="form-group">
+                        <label>Anchor Point:</label>
+                        <div class="anchor-point-controls">
+                            <button id="set-anchor-button" class="btn" onclick="startAnchorPointPlacement()">Set Anchor Point</button>
+                            <span id="anchor-status" class="status-text">Not set</span>
+                        </div>
+                        <div id="anchor-coordinates" class="coordinates-display"></div>
                     </div>
+                    <div class="form-group" id="alt1-status-section">
+                        <label>Alt1 Status:</label>
+                        <div id="alt1-status-indicator">
+                            <!-- Alt1 status indicator will be inserted here by JavaScript -->
+                        </div>
+                    </div>
+                    <div id="save-feedback" class="save-feedback"></div>
                 </div>
-            </div>
-            
-            <div class="map-visibility-toggle">
-                <label>
-                    <input type="checkbox" id="show-map-outline" checked>
-                    Show Map Outline
-                </label>
-            </div>
-            
-            <button id="update-map-button" class="button">Update Map Tracking</button>
-            <button id="open-helper-button" class="button">Open Helper Window</button>
-            <div id="map-status">Set a marker position first to enable map tracking.</div>
-            
-            <div class="map-preview-container">
-                <div class="section-title">Map Preview</div>
-                <canvas id="map-preview-canvas" width="140" height="140"></canvas>
-                <div class="info-text">Live preview of the tracked minimap area</div>
             </div>
         </div>
     </div>
 
-    <footer>
-        Dungeoneering Gate Engine v<span id="footer-version">1.0.0</span>
-    </footer>
+    <!-- Context Menu for Grid Cells -->
+    <div id="context-menu" class="context-menu">
+        <div class="context-menu-section">
+            <div class="context-menu-title">Select Color</div>
+            <div class="color-options">
+                <div class="color-row">
+                    <div class="color-option" style="background-color: #333333; color: #ffff00;" data-color="Yellow" title="Yellow">Yellow</div>
+                    <div class="color-option" style="background-color: #333333; color: #dc143c;" data-color="Crimson" title="Crimson">Crimson</div>
+                </div>
+                <div class="color-row">
+                    <div class="color-option" style="background-color: #333333; color: #0000ff;" data-color="Blue" title="Blue">Blue</div>
+                    <div class="color-option" style="background-color: #333333; color: #800080;" data-color="Purple" title="Purple">Purple</div>
+                </div>
+                <div class="color-row">
+                    <div class="color-option" style="background-color: #333333; color: #ffa500;" data-color="Orange" title="Orange">Orange</div>
+                    <div class="color-option" style="background-color: #333333; color: #00ff00;" data-color="Green" title="Green">Green</div>
+                </div>
+                <div class="color-row">
+                    <div class="color-option" style="background-color: #333333; color: #ffd700;" data-color="Gold" title="Gold">Gold</div>
+                    <div class="color-option" style="background-color: #333333; color: #c0c0c0;" data-color="Silver" title="Silver">Silver</div>
+                </div>
+            </div>
+        </div>
+    </div>
 
-    <script src="index.bundle.js"></script>
-    
+    <!-- Shape Menu (shown after color selection) -->
+    <div id="shape-menu" class="context-menu">
+        <div class="context-menu-section">
+            <div class="context-menu-title">Select Shape</div>
+            <div class="shape-options" id="shape-options-container">
+                <!-- Shape options will be dynamically populated with preview images -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Crosshair for anchor point placement -->
+    <div id="crosshair" class="crosshair">
+        <div class="crosshair-h"></div>
+        <div class="crosshair-v"></div>
+        <div class="crosshair-center"></div>
+    </div>
+
     <script>
-        // Check if Alt1 is available and identify the app
-        if (window.alt1) {
-            alt1.identifyAppUrl("./appconfig.json");
-            document.getElementById('output').insertAdjacentHTML("beforeend", `
-                <div>Alt1 detected! Click to capture if on alt1</div>
-            `);
-        } else {
-            // Create the installation URL for the main application
-            const currentUrl = window.location.href;
-            const baseUrl = currentUrl.substring(0, currentUrl.lastIndexOf('/') + 1);
-            let addappurl = `alt1://addapp/${baseUrl}appconfig.json`;
+        // Initialize Alt1 globals
+        window.alt1 = window.alt1 || null;
+
+        // Document ready function
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log("Document loaded");
             
-            console.log('Alt1 installation URL:', addappurl);
+            // Setup Alt1 status
+            setupAlt1();
             
-            document.getElementById('output').insertAdjacentHTML("beforeend", `
-                <div>Alt1 not detected, click <a href='${addappurl}'>here</a> to add this app to Alt1</div>
-            `);
+            // Periodically check Alt1 status
+            setInterval(setupAlt1, 5000);
+            
+            // Load settings from localStorage
+            loadSettings();
+            
+            // Update map size based on settings
+            updateMapSize();
+            
+            // Initialize grid
+            initializeGrid();
+        });
+
+        // Check if Alt1 is available and setup installation
+        function setupAlt1() {
+            const statusIndicatorDiv = document.getElementById('alt1-status-indicator');
+            
+            if (window.alt1) {
+                // Alt1 detected, identify the app
+                alt1.identifyAppUrl("./appconfig.json");
+                
+                // Update the status indicator
+                statusIndicatorDiv.innerHTML = `
+                    <div class="status-row">
+                        <span class="status-indicator detected"></span>
+                        <span class="status-text detected">Detected</span>
+                    </div>
+                `;
+            } else {
+                // Alt1 not detected, create installation link
+                const currentUrl = window.location.href;
+                const baseUrl = currentUrl.substring(0, currentUrl.lastIndexOf('/') + 1);
+                const addappurl = `alt1://addapp/${baseUrl}appconfig.json`;
+                
+                // Update the status indicator
+                statusIndicatorDiv.innerHTML = `
+                    <div class="status-row">
+                        <span class="status-indicator not-detected"></span>
+                        <span class="status-text not-detected">Not Detected</span>
+                        <a href='${addappurl}' class="alt1-install-link">Install</a>
+                    </div>
+                `;
+            }
         }
+
+        // Function to show a specific view
+        function showView(viewId, clickedItem) {
+            console.log("Show view called for:", viewId);
+            
+            // Update active nav item
+            var navItems = document.querySelectorAll(".nav-item");
+            navItems.forEach(function(item) {
+                item.classList.remove("active");
+            });
+            clickedItem.classList.add("active");
+            
+            // Update active view
+            var views = document.querySelectorAll(".view");
+            views.forEach(function(view) {
+                view.classList.remove("active");
+            });
+            
+            var viewToShow = document.getElementById(viewId);
+            if (viewToShow) {
+                viewToShow.classList.add("active");
+            }
+
+            // Reset any custom styles applied to views
+            resetViewStyles();
+
+            // If switching to map view, update the map size
+            if (viewId === 'map-view') {
+                updateMapSize();
+                // Enable compact mode for map view
+                document.body.classList.add('compact-mode');
+            }
+        }
+
+        // Function to reset view styles
+        function resetViewStyles() {
+            // Reset any inline styles applied to views
+            document.querySelectorAll('.view').forEach(function(view) {
+                view.style.display = '';
+                view.style.flexDirection = '';
+                view.style.alignItems = '';
+                view.style.justifyContent = '';
+            });
+            
+            // Remove compact mode
+            document.body.classList.remove('compact-mode');
+            
+            // Don't hide crosshair if we're setting an anchor point
+            if (!isSettingAnchorPoint) {
+                const crosshair = document.getElementById('crosshair');
+                if (crosshair) {
+                    crosshair.classList.remove('active');
+                }
+            }
+        }
+
+        // Settings management
+        let settings = {
+            dungeonSize: "small", // Default value
+            mapState: {}, // Store cell states here
+            anchorPoint: null // Store anchor point coordinates
+        };
+
+        // Function to save a specific setting
+        function saveSetting(key, value) {
+            settings[key] = value;
+            console.log(`Setting ${key} updated to: ${value}`);
+            
+            // Auto-save to localStorage
+            localStorage.setItem("dungeonSettings", JSON.stringify(settings));
+            console.log("Settings auto-saved to localStorage");
+            
+            // Show save feedback
+            showSaveFeedback();
+            
+            // Apply changes immediately
+            if (key === 'dungeonSize') {
+                updateMapSize();
+            }
+        }
+        
+        // Function to show save feedback
+        function showSaveFeedback() {
+            const feedback = document.getElementById('save-feedback');
+            if (!feedback) return;
+            
+            feedback.textContent = 'Settings saved!';
+            feedback.classList.add('visible');
+            
+            // Hide the feedback after 2 seconds
+            setTimeout(() => {
+                feedback.classList.remove('visible');
+            }, 2000);
+        }
+
+        // Function to update dungeon size
+        function updateDungeonSize(value) {
+            saveSetting('dungeonSize', value);
+        }
+
+        // Function to update map size based on settings
+        function updateMapSize() {
+            const mapContainer = document.getElementById('map-container');
+            const mapGrid = document.getElementById('map-grid');
+            
+            if (!mapContainer || !mapGrid) return;
+            
+            // Remove all size classes
+            mapContainer.classList.remove('small', 'medium', 'large');
+            mapGrid.classList.remove('small', 'medium', 'large');
+            
+            // Add the appropriate size class
+            mapContainer.classList.add(settings.dungeonSize);
+            mapGrid.classList.add(settings.dungeonSize);
+            
+            // Clear and recreate grid cells
+            mapGrid.innerHTML = '';
+            createGridCells(settings.dungeonSize);
+        }
+        
+        // Function to create grid cells based on dungeon size
+        function createGridCells(size) {
+            const mapGrid = document.getElementById('map-grid');
+            if (!mapGrid) return;
+            
+            let rows = 4, cols = 4;
+            
+            switch(size) {
+                case 'small':
+                    rows = 4;
+                    cols = 4;
+                    break;
+                case 'medium':
+                    rows = 8;
+                    cols = 4;
+                    break;
+                case 'large':
+                    rows = 8;
+                    cols = 8;
+                    break;
+            }
+            
+            for (let r = 0; r < rows; r++) {
+                for (let c = 0; c < cols; c++) {
+                    const cell = document.createElement('div');
+                    cell.className = 'grid-cell';
+                    cell.dataset.row = r;
+                    cell.dataset.col = c;
+                    
+                    // Add event listener for right-click to show context menu
+                    cell.addEventListener('contextmenu', function(e) {
+                        e.preventDefault();
+                        showContextMenu(e, cell);
+                    });
+                    
+                    mapGrid.appendChild(cell);
+                }
+            }
+        }
+        
+        // Variables to track the currently active cell and selected color
+        let activeCell = null;
+        let selectedColor = null;
+        
+        // Function to show the context menu
+        function showContextMenu(event, cell) {
+            console.log("showContextMenu called", event, cell);
+            
+            const contextMenu = document.getElementById('context-menu');
+            if (!contextMenu) {
+                console.error("Context menu element not found");
+                return;
+            }
+            
+            // Set the active cell
+            activeCell = cell;
+            
+            // Reset selected color
+            selectedColor = null;
+            
+            // Position based on the current dungeon size
+            let posX, posY;
+            
+            // Get the current dungeon size from settings
+            const dungeonSize = settings.dungeonSize;
+            
+            // Adjust position based on dungeon size
+            if (dungeonSize === 'small') {
+                posX = 38;
+                posY = 20;
+            } else if (dungeonSize === 'medium') {
+                posX = 38;
+                posY = 100;
+            } else if (dungeonSize === 'large') {
+                posX = 107;
+                posY = 90;
+            } else {
+                // Default fallback
+                posX = 30;
+                posY = 20;
+            }
+            
+            // Position the context menu
+            contextMenu.style.left = `${posX}px`;
+            contextMenu.style.top = `${posY}px`;
+            
+            // Make the context menu visible
+            contextMenu.classList.add('visible');
+            
+            // Add event listeners to color options
+            document.querySelectorAll('.color-option').forEach(option => {
+                option.onclick = function() {
+                    console.log("Color option clicked:", this.dataset.color);
+                    selectedColor = this.dataset.color;
+                    hideContextMenu();
+                    showShapeMenu();
+                };
+            });
+            
+            // Add a click event listener to the document to hide the context menu when clicking elsewhere
+            setTimeout(() => {
+                document.addEventListener('click', hideContextMenu);
+            }, 0);
+            
+            // Prevent the default context menu
+            event.preventDefault();
+            event.stopPropagation();
+            return false;
+        }
+        
+        // Function to show the shape menu after color selection
+        function showShapeMenu() {
+            console.log("showShapeMenu called with color:", selectedColor);
+            
+            const shapeMenu = document.getElementById('shape-menu');
+            if (!shapeMenu) {
+                console.error("Shape menu element not found");
+                return;
+            }
+            
+            const shapeOptionsContainer = document.getElementById('shape-options-container');
+            if (!shapeOptionsContainer) {
+                console.error("Shape options container not found");
+                return;
+            }
+            
+            // Clear previous shape options
+            shapeOptionsContainer.innerHTML = '';
+            
+            // Define available shapes
+            const shapes = [
+                "pentagon", "triangle", "shield", "wedge", 
+                "rectangle", "crescent", "corner", "diamond"
+            ];
+            
+            // Create shape rows for two-column layout
+            for (let i = 0; i < shapes.length; i += 2) {
+                const shapeRow = document.createElement('div');
+                shapeRow.className = 'shape-row';
+                
+                // Create first shape option in the row
+                const shapeOption1 = createShapeOption(shapes[i]);
+                shapeRow.appendChild(shapeOption1);
+                
+                // Create second shape option if available
+                if (i + 1 < shapes.length) {
+                    const shapeOption2 = createShapeOption(shapes[i + 1]);
+                    shapeRow.appendChild(shapeOption2);
+                }
+                
+                // Add row to container
+                shapeOptionsContainer.appendChild(shapeRow);
+            }
+            
+            // Position based on the current dungeon size - use the same position as the color menu
+            let posX, posY;
+            
+            // Get the current dungeon size from settings
+            const dungeonSize = settings.dungeonSize;
+            
+            // Adjust position based on dungeon size - use the same values as in showContextMenu
+            if (dungeonSize === 'small') {
+                posX = 38;
+                posY = 20;
+            } else if (dungeonSize === 'medium') {
+                posX = 38;
+                posY = 100;
+            } else if (dungeonSize === 'large') {
+                posX = 107;
+                posY = 90;
+            } else {
+                // Default fallback
+                posX = 30;
+                posY = 20;
+            }
+            
+            // Position the shape menu
+            shapeMenu.style.left = `${posX}px`;
+            shapeMenu.style.top = `${posY}px`;
+            
+            // Make the shape menu visible
+            shapeMenu.classList.add('visible');
+            
+            // Add a click event listener to the document to hide the shape menu when clicking elsewhere
+            setTimeout(() => {
+                document.addEventListener('click', hideShapeMenu);
+            }, 0);
+        }
+        
+        // Helper function to create a shape option
+        function createShapeOption(shape) {
+            const shapeOption = document.createElement('div');
+            shapeOption.className = 'shape-option';
+            shapeOption.dataset.shape = shape;
+            shapeOption.title = shape.charAt(0).toUpperCase() + shape.slice(1);
+            
+            // Create preview image
+            const previewImg = document.createElement('img');
+            previewImg.className = 'shape-preview';
+            previewImg.src = `../assets/keys/${selectedColor}_${shape}_key.png`;
+            previewImg.alt = `${selectedColor} ${shape}`;
+            
+            // Add shape name
+            const shapeName = document.createElement('span');
+            shapeName.textContent = shape.charAt(0).toUpperCase() + shape.slice(1);
+            shapeName.style.fontSize = '9px';
+            
+            // Add to shape option
+            shapeOption.appendChild(previewImg);
+            shapeOption.appendChild(shapeName);
+            
+            // Add click event
+            shapeOption.onclick = function() {
+                console.log("Shape option clicked:", this.dataset.shape);
+                applyKeyToCell(selectedColor, this.dataset.shape);
+                hideShapeMenu();
+            };
+            
+            return shapeOption;
+        }
+        
+        // Function to hide the context menu
+        function hideContextMenu(event) {
+            console.log("hideContextMenu called");
+            const contextMenu = document.getElementById('context-menu');
+            if (contextMenu) {
+                contextMenu.classList.remove('visible');
+            }
+            document.removeEventListener('click', hideContextMenu);
+        }
+        
+        // Function to hide the shape menu
+        function hideShapeMenu(event) {
+            console.log("hideShapeMenu called");
+            const shapeMenu = document.getElementById('shape-menu');
+            if (shapeMenu) {
+                shapeMenu.classList.remove('visible');
+            }
+            document.removeEventListener('click', hideShapeMenu);
+        }
+        
+        // Function to apply a key image to the active cell
+        function applyKeyToCell(color, shape) {
+            if (!activeCell || !color || !shape || color === 'none' || shape === 'none') return;
+            
+            // Remove any existing image
+            const existingImg = activeCell.querySelector('img');
+            if (existingImg) {
+                activeCell.removeChild(existingImg);
+            }
+            
+            // Store the color and shape as data attributes
+            activeCell.dataset.color = color;
+            activeCell.dataset.shape = shape;
+            
+            // Add the key image
+            const img = document.createElement('img');
+            img.src = `../assets/keys/${color}_${shape}_key.png`;
+            img.alt = `${color} ${shape} key`;
+            activeCell.appendChild(img);
+            
+            // Save the cell state
+            saveCellState(activeCell);
+        }
+        
+        // Function to save the state of a cell
+        function saveCellState(cell) {
+            const row = cell.dataset.row;
+            const col = cell.dataset.col;
+            
+            // Get the current color and shape
+            const color = cell.dataset.color || '';
+            const shape = cell.dataset.shape || '';
+            
+            // Create a cell state object
+            const cellState = { row, col, color, shape };
+            
+            // Get the current map state from settings or initialize a new one
+            if (!settings.mapState) {
+                settings.mapState = {};
+            }
+            
+            // Create a key for this cell
+            const cellKey = `${row}-${col}`;
+            
+            // Save the cell state
+            settings.mapState[cellKey] = cellState;
+            
+            // Save to localStorage
+            localStorage.setItem("dungeonSettings", JSON.stringify(settings));
+            console.log(`Cell state saved for ${row},${col}`);
+        }
+        
+        // Function to load cell states from settings
+        function loadCellStates() {
+            if (!settings.mapState) return;
+            
+            // Get all grid cells
+            const cells = document.querySelectorAll('.grid-cell');
+            
+            // Loop through each cell
+            cells.forEach(cell => {
+                const row = cell.dataset.row;
+                const col = cell.dataset.col;
+                const cellKey = `${row}-${col}`;
+                
+                // Check if we have a saved state for this cell
+                if (settings.mapState[cellKey]) {
+                    const state = settings.mapState[cellKey];
+                    
+                    // Apply the color and shape
+                    if (state.color && state.shape && state.color !== 'none' && state.shape !== 'none') {
+                        cell.dataset.color = state.color;
+                        cell.dataset.shape = state.shape;
+                        
+                        const img = document.createElement('img');
+                        img.src = `../assets/keys/${state.color}_${state.shape}_key.png`;
+                        img.alt = `${state.color} ${state.shape} key`;
+                        cell.appendChild(img);
+                    }
+                }
+            });
+        }
+        
+        // Update the initializeGrid function to also load cell states
+        function initializeGrid() {
+            // Create initial grid cells
+            createGridCells(settings.dungeonSize);
+            
+            // Load saved cell states
+            loadCellStates();
+        }
+        
+        // Function to load settings from localStorage
+        function loadSettings() {
+            console.log("Loading settings from localStorage");
+            
+            const savedSettings = localStorage.getItem("dungeonSettings");
+            console.log("Raw saved settings:", savedSettings);
+            
+            if (savedSettings) {
+                try {
+                    settings = JSON.parse(savedSettings);
+                    console.log("Parsed settings:", settings);
+                    console.log("Anchor point from loaded settings:", settings.anchorPoint);
+                    
+                    // Apply saved settings to form elements
+                    document.getElementById("dungeon-size").value = settings.dungeonSize;
+                    
+                    // Update anchor point status
+                    const anchorStatus = document.getElementById('anchor-status');
+                    if (anchorStatus) {
+                        anchorStatus.textContent = settings.anchorPoint ? "Set" : "Not set";
+                        anchorStatus.className = "status-text " + (settings.anchorPoint ? "anchor-active" : "anchor-inactive");
+                    }
+                    
+                    // Update anchor point display
+                    updateAnchorPointDisplay();
+                } catch (e) {
+                    console.error("Error loading saved settings:", e);
+                }
+            } else {
+                console.log("No saved settings found");
+            }
+        }
+        
+        // Variables for anchor point placement
+        let isSettingAnchorPoint = false;
+        let anchorPointInterval = null;
+        
+        // Function to start anchor point placement
+        function startAnchorPointPlacement() {
+            if (isSettingAnchorPoint) return;
+            
+            console.log("Starting anchor point placement");
+            isSettingAnchorPoint = true;
+            
+            // Update UI
+            const anchorStatus = document.getElementById('anchor-status');
+            const setAnchorButton = document.getElementById('set-anchor-button');
+            
+            if (anchorStatus) {
+                anchorStatus.textContent = "Press SPACE to set anchor point";
+                anchorStatus.className = "status-text anchor-active";
+            }
+            
+            if (setAnchorButton) {
+                setAnchorButton.textContent = "Cancel";
+                setAnchorButton.onclick = cancelAnchorPointPlacement;
+            }
+            
+            // Show crosshair
+            const crosshair = document.getElementById('crosshair');
+            if (crosshair) {
+                crosshair.classList.add('active');
+            }
+            
+            // Start tracking mouse position
+            anchorPointInterval = setInterval(updateCrosshairPosition, 50);
+            
+            // Add space key listener
+            document.addEventListener('keydown', handleAnchorKeyPress);
+        }
+        
+        // Function to update crosshair position
+        function updateCrosshairPosition() {
+            if (!window.alt1) return;
+            
+            const mousePos = getAlt1MousePosition();
+            if (!mousePos) return;
+            
+            const crosshair = document.getElementById('crosshair');
+            if (!crosshair) return;
+            
+            crosshair.style.left = `${mousePos.x - 50}px`;
+            crosshair.style.top = `${mousePos.y - 50}px`;
+            crosshair.style.width = '100px';
+            crosshair.style.height = '100px';
+        }
+
+        // Function to get Alt1 mouse position
+        function getAlt1MousePosition() {
+            if (!window.alt1) {
+                console.log("Alt1 not available");
+                return null;
+            }
+            
+            try {
+                const pos = alt1.mousePosition;
+                console.log("Raw Alt1 mouse position:", pos);
+                
+                if (pos === -1) {
+                    console.log("Invalid mouse position (-1)");
+                    return null;
+                }
+                
+                const x = pos >>> 16;
+                const y = pos & 0xFFFF;
+                console.log("Decoded mouse position:", { x, y });
+                
+                return {
+                    x: x,
+                    y: y
+                };
+            } catch (e) {
+                console.error("Error getting mouse position:", e);
+                return null;
+            }
+        }
+        
+        // Function to handle key press during anchor point placement
+        function handleAnchorKeyPress(e) {
+            if (e.code === 'Space' || e.key === ' ') {
+                e.preventDefault();
+                setAnchorPoint();
+            } else if (e.code === 'Escape' || e.key === 'Escape') {
+                e.preventDefault();
+                cancelAnchorPointPlacement();
+            }
+        }
+        
+        // Function to set the anchor point
+        function setAnchorPoint() {
+            console.log("setAnchorPoint called");
+            
+            if (!isSettingAnchorPoint) {
+                console.log("Not in anchor point setting mode");
+                return;
+            }
+            
+            if (!window.alt1) {
+                console.log("Alt1 not available");
+                return;
+            }
+            
+            const mousePos = getAlt1MousePosition();
+            console.log("Mouse position from getAlt1MousePosition:", mousePos);
+            
+            if (!mousePos) {
+                console.log("Failed to get mouse position");
+                return;
+            }
+            
+            // Save anchor point
+            settings.anchorPoint = {
+                x: mousePos.x,
+                y: mousePos.y
+            };
+            
+            console.log("Anchor point saved:", settings.anchorPoint);
+            
+            // Save settings
+            localStorage.setItem("dungeonSettings", JSON.stringify(settings));
+            console.log("Settings saved to localStorage");
+            
+            // Update UI
+            updateAnchorPointDisplay();
+            
+            // End placement mode
+            endAnchorPointPlacement();
+            
+            // Show feedback
+            showSaveFeedback();
+        }
+        
+        // Function to cancel anchor point placement
+        function cancelAnchorPointPlacement() {
+            console.log("Cancelling anchor point placement");
+            endAnchorPointPlacement();
+        }
+        
+        // Function to end anchor point placement mode
+        function endAnchorPointPlacement() {
+            isSettingAnchorPoint = false;
+            
+            // Update UI
+            const anchorStatus = document.getElementById('anchor-status');
+            const setAnchorButton = document.getElementById('set-anchor-button');
+            
+            if (anchorStatus) {
+                anchorStatus.textContent = settings.anchorPoint ? "Set" : "Not set";
+                anchorStatus.className = "status-text " + (settings.anchorPoint ? "anchor-active" : "anchor-inactive");
+            }
+            
+            if (setAnchorButton) {
+                setAnchorButton.textContent = "Set Anchor Point";
+                setAnchorButton.onclick = startAnchorPointPlacement;
+            }
+            
+            // Hide crosshair
+            const crosshair = document.getElementById('crosshair');
+            if (crosshair) {
+                crosshair.classList.remove('active');
+            }
+            
+            // Stop tracking mouse position
+            if (anchorPointInterval) {
+                clearInterval(anchorPointInterval);
+                anchorPointInterval = null;
+            }
+            
+            // Remove space key listener
+            document.removeEventListener('keydown', handleAnchorKeyPress);
+        }
+        
+        // Function to update anchor point display
+        function updateAnchorPointDisplay() {
+            console.log("updateAnchorPointDisplay called");
+            
+            const coordinatesDisplay = document.getElementById('anchor-coordinates');
+            if (!coordinatesDisplay) {
+                console.log("Coordinates display element not found");
+                return;
+            }
+            
+            console.log("Current settings.anchorPoint:", settings.anchorPoint);
+            
+            if (settings.anchorPoint) {
+                const displayText = `X: ${settings.anchorPoint.x}, Y: ${settings.anchorPoint.y}`;
+                console.log("Setting coordinates display to:", displayText);
+                coordinatesDisplay.textContent = displayText;
+            } else {
+                console.log("No anchor point set, displaying undefined");
+                coordinatesDisplay.textContent = 'X: undefined, Y: undefined';
+            }
+        }
+
+        // Load settings and initialize the app on page load
+        window.onload = function() {
+            console.log("Page fully loaded");
+            
+            // Try to load saved settings
+            loadSettings();
+            
+            // Update anchor point display
+            updateAnchorPointDisplay();
+            
+            // Check if we're running in Alt1
+            if (window.alt1) {
+                console.log("Running in Alt1 browser");
+                document.body.classList.add('alt1-mode');
+            }
+        };
+
+        // Add this at the end of the script section to ensure event listeners are properly set up
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log("Re-initializing context menu event listeners");
+            
+            // Add right-click event listeners to all grid cells
+            document.querySelectorAll('.grid-cell').forEach(cell => {
+                cell.addEventListener('contextmenu', function(e) {
+                    console.log("Context menu event triggered on cell");
+                    e.preventDefault();
+                    showContextMenu(e, this);
+                    return false;
+                });
+            });
+        });
     </script>
 </body>
-</html> 
+</html>

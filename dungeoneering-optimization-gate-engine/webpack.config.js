@@ -67,10 +67,6 @@ module.exports = {
                     to: "install.html"
                 },
                 {
-                    from: "helper.html",
-                    to: "helper.html"
-                },
-                {
                     from: "appconfig.json",
                     to: "appconfig.json"
                 },

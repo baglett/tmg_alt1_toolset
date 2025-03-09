@@ -1,0 +1,23 @@
+{
+  "rules": [
+    {
+      "name": "Build and Start on File Change",
+      "description": "Automatically run npm build and start when files change (PowerShell only)",
+      "events": ["file_save"],
+      "patterns": ["src/**/*"],
+      "commands": [
+        {
+          "command": "npm run build; if ($?) { npm run start }",
+          "cwd": "${workspaceFolder}",
+          "shell": "powershell"
+        }
+      ],
+      "conditions": [
+        {
+          "type": "shell_is",
+          "shell": "powershell"
+        }
+      ]
+    }
+  ]
+}

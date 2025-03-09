@@ -3,18 +3,28 @@
 <head>
     <title>Door Text Reader</title>
     <style>
-        body {
+        html, body {
             font-family: Arial, sans-serif;
             margin: 0;
-            padding: 20px;
+            padding: 0;
             background: #2b2b2b;
             color: #ffffff;
             text-align: center;
-            max-width: 800px;
-            margin: 0 auto;
+            overflow: hidden;
+            min-width: 0;
+            min-height: 0;
+            width: 100%;
+            height: 100%;
+        }
+        * {
+            box-sizing: border-box;
+            max-width: 100%;
         }
         .title-container {
-            margin-bottom: 20px;
+            margin-bottom: 10px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
         }
         .title {
             font-size: 24px;
@@ -29,15 +39,17 @@
             font-size: 12px;
         }
         #alt1-status {
-            margin: 20px 0;
-            padding: 15px;
+            margin: 10px 0;
+            padding: 5px;
             background: rgba(0, 0, 0, 0.3);
             border-radius: 4px;
             cursor: pointer;
             display: flex;
             align-items: center;
             justify-content: center;
-            gap: 10px;
+            gap: 5px;
+            overflow: hidden;
+            text-overflow: ellipsis;
         }
         #alt1-status:not(.detected) {
             color: #ff4444;
@@ -47,15 +59,15 @@
             cursor: default;
         }
         .scan-container {
-            margin: 20px auto;
-            max-width: 400px;
+            margin: 10px auto;
+            overflow: hidden;
         }
         #viewport, #croppedViewport {
-            margin: 10px auto;
-            padding: 10px;
+            margin: 5px auto;
+            padding: 5px;
             background: rgba(0, 0, 0, 0.3);
             border-radius: 4px;
-            width: 100%;
+            width: auto;
             height: 60px;
             display: flex;
             align-items: center;
@@ -71,31 +83,32 @@
         .viewport-label {
             font-size: 14px;
             color: #aaa;
-            margin-bottom: 5px;
+            margin-bottom: 2px;
             text-align: left;
         }
         #output {
-            margin: 20px auto;
-            padding: 15px;
+            margin: 10px auto;
+            padding: 5px;
             background: rgba(0, 0, 0, 0.3);
             border-radius: 4px;
             min-height: 30px;
             white-space: pre-wrap;
             font-size: 16px;
-            width: 100%;
+            width: auto;
             box-sizing: border-box;
+            overflow: hidden;
         }
         .button {
             background: #4CAF50;
             color: white;
-            padding: 12px 24px;
+            padding: 8px 16px;
             border: none;
             border-radius: 4px;
             cursor: pointer;
             font-size: 16px;
-            margin: 10px auto;
+            margin: 5px auto;
             display: block;
-            width: 200px;
+            width: auto;
             transition: background-color 0.3s;
         }
         .button:hover {
@@ -110,23 +123,36 @@
         .install-button {
             background: #4CAF50;
             color: white;
-            padding: 8px 16px;
+            padding: 4px 8px;
             border: none;
             border-radius: 4px;
             cursor: pointer;
             font-size: 14px;
             white-space: nowrap;
             transition: background-color 0.3s;
+            animation: pulse 2s infinite;
         }
         .install-button:hover {
             background: #45a049;
+            animation: none;
+        }
+        @keyframes pulse {
+            0% {
+                box-shadow: 0 0 0 0 rgba(76, 175, 80, 0.7);
+            }
+            70% {
+                box-shadow: 0 0 0 10px rgba(76, 175, 80, 0);
+            }
+            100% {
+                box-shadow: 0 0 0 0 rgba(76, 175, 80, 0);
+            }
         }
         .checkbox-container {
             display: flex;
             align-items: center;
             justify-content: center;
-            gap: 8px;
-            margin: 10px 0;
+            gap: 4px;
+            margin: 5px 0;
         }
         .checkbox-container input[type="checkbox"] {
             width: 16px;
@@ -138,20 +164,194 @@
             user-select: none;
         }
         .info-panel {
-            margin: 10px auto;
-            padding: 10px;
+            margin: 5px auto;
+            padding: 5px;
             background: rgba(0, 0, 0, 0.3);
             border-radius: 4px;
             font-family: monospace;
             font-size: 12px;
             text-align: left;
             color: #aaa;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
         }
         .settings-section {
-            margin-bottom: 20px;
+            margin-bottom: 10px;
+            overflow: hidden;
         }
         .setting {
-            margin-bottom: 10px;
+            margin-bottom: 5px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        .setting.alt1-setting {
+            margin-top: 10px;
+        }
+        #alt1-status-settings {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+        #alt1-status-text {
+            font-weight: bold;
+        }
+        #install-alt1-btn {
+            margin-left: 5px;
+        }
+        .version-text {
+            font-weight: bold;
+            color: #4CAF50;
+        }
+        .container {
+            margin: 10px auto;
+            padding: 10px;
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 4px;
+            width: 100%;
+            box-sizing: border-box;
+        }
+        .browser-message {
+            background: rgba(255, 193, 7, 0.2);
+            border-left: 3px solid #FFC107;
+            padding: 8px;
+            margin: 10px 0;
+            border-radius: 4px;
+            white-space: normal;
+            text-align: left;
+        }
+        .browser-message p {
+            margin: 0 0 8px 0;
+            font-weight: bold;
+        }
+        .browser-message a {
+            color: #4CAF50;
+            text-decoration: none;
+        }
+        .browser-message a:hover {
+            text-decoration: underline;
+        }
+        .direct-install {
+            margin-top: 10px;
+        }
+        .direct-install-link {
+            background: #4CAF50;
+            color: white;
+            padding: 8px 16px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+            text-decoration: none;
+            transition: background-color 0.3s;
+        }
+        .direct-install-link:hover {
+            background: #45a049;
+        }
+        .install-note {
+            font-size: 12px;
+            color: #aaa;
+            margin-top: 5px;
+        }
+        .top-install-container {
+            margin: 10px auto;
+            text-align: center;
+        }
+        .top-install-button {
+            background: #ff9800;
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: bold;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.3);
+            transition: all 0.3s;
+        }
+        .top-install-button:hover {
+            background: #f57c00;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0,0,0,0.3);
+        }
+        .debug-section {
+            margin-top: 15px;
+            text-align: left;
+        }
+        .debug-section summary {
+            cursor: pointer;
+            color: #aaa;
+            font-size: 14px;
+        }
+        .debug-output {
+            background: rgba(0, 0, 0, 0.5);
+            padding: 10px;
+            border-radius: 4px;
+            margin: 10px 0;
+            font-family: monospace;
+            font-size: 12px;
+            word-break: break-all;
+            white-space: normal;
+        }
+        .copy-url-button {
+            background: #2196F3;
+            color: white;
+            padding: 5px 10px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 12px;
+        }
+        .copy-url-button:hover {
+            background: #0b7dda;
+        }
+        .alt1-install-link {
+            display: inline-block;
+            background: #4CAF50;
+            color: white;
+            padding: 6px 12px;
+            border-radius: 4px;
+            text-decoration: none;
+            font-weight: bold;
+            transition: background-color 0.3s;
+        }
+        .alt1-install-link:hover {
+            background: #45a049;
+            text-decoration: none;
+        }
+        .status-row {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .status-label {
+            font-weight: bold;
+        }
+        .status-indicator {
+            display: inline-block;
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+        }
+        .status-indicator.detected {
+            background-color: #4CAF50;
+            box-shadow: 0 0 5px #4CAF50;
+        }
+        .status-indicator.not-detected {
+            background-color: #ff4444;
+            box-shadow: 0 0 5px #ff4444;
+        }
+        .status-text {
+            font-weight: bold;
+        }
+        .status-text.detected {
+            color: #4CAF50;
+        }
+        .status-text.not-detected {
+            color: #ff4444;
         }
     </style>
 </head>
@@ -161,11 +361,8 @@
         <span class="version">v1.1.61</span>
     </div>
 
-    <div id="alt1-status">
-        <span>Checking Alt1 status...</span>
-        <button class="install-button" style="display: none;">
-            Add to Alt1
-        </button>
+    <div id="alt1-status" class="container">
+        <div id="alt1-output"></div>
     </div>
 
     <div class="scan-container">
@@ -173,6 +370,14 @@
         <div class="info-panel">
             <div id="mousePosition">Mouse Position: (0, 0)</div>
             <div id="captureRegion">Capture Region: (0, 0) 250x30</div>
+        </div>
+        
+        <!-- Alt1 Status Section at the top of settings -->
+        <div class="settings-section">
+            <h3>Alt1 Status</h3>
+            <div class="setting" id="alt1-status-indicator">
+                <!-- Alt1 status indicator will be inserted here by JavaScript -->
+            </div>
         </div>
         
         <div class="viewport-label">Original Capture:</div>
@@ -197,6 +402,18 @@
             <div class="setting">
                 <input type="checkbox" id="enablePreviewBox" checked>
                 <label for="enablePreviewBox">Show preview box</label>
+            </div>
+        </div>
+            
+        <!-- Alt1 Settings Section -->
+        <div class="settings-section">
+            <h3>Alt1 Integration</h3>
+            <div class="setting">
+                <span>App Version: </span>
+                <span class="version-text">v1.1.61</span>
+            </div>
+            <div class="setting" id="alt1-settings-output">
+                <!-- Alt1 status will be inserted here by JavaScript -->
             </div>
         </div>
 
@@ -228,35 +445,63 @@
         window.alt1 = window.alt1 || null;
         window.A1lib = window.A1lib || null;
 
-        // Check Alt1 status and setup installation button
-        function setupAlt1Button() {
-            const btn = document.querySelector('.install-button');
-            const status = document.querySelector('#alt1-status span');
-            const statusContainer = document.querySelector('#alt1-status');
-
+        // Check if Alt1 is available and setup installation
+        function setupAlt1() {
+            const outputDiv = document.getElementById('alt1-output');
+            const settingsOutputDiv = document.getElementById('alt1-settings-output');
+            const statusIndicatorDiv = document.getElementById('alt1-status-indicator');
+            
             if (window.alt1) {
-                status.textContent = 'Alt1 detected!';
-                statusContainer.classList.add('detected');
-                btn.style.display = 'none';
-            } else {
-                status.textContent = 'Alt1 not detected - Click button to install';
-                btn.style.display = 'inline-block';
+                // Alt1 detected, identify the app
+                alt1.identifyAppUrl("./appconfig.json");
+                outputDiv.innerHTML = `<div>Alt1 detected! Click to capture if on alt1</div>`;
+                settingsOutputDiv.innerHTML = `<div>Alt1 Status: <span style="color: #4CAF50; font-weight: bold;">Detected</span></div>`;
                 
-                // Setup installation URL
-                btn.onclick = function() {
-                    const currentUrl = window.location.href;
-                    const baseUrl = currentUrl.substring(0, currentUrl.lastIndexOf('/'));
-                    const installUrl = 'alt1://addapp/' + baseUrl + '/appconfig.json';
-                    window.location.href = installUrl;
-                };
+                // Update the status indicator
+                statusIndicatorDiv.innerHTML = `
+                    <div class="status-row">
+                        <span class="status-label">Alt1 Status:</span>
+                        <span class="status-indicator detected"></span>
+                        <span class="status-text detected">Detected</span>
+                    </div>
+                `;
+            } else {
+                // Alt1 not detected, create installation link
+                const currentUrl = window.location.href;
+                const baseUrl = currentUrl.substring(0, currentUrl.lastIndexOf('/') + 1);
+                const addappurl = `alt1://addapp/${baseUrl}appconfig.json`;
+                
+                console.log('Alt1 installation URL:', addappurl);
+                
+                outputDiv.innerHTML = `
+                    <div>Alt1 not detected - <a href='${addappurl}' class="alt1-install-link">Install to Alt1</a></div>
+                `;
+                
+                settingsOutputDiv.innerHTML = `
+                    <div>Alt1 Status: <span style="color: #ff4444; font-weight: bold;">Not Detected</span></div>
+                    <div style="margin-top: 5px;"><a href='${addappurl}' class="alt1-install-link">Install to Alt1</a></div>
+                `;
+                
+                // Update the status indicator
+                statusIndicatorDiv.innerHTML = `
+                    <div class="status-row">
+                        <span class="status-label">Alt1 Status:</span>
+                        <span class="status-indicator not-detected"></span>
+                        <span class="status-text not-detected">Not Detected</span>
+                    </div>
+                    <div style="margin-top: 5px;"><a href='${addappurl}' class="alt1-install-link">Install to Alt1</a></div>
+                `;
             }
         }
 
         // Initialize everything
         async function initialize() {
             try {
-                // Setup Alt1 button first
-                setupAlt1Button();
+                // Setup Alt1 first
+                setupAlt1();
+                
+                // Periodically check Alt1 status
+                setInterval(setupAlt1, 5000);
                 
                 // Load our bundle
                 await new Promise((resolve, reject) => {
