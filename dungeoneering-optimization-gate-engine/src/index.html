@@ -155,7 +155,7 @@
         .compact-mode .map-container {
             border: none;
         }
-
+        
         .map-container.small {
             width: 140px;
             height: 140px;
@@ -182,6 +182,16 @@
             max-width: 280px;
             max-height: 280px;
         }
+        
+        /* Map background canvas */
+        .map-background {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 1;
+        }
 
         .map-grid {
             display: grid;
@@ -190,6 +200,8 @@
             padding: 0;
             margin: 0;
             gap: 0;
+            position: relative;
+            z-index: 2;
         }
 
         .map-grid.small {
@@ -208,13 +220,24 @@
         }
 
         .grid-cell {
-            border: 1px solid #40444b;
-            background-color: #2f3136;
+            border: 1px solid rgba(64, 68, 75, 0.8);
+            background-color: rgba(47, 49, 54, 0.4); /* More transparent background */
             width: 35px;
             height: 35px;
             box-sizing: border-box;
             margin: 0;
             padding: 0;
+            position: relative; /* For proper z-index stacking */
+        }
+
+        /* Grid cell with key image */
+        .grid-cell img {
+            width: 60%; /* Reduced from 100% */
+            height: 60%; /* Reduced from 100% */
+            object-fit: contain;
+            position: relative;
+            z-index: 3; /* Make sure images are above the background */
+            margin: 20%; /* Add margin to center the smaller image */
         }
 
         /* Alt1 specific styles */
@@ -411,13 +434,6 @@
             margin-right: 2px; /* Minimal margin */
         }
         
-        /* Grid cell with key image */
-        .grid-cell img {
-            width: 100%;
-            height: 100%;
-            object-fit: contain;
-        }
-
         /* Shape menu specific styles to match color menu width */
         #shape-menu {
             width: 140px; /* Match the max-width of context-menu */
@@ -491,6 +507,40 @@
 
         .anchor-inactive {
             color: #aaaaaa;
+        }
+
+        /* Anchor adjustment controls */
+        .anchor-adjustment-controls {
+            margin-top: 10px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 4px;
+        }
+        
+        .adjustment-row {
+            display: flex;
+            gap: 4px;
+            justify-content: center;
+        }
+        
+        .adjustment-btn {
+            min-width: 30px;
+            width: 30px;
+            height: 30px;
+            padding: 0;
+            font-size: 14px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .shortcut-note {
+            font-size: 10px;
+            color: #aaaaaa;
+            margin-top: 4px;
+            text-align: center;
+            font-style: italic;
         }
 
         /* Settings form styles */
@@ -612,6 +662,51 @@
         .btn:hover {
             background-color: #4752c4;
         }
+
+        /* Clear menu styles */
+        .clear-option {
+            padding: 6px 8px;
+            cursor: pointer;
+            background-color: #40444b;
+            border-radius: 2px;
+            font-size: 11px;
+            margin: 4px;
+            text-align: center;
+            font-weight: bold;
+            color: #ff4747; /* Red color for clear action */
+        }
+        
+        .clear-option:hover {
+            background-color: #5865f2;
+        }
+        
+        /* Gatestone options styles */
+        .gatestone-options {
+            margin-top: 4px;
+        }
+        
+        .gatestone-option {
+            display: flex;
+            align-items: center;
+            padding: 4px 8px;
+            cursor: pointer;
+            background-color: #40444b;
+            border-radius: 2px;
+            font-size: 11px;
+            margin: 4px;
+            font-weight: bold;
+        }
+        
+        .gatestone-option:hover {
+            background-color: #5865f2;
+        }
+        
+        .gatestone-preview {
+            width: 16px;
+            height: 16px;
+            margin-right: 6px;
+            object-fit: contain;
+        }
     </style>
 </head>
 <body>
@@ -636,6 +731,7 @@
             <div class="view" id="map-view">
                 <div class="map-wrapper">
                     <div id="map-container" class="map-container small">
+                        <canvas id="mapBackgroundCanvas" class="map-background"></canvas>
                         <div id="map-grid" class="map-grid small"></div>
                     </div>
                 </div>
@@ -659,6 +755,19 @@
                             <span id="anchor-status" class="status-text">Not set</span>
                         </div>
                         <div id="anchor-coordinates" class="coordinates-display"></div>
+                        <div class="anchor-adjustment-controls">
+                            <div class="adjustment-row">
+                                <button class="btn adjustment-btn" onclick="adjustAnchorPoint(0, -1)">↑</button>
+                            </div>
+                            <div class="adjustment-row">
+                                <button class="btn adjustment-btn" onclick="adjustAnchorPoint(-1, 0)">←</button>
+                                <button class="btn adjustment-btn" onclick="adjustAnchorPoint(1, 0)">→</button>
+                            </div>
+                            <div class="adjustment-row">
+                                <button class="btn adjustment-btn" onclick="adjustAnchorPoint(0, 1)">↓</button>
+                            </div>
+                            <div class="shortcut-note">You can also use keyboard arrow keys</div>
+                        </div>
                     </div>
                     
                     <!-- Screen Capture Preview Section -->
@@ -720,6 +829,28 @@
         </div>
     </div>
 
+    <!-- Cell Menu (shown on left-click) -->
+    <div id="cell-menu" class="context-menu">
+        <div class="context-menu-section">
+            <div class="context-menu-title">Cell Options</div>
+            <div class="clear-option" onclick="clearCell()">Clear Cell</div>
+            <div class="gatestone-options">
+                <div class="gatestone-option" onclick="addGatestone('Gatestone')">
+                    <img src="../assets/gatestones/Gatestone.png" alt="Gatestone" class="gatestone-preview">
+                    <span>Gatestone</span>
+                </div>
+                <div class="gatestone-option" onclick="addGatestone('Gatestone_2')">
+                    <img src="../assets/gatestones/Gatestone_2.png" alt="Gatestone 2" class="gatestone-preview">
+                    <span>Gatestone 2</span>
+                </div>
+                <div class="gatestone-option" onclick="addGatestone('Group_Gatestone')">
+                    <img src="../assets/gatestones/Group_Gatestone.png" alt="Group Gatestone" class="gatestone-preview">
+                    <span>Group Gatestone</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- Crosshair for anchor point placement -->
     <div id="crosshair" class="crosshair">
         <div class="crosshair-h"></div>
@@ -749,6 +880,9 @@
             
             // Initialize grid
             initializeGrid();
+            
+            // Add keyboard shortcuts for anchor point adjustment
+            document.addEventListener('keydown', handleKeyboardShortcuts);
         });
 
         // Check if Alt1 is available and setup installation
@@ -801,11 +935,16 @@
             // Reset any custom styles applied to views
             resetViewStyles();
 
-            // If switching to map view, update the map size
+            // If switching to map view, update the map size and background
             if (viewId === 'map-view') {
                 updateMapSize();
                 // Enable compact mode for map view
                 document.body.classList.add('compact-mode');
+                // Force an update of the map background
+                if (isCaptureActive && settings.anchorPoint) {
+                    // Trigger a screen capture to update the map background
+                    updateCapturePreview();
+                }
             }
         }
 
@@ -895,6 +1034,25 @@
             // Clear and recreate grid cells
             mapGrid.innerHTML = '';
             createGridCells(settings.dungeonSize);
+            
+            // Update the map background canvas size
+            const mapCanvas = document.getElementById('mapBackgroundCanvas');
+            if (mapCanvas) {
+                // Set canvas dimensions to match the container
+                mapCanvas.width = mapContainer.clientWidth;
+                mapCanvas.height = mapContainer.clientHeight;
+                
+                // Redraw the background if we have an anchor point and capture is active
+                if (settings.anchorPoint && isCaptureActive) {
+                    // Trigger a screen capture to update the map background
+                    updateCapturePreview();
+                } else {
+                    // Just fill with a dark color
+                    const ctx = mapCanvas.getContext('2d');
+                    ctx.fillStyle = '#202225';
+                    ctx.fillRect(0, 0, mapCanvas.width, mapCanvas.height);
+                }
+            }
         }
         
         // Function to create grid cells based on dungeon size
@@ -930,6 +1088,12 @@
                     cell.addEventListener('contextmenu', function(e) {
                         e.preventDefault();
                         showContextMenu(e, cell);
+                    });
+                    
+                    // Add event listener for left-click to show clear menu
+                    cell.addEventListener('click', function(e) {
+                        e.preventDefault();
+                        showCellMenu(e, this);
                     });
                     
                     mapGrid.appendChild(cell);
@@ -1167,12 +1331,13 @@
             const row = cell.dataset.row;
             const col = cell.dataset.col;
             
-            // Get the current color and shape
+            // Get the current color, shape, and gatestone
             const color = cell.dataset.color || '';
             const shape = cell.dataset.shape || '';
+            const gatestone = cell.dataset.gatestone || '';
             
             // Create a cell state object
-            const cellState = { row, col, color, shape };
+            const cellState = { row, col, color, shape, gatestone };
             
             // Get the current map state from settings or initialize a new one
             if (!settings.mapState) {
@@ -1207,7 +1372,7 @@
                 if (settings.mapState[cellKey]) {
                     const state = settings.mapState[cellKey];
                     
-                    // Apply the color and shape
+                    // Apply the color and shape if they exist
                     if (state.color && state.shape && state.color !== 'none' && state.shape !== 'none') {
                         cell.dataset.color = state.color;
                         cell.dataset.shape = state.shape;
@@ -1215,6 +1380,15 @@
                         const img = document.createElement('img');
                         img.src = `../assets/keys/${state.color}_${state.shape}_key.png`;
                         img.alt = `${state.color} ${state.shape} key`;
+                        cell.appendChild(img);
+                    }
+                    // Apply the gatestone if it exists
+                    else if (state.gatestone && state.gatestone !== 'none') {
+                        cell.dataset.gatestone = state.gatestone;
+                        
+                        const img = document.createElement('img');
+                        img.src = `../assets/gatestones/${state.gatestone}.png`;
+                        img.alt = state.gatestone.replace('_', ' ');
                         cell.appendChild(img);
                     }
                 }
@@ -1402,6 +1576,30 @@
             showSaveFeedback();
         }
         
+        // Function to adjust the anchor point by a specified amount
+        function adjustAnchorPoint(deltaX, deltaY) {
+            // Check if anchor point is set
+            if (!settings.anchorPoint) {
+                console.log("Cannot adjust anchor point: not set");
+                return;
+            }
+            
+            // Adjust the anchor point coordinates
+            settings.anchorPoint.x += deltaX;
+            settings.anchorPoint.y += deltaY;
+            
+            console.log("Anchor point adjusted to:", settings.anchorPoint);
+            
+            // Save settings
+            localStorage.setItem("dungeonSettings", JSON.stringify(settings));
+            console.log("Settings saved to localStorage");
+            
+            // If capture is active, update the preview
+            if (isCaptureActive) {
+                updateCapturePreview();
+            }
+        }
+        
         // Function to cancel anchor point placement
         function cancelAnchorPointPlacement() {
             console.log("Cancelling anchor point placement");
@@ -1464,6 +1662,39 @@
             }
         }
 
+        // Function to handle keyboard shortcuts
+        function handleKeyboardShortcuts(e) {
+            // Only process if we're in the settings view and not setting an anchor point
+            if (isSettingAnchorPoint || !document.getElementById('settings-view').classList.contains('active')) {
+                return;
+            }
+            
+            // Check if anchor point is set
+            if (!settings.anchorPoint) {
+                return;
+            }
+            
+            // Check for arrow keys
+            switch (e.key) {
+                case 'ArrowUp':
+                    adjustAnchorPoint(0, -1);
+                    e.preventDefault();
+                    break;
+                case 'ArrowDown':
+                    adjustAnchorPoint(0, 1);
+                    e.preventDefault();
+                    break;
+                case 'ArrowLeft':
+                    adjustAnchorPoint(-1, 0);
+                    e.preventDefault();
+                    break;
+                case 'ArrowRight':
+                    adjustAnchorPoint(1, 0);
+                    e.preventDefault();
+                    break;
+            }
+        }
+
         // Load settings and initialize the app on page load
         document.addEventListener('DOMContentLoaded', function() {
             // Try to load saved settings
@@ -1477,6 +1708,9 @@
             
             // Initialize screen capture preview
             initScreenCapturePreview();
+            
+            // Initialize map background
+            initMapBackground();
             
             // Check if we're running in Alt1
             if (window.alt1) {
@@ -1494,8 +1728,41 @@
                     showContextMenu(e, this);
                     return false;
                 });
+                
+                // Add left-click event listeners to all grid cells
+                cell.addEventListener('click', function(e) {
+                    console.log("Click event triggered on cell");
+                    showCellMenu(e, this);
+                });
             });
+            
+            // Add window resize event listener
+            window.addEventListener('resize', handleWindowResize);
         });
+        
+        // Function to handle window resize events
+        function handleWindowResize() {
+            // Update the map background canvas size
+            const mapCanvas = document.getElementById('mapBackgroundCanvas');
+            const mapContainer = document.getElementById('map-container');
+            
+            if (mapCanvas && mapContainer) {
+                // Set canvas dimensions to match the container
+                mapCanvas.width = mapContainer.clientWidth;
+                mapCanvas.height = mapContainer.clientHeight;
+                
+                // Redraw the background if we have an anchor point and capture is active
+                if (settings.anchorPoint && isCaptureActive) {
+                    // Trigger a screen capture to update the map background
+                    updateCapturePreview();
+                } else {
+                    // Just fill with a dark color
+                    const ctx = mapCanvas.getContext('2d');
+                    ctx.fillStyle = '#202225';
+                    ctx.fillRect(0, 0, mapCanvas.width, mapCanvas.height);
+                }
+            }
+        }
         
         // Function to update Alt1 status
         function updateAlt1Status() {
@@ -1740,6 +2007,9 @@
                 
                 // Draw overlay in game
                 updateGameOverlay(captureRegion);
+                
+                // Update map background if we're in map view
+                updateMapBackground(imgData);
             } catch (error) {
                 console.error("Error updating capture preview:", error);
             }
@@ -1762,6 +2032,59 @@
                 width: width,
                 height: height
             };
+        }
+        
+        // Function to update the map background with the captured image
+        function updateMapBackground(imgData) {
+            const mapCanvas = document.getElementById('mapBackgroundCanvas');
+            if (!mapCanvas) return;
+            
+            // Resize the canvas to match the map container
+            const mapContainer = document.getElementById('map-container');
+            if (!mapContainer) return;
+            
+            // Set canvas dimensions to match the container
+            mapCanvas.width = mapContainer.clientWidth;
+            mapCanvas.height = mapContainer.clientHeight;
+            
+            // Draw the image data to the canvas
+            const ctx = mapCanvas.getContext('2d');
+            
+            // If we have image data, draw it
+            if (imgData) {
+                // Create a temporary canvas to handle the image data
+                const tempCanvas = document.createElement('canvas');
+                tempCanvas.width = imgData.width;
+                tempCanvas.height = imgData.height;
+                const tempCtx = tempCanvas.getContext('2d');
+                tempCtx.putImageData(imgData, 0, 0);
+                
+                // Draw the temp canvas to the map background canvas, scaling if needed
+                ctx.drawImage(tempCanvas, 0, 0, mapCanvas.width, mapCanvas.height);
+            } else {
+                // If no image data, just fill with a dark color
+                ctx.fillStyle = '#202225';
+                ctx.fillRect(0, 0, mapCanvas.width, mapCanvas.height);
+            }
+        }
+        
+        // Function to initialize the map background
+        function initMapBackground() {
+            const mapCanvas = document.getElementById('mapBackgroundCanvas');
+            if (!mapCanvas) return;
+            
+            // Resize the canvas to match the map container
+            const mapContainer = document.getElementById('map-container');
+            if (!mapContainer) return;
+            
+            // Set canvas dimensions to match the container
+            mapCanvas.width = mapContainer.clientWidth;
+            mapCanvas.height = mapContainer.clientHeight;
+            
+            // Fill with a dark color initially
+            const ctx = mapCanvas.getContext('2d');
+            ctx.fillStyle = '#202225';
+            ctx.fillRect(0, 0, mapCanvas.width, mapCanvas.height);
         }
         
         // Function to update game overlay
@@ -1796,6 +2119,127 @@
             } catch (error) {
                 console.warn("Error updating game overlay:", error);
             }
+        }
+
+        // Function to show the cell menu
+        function showCellMenu(event, cell) {
+            console.log("showCellMenu called", event, cell);
+            
+            const cellMenu = document.getElementById('cell-menu');
+            if (!cellMenu) {
+                console.error("Cell menu element not found");
+                return;
+            }
+            
+            // Set the active cell
+            activeCell = cell;
+            
+            // Get the map container position
+            const mapContainer = document.getElementById('map-container');
+            const mapRect = mapContainer.getBoundingClientRect();
+            
+            // Position the menu relative to the click position
+            // Ensure the menu stays within the map container
+            const posX = Math.min(event.clientX - mapRect.left, mapRect.width - cellMenu.offsetWidth);
+            const posY = Math.min(event.clientY - mapRect.top, mapRect.height - cellMenu.offsetHeight);
+            
+            // Position the cell menu
+            cellMenu.style.left = `${posX}px`;
+            cellMenu.style.top = `${posY}px`;
+            
+            // Only show the clear option if the cell has content
+            const clearOption = cellMenu.querySelector('.clear-option');
+            if (clearOption) {
+                if (cell.querySelector('img')) {
+                    clearOption.style.display = 'block';
+                } else {
+                    clearOption.style.display = 'none';
+                }
+            }
+            
+            // Make the cell menu visible
+            cellMenu.classList.add('visible');
+            
+            // Add a click event listener to the document to hide the cell menu when clicking elsewhere
+            setTimeout(() => {
+                document.addEventListener('click', hideCellMenu);
+            }, 0);
+            
+            // Prevent the default click behavior
+            event.preventDefault();
+            event.stopPropagation();
+        }
+        
+        // Function to hide the cell menu
+        function hideCellMenu(event) {
+            console.log("hideCellMenu called");
+            const cellMenu = document.getElementById('cell-menu');
+            if (cellMenu) {
+                cellMenu.classList.remove('visible');
+            }
+            document.removeEventListener('click', hideCellMenu);
+        }
+
+        // Function to clear the active cell
+        function clearCell() {
+            if (!activeCell) {
+                console.log("No active cell to clear");
+                return;
+            }
+            
+            console.log("Clearing cell:", activeCell);
+            
+            // Remove any existing image
+            const existingImg = activeCell.querySelector('img');
+            if (existingImg) {
+                activeCell.removeChild(existingImg);
+            }
+            
+            // Remove data attributes
+            delete activeCell.dataset.color;
+            delete activeCell.dataset.shape;
+            delete activeCell.dataset.gatestone;
+            
+            // Save the cell state
+            saveCellState(activeCell);
+            
+            // Hide the cell menu
+            hideCellMenu();
+        }
+        
+        // Function to add a gatestone to the active cell
+        function addGatestone(gatestoneType) {
+            if (!activeCell) {
+                console.log("No active cell to add gatestone to");
+                return;
+            }
+            
+            console.log(`Adding ${gatestoneType} to cell:`, activeCell);
+            
+            // Remove any existing image
+            const existingImg = activeCell.querySelector('img');
+            if (existingImg) {
+                activeCell.removeChild(existingImg);
+            }
+            
+            // Remove previous data attributes
+            delete activeCell.dataset.color;
+            delete activeCell.dataset.shape;
+            
+            // Set gatestone data attribute
+            activeCell.dataset.gatestone = gatestoneType;
+            
+            // Add the gatestone image
+            const img = document.createElement('img');
+            img.src = `../assets/gatestones/${gatestoneType}.png`;
+            img.alt = gatestoneType.replace('_', ' ');
+            activeCell.appendChild(img);
+            
+            // Save the cell state
+            saveCellState(activeCell);
+            
+            // Hide the cell menu
+            hideCellMenu();
         }
     </script>
     <!-- Include the bundled JavaScript file -->
