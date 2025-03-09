@@ -157,30 +157,30 @@
         }
         
         .map-container.small {
-            width: 140px;
-            height: 140px;
-            min-width: 140px;
-            min-height: 140px;
-            max-width: 140px;
-            max-height: 140px;
+            width: 128px;
+            height: 128px;
+            min-width: 128px;
+            min-height: 128px;
+            max-width: 128px;
+            max-height: 128px;
         }
 
         .map-container.medium {
-            width: 140px;
-            height: 280px;
-            min-width: 140px;
-            min-height: 280px;
-            max-width: 140px;
-            max-height: 280px;
+            width: 128px;
+            height: 268px;
+            min-width: 128px;
+            min-height: 268px;
+            max-width: 128px;
+            max-height: 268px;
         }
 
         .map-container.large {
-            width: 280px;
-            height: 280px;
-            min-width: 280px;
-            min-height: 280px;
-            max-width: 280px;
-            max-height: 280px;
+            width: 268px;
+            height: 268px;
+            min-width: 268px;
+            min-height: 268px;
+            max-width: 268px;
+            max-height: 268px;
         }
         
         /* Map background canvas */
@@ -205,25 +205,25 @@
         }
 
         .map-grid.small {
-            grid-template-columns: repeat(4, 35px);
-            grid-template-rows: repeat(4, 35px);
+            grid-template-columns: repeat(4, 32px);
+            grid-template-rows: repeat(4, 32px);
         }
 
         .map-grid.medium {
-            grid-template-columns: repeat(4, 35px);
-            grid-template-rows: repeat(8, 35px);
+            grid-template-columns: repeat(4, 32px);
+            grid-template-rows: repeat(8, 33.5px);
         }
 
         .map-grid.large {
-            grid-template-columns: repeat(8, 35px);
-            grid-template-rows: repeat(8, 35px);
+            grid-template-columns: repeat(8, 33.5px);
+            grid-template-rows: repeat(8, 33.5px);
         }
 
         .grid-cell {
             border: 1px solid rgba(64, 68, 75, 0.8);
             background-color: rgba(47, 49, 54, 0.4); /* More transparent background */
-            width: 35px;
-            height: 35px;
+            width: 30px;
+            height: 30px;
             box-sizing: border-box;
             margin: 0;
             padding: 0;
@@ -778,7 +778,7 @@
                             <span id="capture-status" class="status-text capture-active">Active</span>
                         </div>
                         <div class="screen-capture-preview">
-                            <canvas id="capturePreviewCanvas" width="280" height="280"></canvas>
+                            <canvas id="capturePreviewCanvas" width="268" height="268"></canvas>
                         </div>
                     </div>
                     
@@ -1927,16 +1927,16 @@
             // Set canvas size based on dungeon size
             switch(settings.dungeonSize) {
                 case 'small':
-                    canvas.width = 140;
-                    canvas.height = 140;
+                    canvas.width = 128;
+                    canvas.height = 128;
                     break;
                 case 'medium':
-                    canvas.width = 140;
-                    canvas.height = 280;
+                    canvas.width = 128;
+                    canvas.height = 268;
                     break;
                 case 'large':
-                    canvas.width = 280;
-                    canvas.height = 280;
+                    canvas.width = 268;
+                    canvas.height = 268;
                     break;
             }
             
