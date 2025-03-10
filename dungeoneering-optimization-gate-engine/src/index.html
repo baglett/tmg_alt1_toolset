@@ -2134,14 +2134,27 @@
             // Set the active cell
             activeCell = cell;
             
-            // Get the map container position
-            const mapContainer = document.getElementById('map-container');
-            const mapRect = mapContainer.getBoundingClientRect();
+            // Position based on the current dungeon size - use the same position as the context menu
+            let posX, posY;
             
-            // Position the menu relative to the click position
-            // Ensure the menu stays within the map container
-            const posX = Math.min(event.clientX - mapRect.left, mapRect.width - cellMenu.offsetWidth);
-            const posY = Math.min(event.clientY - mapRect.top, mapRect.height - cellMenu.offsetHeight);
+            // Get the current dungeon size from settings
+            const dungeonSize = settings.dungeonSize;
+            
+            // Adjust position based on dungeon size - use the same values as in showContextMenu
+            if (dungeonSize === 'small') {
+                posX = 38;
+                posY = 20;
+            } else if (dungeonSize === 'medium') {
+                posX = 38;
+                posY = 100;
+            } else if (dungeonSize === 'large') {
+                posX = 107;
+                posY = 90;
+            } else {
+                // Default fallback
+                posX = 30;
+                posY = 20;
+            }
             
             // Position the cell menu
             cellMenu.style.left = `${posX}px`;
