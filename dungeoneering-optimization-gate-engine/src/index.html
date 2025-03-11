@@ -707,6 +707,113 @@
             margin-right: 6px;
             object-fit: contain;
         }
+
+        /* Room feedback styles */
+        #room-feedback {
+            display: none;
+            position: absolute;
+            background-color: rgba(0, 0, 0, 0.8);
+            color: #ffffff;
+            padding: 5px 10px;
+            border-radius: 3px;
+            font-size: 12px;
+            z-index: 1000;
+            pointer-events: none;
+        }
+
+        /* Add styles for OCR testing section */
+        .ocr-test-controls {
+            margin-top: 8px;
+            display: flex;
+            gap: 8px;
+            align-items: center;
+        }
+
+        .ocr-test-result {
+            margin-top: 8px;
+            padding: 8px;
+            background-color: #202225;
+            border-radius: 3px;
+            font-family: monospace;
+            font-size: 12px;
+            color: #dcddde;
+            min-height: 20px;
+            white-space: pre-wrap;
+            word-break: break-all;
+        }
+
+        /* Add styles for blocked room and skill options */
+        .blocked-room-option {
+            display: flex;
+            align-items: center;
+            padding: 4px 8px;
+            cursor: pointer;
+            background-color: #40444b;
+            border-radius: 2px;
+            font-size: 11px;
+            margin: 4px;
+            font-weight: bold;
+        }
+        
+        .blocked-room-option:hover {
+            background-color: #5865f2;
+        }
+        
+        .blocked-room-preview {
+            width: 16px;
+            height: 16px;
+            margin-right: 6px;
+            object-fit: contain;
+        }
+
+        .skill-option {
+            padding: 6px 8px;
+            cursor: pointer;
+            background-color: #40444b;
+            border-radius: 2px;
+            font-size: 11px;
+            margin: 4px;
+            text-align: center;
+            font-weight: bold;
+        }
+        
+        .skill-option:hover {
+            background-color: #5865f2;
+        }
+
+        .skill-tier-options {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 4px;
+            padding: 4px;
+        }
+
+        .skill-tier-option {
+            padding: 4px 8px;
+            cursor: pointer;
+            background-color: #40444b;
+            border-radius: 2px;
+            font-size: 11px;
+            text-align: center;
+            font-weight: bold;
+            color: #dcddde;
+        }
+
+        .skill-tier-option:hover {
+            background-color: #5865f2;
+        }
+
+        .grid-cell .skill-tier {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 12px;
+            font-weight: bold;
+            color: #ffffff;
+            text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.8);
+            pointer-events: none;
+        }
     </style>
 </head>
 <body>
@@ -788,6 +895,18 @@
                             <!-- Alt1 status indicator will be inserted here by JavaScript -->
                         </div>
                     </div>
+
+                    <!-- Add OCR Testing Section -->
+                    <div class="form-group">
+                        <label>OCR Testing:</label>
+                        <div class="ocr-test-controls">
+                            <button id="test-ocr-button" class="btn" onclick="testOCROnLockedRoom()">Test Locked Room OCR</button>
+                        </div>
+                        <div id="ocr-test-result" class="ocr-test-result">
+                            <!-- OCR test results will be shown here -->
+                        </div>
+                    </div>
+
                     <div id="save-feedback" class="save-feedback"></div>
                 </div>
             </div>
@@ -848,6 +967,21 @@
                     <span>Group Gatestone</span>
                 </div>
             </div>
+            <div class="blocked-room-option" onclick="addBlockedRoom()">
+                <img src="../assets/rooms/blocked_room.png" alt="Blocked Room" class="blocked-room-preview">
+                <span>Blocked Room</span>
+            </div>
+            <div class="skill-option" onclick="showSkillTierMenu()">Select Skill Tier</div>
+        </div>
+    </div>
+
+    <!-- Skill Tier Menu -->
+    <div id="skill-tier-menu" class="context-menu">
+        <div class="context-menu-section">
+            <div class="context-menu-title">Select Skill Tier</div>
+            <div class="skill-tier-options">
+                <!-- Will be populated dynamically -->
+            </div>
         </div>
     </div>
 
@@ -858,31 +992,184 @@
         <div class="crosshair-center"></div>
     </div>
 
+    <!-- Include Tesseract.js for OCR -->
+    <script src="https://cdn.jsdelivr.net/npm/tesseract.js@4.1.1/dist/tesseract.min.js"></script>
     <script>
+        // Load Tesseract.js directly without integrity checks
+        async function loadTesseract() {
+            return new Promise((resolve, reject) => {
+                if (typeof Tesseract !== 'undefined') {
+                    console.log('Tesseract.js already loaded');
+                    resolve();
+                } else {
+                    console.error('Tesseract.js not loaded');
+                    reject(new Error('Tesseract.js not loaded'));
+                }
+            });
+        }
+
+        // Initialize Tesseract worker
+        let tesseractWorker = null;
+        let isInitializingWorker = false;
+
+        // Function to initialize Tesseract worker
+        async function initTesseractWorker() {
+            if (tesseractWorker !== null) return;
+            if (isInitializingWorker) return;
+
+            console.log('Starting Tesseract worker initialization...');
+            isInitializingWorker = true;
+
+            try {
+                // First ensure Tesseract.js is loaded
+                if (typeof Tesseract === 'undefined') {
+                    console.log('Loading Tesseract.js...');
+                    await loadTesseract();
+                }
+
+                console.log('Creating Tesseract worker...');
+                tesseractWorker = await Tesseract.createWorker({
+                    workerPath: 'https://cdn.jsdelivr.net/npm/tesseract.js@4.1.1/dist/worker.min.js',
+                    langPath: 'https://tessdata.projectnaptha.com/4.0.0',
+                    logger: m => {
+                        console.log('Tesseract:', m);
+                        // Update initialization status in UI
+                        let feedback = document.getElementById('room-feedback');
+                        if (feedback) {
+                            feedback.textContent = `Initializing OCR: ${m.status}`;
+                            feedback.style.display = 'block';
+                        }
+                    },
+                    errorHandler: err => {
+                        console.error('Tesseract Error:', err);
+                        let feedback = document.getElementById('room-feedback');
+                        if (feedback) {
+                            feedback.textContent = `OCR Error: ${err.message}`;
+                            feedback.style.display = 'block';
+                        }
+                    }
+                });
+                
+                console.log('Loading language...');
+                await tesseractWorker.loadLanguage('eng');
+                
+                console.log('Initializing...');
+                await tesseractWorker.initialize('eng');
+                
+                console.log('Setting parameters...');
+                await tesseractWorker.setParameters({
+                    tessedit_char_whitelist: '?',
+                });
+                
+                console.log('Tesseract worker initialized successfully');
+                
+                // Clear any initialization messages
+                let feedback = document.getElementById('room-feedback');
+                if (feedback) {
+                    feedback.style.display = 'none';
+                }
+            } catch (error) {
+                console.error('Failed to initialize Tesseract worker:', error);
+                // Show error in UI
+                let feedback = document.getElementById('room-feedback');
+                if (feedback) {
+                    feedback.textContent = `OCR Init Error: ${error.message}`;
+                    feedback.style.display = 'block';
+                    setTimeout(() => {
+                        feedback.style.display = 'none';
+                    }, 5000);
+                }
+                tesseractWorker = null;
+            } finally {
+                isInitializingWorker = false;
+            }
+        }
+
+        // Initialize when document is ready
+        document.addEventListener('DOMContentLoaded', async function() {
+            try {
+                await initTesseractWorker();
+            } catch (error) {
+                console.error('Error initializing Tesseract:', error);
+            }
+        });
+
         // Initialize Alt1 globals
         window.alt1 = window.alt1 || null;
 
+        // Function to automatically check rooms with keys
+        async function checkRoomsWithKeys() {
+            // Skip if capture is not active
+            if (!isCaptureActive) return;
+            
+            // Get all cells with keys (has color and shape but not gatestone)
+            const cells = document.querySelectorAll('.grid-cell');
+            for (const cell of cells) {
+                if (cell.dataset.color && cell.dataset.shape && !cell.dataset.gatestone) {
+                    const isLocked = await hasQuestionMark(cell);
+                    if (!isLocked) {
+                        console.log("Found unlocked room with key, clearing...");
+                        // Remove the key image
+                        const existingImg = cell.querySelector('img');
+                        if (existingImg) {
+                            cell.removeChild(existingImg);
+                        }
+                        
+                        // Remove key data attributes
+                        delete cell.dataset.color;
+                        delete cell.dataset.shape;
+                        
+                        // Save the updated cell state
+                        saveCellState(cell);
+                    }
+                }
+            }
+        }
+
         // Document ready function
-        document.addEventListener('DOMContentLoaded', function() {
+        document.addEventListener('DOMContentLoaded', async function() {
             console.log("Document loaded");
             
-            // Setup Alt1 status
-            setupAlt1();
+            // Create feedback element early
+            let feedback = document.createElement('div');
+            feedback.id = 'room-feedback';
+            document.body.appendChild(feedback);
+            feedback.textContent = 'Initializing OCR...';
+            feedback.style.display = 'block';
             
-            // Periodically check Alt1 status
-            setInterval(setupAlt1, 5000);
-            
-            // Load settings from localStorage
-            loadSettings();
-            
-            // Update map size based on settings
-            updateMapSize();
-            
-            // Initialize grid
-            initializeGrid();
-            
-            // Add keyboard shortcuts for anchor point adjustment
-            document.addEventListener('keydown', handleKeyboardShortcuts);
+            try {
+                // Initialize Tesseract worker
+                await initTesseractWorker();
+                
+                // Setup Alt1 status
+                setupAlt1();
+                
+                // Rest of initialization...
+                // Periodically check Alt1 status
+                setInterval(setupAlt1, 5000);
+                
+                // Set up automatic room checking every 2 seconds
+                setInterval(checkRoomsWithKeys, 2000);
+                
+                // Load settings from localStorage
+                loadSettings();
+                
+                // Update map size based on settings
+                updateMapSize();
+                
+                // Initialize grid
+                initializeGrid();
+                
+                // Add keyboard shortcuts for anchor point adjustment
+                document.addEventListener('keydown', handleKeyboardShortcuts);
+            } catch (error) {
+                console.error('Error during initialization:', error);
+                feedback.textContent = `Init Error: ${error.message}`;
+                feedback.style.display = 'block';
+                setTimeout(() => {
+                    feedback.style.display = 'none';
+                }, 5000);
+            }
         });
 
         // Check if Alt1 is available and setup installation
@@ -1087,7 +1374,7 @@
                     // Add event listener for right-click to show context menu
                     cell.addEventListener('contextmenu', function(e) {
                         e.preventDefault();
-                        showContextMenu(e, cell);
+                        showContextMenu(e, this);
                     });
                     
                     // Add event listener for left-click to show clear menu
@@ -1105,9 +1392,164 @@
         let activeCell = null;
         let selectedColor = null;
         
+        // Function to check if a cell contains a question mark
+        async function hasQuestionMark(cell) {
+            if (!tesseractWorker) {
+                console.log('Tesseract worker not initialized');
+                // Try to initialize again
+                await initTesseractWorker();
+                if (!tesseractWorker) {
+                    return false;
+                }
+            }
+
+            // Get the map background canvas
+            const mapCanvas = document.getElementById('mapBackgroundCanvas');
+            if (!mapCanvas) return false;
+
+            const ctx = mapCanvas.getContext('2d');
+            
+            // Get cell position and dimensions
+            const rect = cell.getBoundingClientRect();
+            const mapRect = mapCanvas.getBoundingClientRect();
+            
+            // Calculate relative position in the canvas
+            const x = rect.left - mapRect.left;
+            const y = rect.top - mapRect.top;
+            const width = rect.width;
+            const height = rect.height;
+            
+            // Create a temporary canvas for preprocessing
+            const tempCanvas = document.createElement('canvas');
+            tempCanvas.width = width;
+            tempCanvas.height = height;
+            const tempCtx = tempCanvas.getContext('2d');
+
+            // Extract and draw the cell image
+            const imageData = ctx.getImageData(x, y, width, height);
+            tempCtx.putImageData(imageData, 0, 0);
+
+            // Preprocess the image
+            const processedImageData = tempCtx.getImageData(0, 0, width, height);
+            const data = processedImageData.data;
+
+            // Convert to grayscale and increase contrast
+            for (let i = 0; i < data.length; i += 4) {
+                const r = data[i];
+                const g = data[i + 1];
+                const b = data[i + 2];
+                
+                // Convert to grayscale
+                const gray = (r + g + b) / 3;
+                
+                // Apply threshold for black and white conversion
+                const threshold = 128;
+                const val = gray > threshold ? 255 : 0;
+                
+                data[i] = val;     // R
+                data[i + 1] = val; // G
+                data[i + 2] = val; // B
+            }
+
+            // Put the processed image back
+            tempCtx.putImageData(processedImageData, 0, 0);
+            
+            try {
+                // Set optimal parameters for symbol detection
+                await tesseractWorker.setParameters({
+                    tessedit_char_whitelist: '?',
+                    tessedit_pageseg_mode: '10', // Treat as single character
+                    tessedit_ocr_engine_mode: '2', // Use Legacy + LSTM mode
+                    tessjs_create_pdf: '0',
+                    tessjs_create_hocr: '0',
+                    tessjs_create_tsv: '0',
+                    tessjs_create_box: '0',
+                    tessjs_create_unlv: '0',
+                    tessjs_create_osd: '0'
+                });
+
+                // Perform OCR
+                const result = await tesseractWorker.recognize(tempCanvas);
+                const text = result.data.text.trim();
+                const confidence = result.data.confidence;
+                
+                // Show feedback with confidence level
+                let feedback = document.getElementById('room-feedback');
+                if (!feedback) {
+                    feedback = document.createElement('div');
+                    feedback.id = 'room-feedback';
+                    document.body.appendChild(feedback);
+                }
+                
+                const hasQuestionMark = text.includes('?');
+                feedback.textContent = hasQuestionMark ? 
+                    `Locked Room (${confidence.toFixed(1)}% confident)` : 
+                    'Not a locked room';
+                feedback.style.display = 'block';
+                
+                // Hide the feedback after 2 seconds
+                setTimeout(() => {
+                    feedback.style.display = 'none';
+                }, 2000);
+                
+                return hasQuestionMark;
+            } catch (error) {
+                console.error('Error during OCR:', error);
+                return false;
+            }
+        }
+
         // Function to show the context menu
-        function showContextMenu(event, cell) {
+        async function showContextMenu(event, cell) {
             console.log("showContextMenu called", event, cell);
+            
+            // Create or get a feedback element for showing OCR status
+            let feedback = document.getElementById('room-feedback');
+            if (!feedback) {
+                feedback = document.createElement('div');
+                feedback.id = 'room-feedback';
+                document.body.appendChild(feedback);
+            }
+            
+            // Position the feedback near the cursor
+            feedback.style.left = `${event.clientX + 10}px`;
+            feedback.style.top = `${event.clientY + 10}px`;
+            
+            // Show "Checking..." message
+            feedback.textContent = "Checking room...";
+            feedback.style.display = 'block';
+            
+            // Check if the cell contains a question mark
+            const isLocked = await hasQuestionMark(cell);
+            
+            if (!isLocked) {
+                console.log("Room is Not Locked");
+                feedback.textContent = "Room is Not Locked";
+                
+                // Check if the cell has a key (color and shape) but not a gatestone
+                if (cell.dataset.color && cell.dataset.shape && !cell.dataset.gatestone) {
+                    console.log("Clearing key from unlocked room");
+                    // Remove the key image
+                    const existingImg = cell.querySelector('img');
+                    if (existingImg) {
+                        cell.removeChild(existingImg);
+                    }
+                    
+                    // Remove key data attributes
+                    delete cell.dataset.color;
+                    delete cell.dataset.shape;
+                    
+                    // Save the updated cell state
+                    saveCellState(cell);
+                }
+                
+                // Hide the feedback after 2 seconds
+                setTimeout(() => {
+                    feedback.style.display = 'none';
+                }, 2000);
+                
+                return;
+            }
             
             const contextMenu = document.getElementById('context-menu');
             if (!contextMenu) {
@@ -1335,9 +1777,11 @@
             const color = cell.dataset.color || '';
             const shape = cell.dataset.shape || '';
             const gatestone = cell.dataset.gatestone || '';
+            const blocked = cell.dataset.blocked || '';
+            const skillTier = cell.dataset.skillTier || '';
             
             // Create a cell state object
-            const cellState = { row, col, color, shape, gatestone };
+            const cellState = { row, col, color, shape, gatestone, blocked, skillTier };
             
             // Get the current map state from settings or initialize a new one
             if (!settings.mapState) {
@@ -1390,6 +1834,24 @@
                         img.src = `../assets/gatestones/${state.gatestone}.png`;
                         img.alt = state.gatestone.replace('_', ' ');
                         cell.appendChild(img);
+                    }
+                    // Apply blocked room if it exists
+                    else if (state.blocked === 'true') {
+                        cell.dataset.blocked = 'true';
+                        
+                        const img = document.createElement('img');
+                        img.src = '../assets/rooms/blocked_room.png';
+                        img.alt = 'Blocked Room';
+                        cell.appendChild(img);
+                    }
+                    // Apply skill tier if it exists
+                    else if (state.skillTier) {
+                        cell.dataset.skillTier = state.skillTier;
+                        
+                        const tierText = document.createElement('div');
+                        tierText.className = 'skill-tier';
+                        tierText.textContent = `T${state.skillTier}`;
+                        cell.appendChild(tierText);
                     }
                 }
             });
@@ -2202,16 +2664,8 @@
             
             console.log("Clearing cell:", activeCell);
             
-            // Remove any existing image
-            const existingImg = activeCell.querySelector('img');
-            if (existingImg) {
-                activeCell.removeChild(existingImg);
-            }
-            
-            // Remove data attributes
-            delete activeCell.dataset.color;
-            delete activeCell.dataset.shape;
-            delete activeCell.dataset.gatestone;
+            // Use the new clearCellContent function
+            clearCellContent(activeCell);
             
             // Save the cell state
             saveCellState(activeCell);
@@ -2253,6 +2707,248 @@
             
             // Hide the cell menu
             hideCellMenu();
+        }
+
+        // Function to test OCR on locked room image
+        async function testOCROnLockedRoom() {
+            console.log("Testing OCR on locked room image");
+            
+            // Get the result display element
+            const resultDisplay = document.getElementById('ocr-test-result');
+            if (!resultDisplay) return;
+            
+            // Show loading state
+            resultDisplay.textContent = 'Loading test image...';
+            
+            try {
+                // Create an image element
+                const img = new Image();
+                img.src = '../assets/rooms/locked_room.png';
+                
+                // Wait for image to load
+                await new Promise((resolve, reject) => {
+                    img.onload = resolve;
+                    img.onerror = () => reject(new Error('Failed to load test image'));
+                });
+                
+                // Create a canvas to draw the image
+                const canvas = document.createElement('canvas');
+                canvas.width = img.width;
+                canvas.height = img.height;
+                const ctx = canvas.getContext('2d');
+                
+                // Draw and preprocess the image
+                ctx.drawImage(img, 0, 0);
+                
+                // Get image data for preprocessing
+                const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+                const data = imageData.data;
+                
+                // Increase contrast and convert to black and white
+                for (let i = 0; i < data.length; i += 4) {
+                    const r = data[i];
+                    const g = data[i + 1];
+                    const b = data[i + 2];
+                    
+                    // Convert to grayscale first
+                    const gray = (r + g + b) / 3;
+                    
+                    // Apply threshold (adjust this value as needed)
+                    const threshold = 128;
+                    const val = gray > threshold ? 255 : 0;
+                    
+                    data[i] = val;     // R
+                    data[i + 1] = val; // G
+                    data[i + 2] = val; // B
+                }
+                
+                // Put the processed image data back
+                ctx.putImageData(imageData, 0, 0);
+                
+                // Initialize Tesseract if needed
+                if (!tesseractWorker) {
+                    resultDisplay.textContent = 'Initializing Tesseract...';
+                    await initTesseractWorker();
+                }
+                
+                // Show OCR in progress
+                resultDisplay.textContent = 'Performing OCR...';
+                
+                // Set Tesseract parameters for better symbol detection
+                await tesseractWorker.setParameters({
+                    tessedit_char_whitelist: '?',
+                    tessedit_pageseg_mode: '10', // Treat image as single character
+                    tessedit_ocr_engine_mode: '2', // Use Legacy + LSTM mode
+                    tessjs_create_pdf: '0',
+                    tessjs_create_hocr: '0',
+                    tessjs_create_tsv: '0',
+                    tessjs_create_box: '0',
+                    tessjs_create_unlv: '0',
+                    tessjs_create_osd: '0'
+                });
+                
+                // Perform OCR
+                const result = await tesseractWorker.recognize(canvas);
+                
+                // Display results and debug info
+                const text = result.data.text.trim();
+                const confidence = result.data.confidence;
+                
+                // Display the processed image for debugging
+                const debugCanvas = document.createElement('canvas');
+                debugCanvas.width = canvas.width;
+                debugCanvas.height = canvas.height;
+                debugCanvas.style.border = '1px solid red';
+                debugCanvas.style.marginTop = '10px';
+                const debugCtx = debugCanvas.getContext('2d');
+                debugCtx.drawImage(canvas, 0, 0);
+                
+                resultDisplay.innerHTML = `OCR Results:
+Text detected: "${text}"
+Confidence: ${confidence}%
+Words found: ${JSON.stringify(result.data.words, null, 2)}
+
+Processed Image (for debugging):`;
+                resultDisplay.appendChild(debugCanvas);
+                
+            } catch (error) {
+                console.error('Error during OCR test:', error);
+                resultDisplay.textContent = `Error during OCR test: ${error.message}`;
+            }
+        }
+
+        // Add new functions for blocked room and skill tiers
+        function addBlockedRoom() {
+            if (!activeCell) {
+                console.log("No active cell to add blocked room to");
+                return;
+            }
+            
+            console.log("Adding blocked room to cell:", activeCell);
+            
+            // Remove any existing image and text
+            clearCellContent(activeCell);
+            
+            // Add the blocked room image
+            const img = document.createElement('img');
+            img.src = '../assets/rooms/blocked_room.png';
+            img.alt = 'Blocked Room';
+            activeCell.appendChild(img);
+            
+            // Set blocked room data attribute
+            activeCell.dataset.blocked = 'true';
+            
+            // Save the cell state
+            saveCellState(activeCell);
+            
+            // Hide the cell menu
+            hideCellMenu();
+        }
+
+        function showSkillTierMenu() {
+            const skillTierMenu = document.getElementById('skill-tier-menu');
+            if (!skillTierMenu) return;
+
+            // Hide the cell menu
+            hideCellMenu();
+
+            // Get the skill tier options container
+            const optionsContainer = skillTierMenu.querySelector('.skill-tier-options');
+            optionsContainer.innerHTML = '';
+
+            // Create options for T1 through T12
+            for (let i = 1; i <= 12; i++) {
+                const option = document.createElement('div');
+                option.className = 'skill-tier-option';
+                option.textContent = `T${i}`;
+                option.onclick = () => addSkillTier(i);
+                optionsContainer.appendChild(option);
+            }
+
+            // Position the menu - use the same positioning logic as the cell menu
+            const dungeonSize = settings.dungeonSize;
+            let posX, posY;
+            
+            if (dungeonSize === 'small') {
+                posX = 38;
+                posY = 20;
+            } else if (dungeonSize === 'medium') {
+                posX = 38;
+                posY = 100;
+            } else if (dungeonSize === 'large') {
+                posX = 107;
+                posY = 90;
+            } else {
+                posX = 30;
+                posY = 20;
+            }
+
+            skillTierMenu.style.left = `${posX}px`;
+            skillTierMenu.style.top = `${posY}px`;
+
+            // Show the menu
+            skillTierMenu.classList.add('visible');
+
+            // Add click listener to hide menu when clicking outside
+            setTimeout(() => {
+                document.addEventListener('click', hideSkillTierMenu);
+            }, 0);
+        }
+
+        function hideSkillTierMenu(event) {
+            const skillTierMenu = document.getElementById('skill-tier-menu');
+            if (skillTierMenu) {
+                skillTierMenu.classList.remove('visible');
+            }
+            document.removeEventListener('click', hideSkillTierMenu);
+        }
+
+        function addSkillTier(tier) {
+            if (!activeCell) {
+                console.log("No active cell to add skill tier to");
+                return;
+            }
+
+            console.log(`Adding skill tier T${tier} to cell:`, activeCell);
+
+            // Remove any existing content
+            clearCellContent(activeCell);
+
+            // Create and add the skill tier text
+            const tierText = document.createElement('div');
+            tierText.className = 'skill-tier';
+            tierText.textContent = `T${tier}`;
+            activeCell.appendChild(tierText);
+
+            // Set skill tier data attribute
+            activeCell.dataset.skillTier = tier;
+
+            // Save the cell state
+            saveCellState(activeCell);
+
+            // Hide the skill tier menu
+            hideSkillTierMenu();
+        }
+
+        function clearCellContent(cell) {
+            // Remove any existing image
+            const existingImg = cell.querySelector('img');
+            if (existingImg) {
+                cell.removeChild(existingImg);
+            }
+
+            // Remove any existing skill tier text
+            const existingTier = cell.querySelector('.skill-tier');
+            if (existingTier) {
+                cell.removeChild(existingTier);
+            }
+
+            // Remove all data attributes
+            delete cell.dataset.color;
+            delete cell.dataset.shape;
+            delete cell.dataset.gatestone;
+            delete cell.dataset.blocked;
+            delete cell.dataset.skillTier;
         }
     </script>
     <!-- Include the bundled JavaScript file -->
