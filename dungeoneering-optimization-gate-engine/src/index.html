@@ -814,6 +814,57 @@
             text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.8);
             pointer-events: none;
         }
+
+        /* Mouse Text OCR styles */
+        .mouse-text-controls {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 8px;
+        }
+
+        .viewport-container {
+            margin: 10px 0;
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 4px;
+            padding: 8px;
+        }
+
+        .viewport-label {
+            font-size: 12px;
+            color: #b9bbbe;
+            margin-bottom: 4px;
+        }
+
+        #mouse-text-viewport {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            background: #202225;
+            border: 1px solid #40444b;
+            border-radius: 3px;
+            padding: 4px;
+            margin: 4px 0;
+        }
+
+        #mouseTextCanvas {
+            max-width: 100%;
+            height: auto;
+            image-rendering: pixelated;
+        }
+
+        #mouse-text-result {
+            min-height: 20px;
+            margin-top: 8px;
+        }
+
+        .mouse-ocr-active {
+            color: #4CAF50 !important;
+        }
+
+        .mouse-ocr-inactive {
+            color: #dcddde !important;
+        }
     </style>
 </head>
 <body>
@@ -904,6 +955,24 @@
                         </div>
                         <div id="ocr-test-result" class="ocr-test-result">
                             <!-- OCR test results will be shown here -->
+                        </div>
+                    </div>
+
+                    <!-- Add Mouse Text OCR Section -->
+                    <div class="form-group">
+                        <label>Mouse Text OCR:</label>
+                        <div class="mouse-text-controls">
+                            <button id="toggle-mouse-ocr" class="btn">Start Mouse OCR</button>
+                            <span id="mouse-ocr-status" class="status-text">Inactive</span>
+                        </div>
+                        <div class="viewport-container">
+                            <div class="viewport-label">Capture Preview:</div>
+                            <div id="mouse-text-viewport">
+                                <canvas id="mouseTextCanvas" width="250" height="35"></canvas>
+                            </div>
+                        </div>
+                        <div id="mouse-text-result" class="ocr-test-result">
+                            <!-- Mouse text OCR results will be shown here -->
                         </div>
                     </div>
 
@@ -1017,7 +1086,14 @@
             if (tesseractWorker !== null) return;
             if (isInitializingWorker) return;
 
-            console.log('Starting Tesseract worker initialization...');
+            console.log('=== Tesseract Initialization Debug ===', {
+                tesseractExists: typeof Tesseract !== 'undefined',
+                tesseractVersion: Tesseract?.version,
+                psmExists: typeof Tesseract?.PSM !== 'undefined',
+                psmValue: Tesseract?.PSM,
+                workerStatus: tesseractWorker ? 'initialized' : 'not initialized'
+            });
+
             isInitializingWorker = true;
 
             try {
@@ -1032,7 +1108,11 @@
                     workerPath: 'https://cdn.jsdelivr.net/npm/tesseract.js@4.1.1/dist/worker.min.js',
                     langPath: 'https://tessdata.projectnaptha.com/4.0.0',
                     logger: m => {
-                        console.log('Tesseract:', m);
+                        console.log('=== Tesseract Worker Event ===', {
+                            status: m.status,
+                            progress: m.progress,
+                            workerId: tesseractWorker?.id
+                        });
                         // Update initialization status in UI
                         let feedback = document.getElementById('room-feedback');
                         if (feedback) {
@@ -1041,13 +1121,23 @@
                         }
                     },
                     errorHandler: err => {
-                        console.error('Tesseract Error:', err);
+                        console.error('=== Tesseract Worker Error ===', {
+                            error: err.message,
+                            workerId: tesseractWorker?.id,
+                            workerState: tesseractWorker ? 'exists' : 'null'
+                        });
                         let feedback = document.getElementById('room-feedback');
                         if (feedback) {
                             feedback.textContent = `OCR Error: ${err.message}`;
                             feedback.style.display = 'block';
                         }
                     }
+                });
+
+                console.log('=== Tesseract Worker Created ===', {
+                    workerExists: !!tesseractWorker,
+                    workerId: tesseractWorker?.id,
+                    psmAfterInit: typeof Tesseract?.PSM !== 'undefined'
                 });
                 
                 console.log('Loading language...');
@@ -1096,6 +1186,259 @@
 
         // Initialize Alt1 globals
         window.alt1 = window.alt1 || null;
+
+        // DoorTextReader class for mouse text OCR
+        class DoorTextReader {
+            constructor() {
+                this.isReading = false;
+                this.lastMousePosition = { x: 0, y: 0 };
+                this.lastCaptureTime = 0;
+                this.captureUpdateInterval = 250;
+                this.mouseTrackingInterval = null;
+                this.lastRecognizedText = '';
+                this.captureWidth = 250;
+                this.captureHeight = 35;
+                this.captureYOffset = 30;
+                this.canvas = document.getElementById('mouseTextCanvas');
+                this.ctx = this.canvas.getContext('2d');
+                this.ctx.imageSmoothingEnabled = false;
+                this.startMouseTracking();
+            }
+
+            startMouseTracking() {
+                if (this.mouseTrackingInterval) {
+                    clearInterval(this.mouseTrackingInterval);
+                }
+
+                this.mouseTrackingInterval = setInterval(() => {
+                    const pos = getAlt1MousePosition();
+                    if (pos) {
+                        this.lastMousePosition = pos;
+                        if (this.isReading) {
+                            this.readText();
+                        }
+                    }
+                }, 100);
+            }
+
+            getCaptureRegion() {
+                const { x, y } = this.lastMousePosition;
+                const captureX = Math.round(x - (this.captureWidth / 2));
+                const captureY = y + this.captureYOffset;
+                
+                return {
+                    x: captureX,
+                    y: captureY,
+                    width: this.captureWidth,
+                    height: this.captureHeight
+                };
+            }
+
+            async readText() {
+                if (!this.isReading || !tesseractWorker || !window.alt1) return;
+
+                console.log('=== OCR Process Debug ===', {
+                    tesseractAvailable: typeof Tesseract !== 'undefined',
+                    tesseractVersion: Tesseract?.version,
+                    workerExists: !!tesseractWorker,
+                    workerState: tesseractWorker ? 'ready' : 'not ready',
+                    psmExists: typeof Tesseract?.PSM !== 'undefined',
+                    psmValue: Tesseract?.PSM?.SINGLE_LINE
+                });
+
+                try {
+                    if (!window.alt1.permissionPixel) {
+                        console.error('Pixel permission not enabled');
+                        return;
+                    }
+
+                    const now = Date.now();
+                    if (now - this.lastCaptureTime < this.captureUpdateInterval) {
+                        setTimeout(() => this.readText(), 50);
+                        return;
+                    }
+                    this.lastCaptureTime = now;
+
+                    const region = this.getCaptureRegion();
+                    console.log('=== Mouse Text OCR Capture ===', {
+                        timestamp: new Date().toISOString(),
+                        region,
+                        mousePosition: this.lastMousePosition,
+                        captureInterval: now - this.lastCaptureTime
+                    });
+
+                    let imgData = null;
+
+                    try {
+                        const img = a1lib.captureHoldFullRs();
+                        if (img) {
+                            imgData = img.toData(region.x, region.y, region.width, region.height);
+                        }
+                    } catch (error) {
+                        console.error('Failed to capture screen:', error);
+                        return;
+                    }
+
+                    if (!imgData) {
+                        console.error('Failed to capture screen region');
+                        return;
+                    }
+
+                    // Update canvas with captured image
+                    this.canvas.width = region.width;
+                    this.canvas.height = region.height;
+                    this.ctx.putImageData(imgData, 0, 0);
+
+                    // Ensure Tesseract and PSM are available
+                    if (!Tesseract || typeof Tesseract.PSM === 'undefined') {
+                        console.error('Tesseract or PSM not properly initialized');
+                        await loadTesseract(); // Try reloading Tesseract
+                        if (!Tesseract || typeof Tesseract.PSM === 'undefined') {
+                            throw new Error('Failed to initialize Tesseract PSM');
+                        }
+                    }
+
+                    console.log('=== OCR Parameters Setup ===', {
+                        timestamp: new Date().toISOString(),
+                        tesseractPSM: Tesseract.PSM,
+                        psmSingleLine: Tesseract.PSM.SINGLE_LINE,
+                        workerExists: !!tesseractWorker,
+                        canvasSize: {
+                            width: this.canvas.width,
+                            height: this.canvas.height
+                        }
+                    });
+
+                    // Set OCR parameters with proper PSM validation
+                    const ocrParams = {
+                        tessedit_char_whitelist: 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789 \'"-:,.!?()[]{}',
+                    };
+
+                    // Only add PSM if it's available
+                    if (typeof Tesseract?.PSM?.SINGLE_LINE !== 'undefined') {
+                        ocrParams.tessedit_pageseg_mode = Tesseract.PSM.SINGLE_LINE;
+                    }
+
+                    await tesseractWorker.setParameters(ocrParams);
+
+                    const startTime = performance.now();
+                    // Perform OCR
+                    const result = await tesseractWorker.recognize(this.canvas);
+                    const endTime = performance.now();
+                    const recognizedText = result.data.text.trim();
+                    this.lastRecognizedText = recognizedText;
+
+                    console.log('=== Mouse Text OCR Result ===', {
+                        timestamp: new Date().toISOString(),
+                        text: recognizedText,
+                        confidence: result.data.confidence,
+                        processingTime: endTime - startTime,
+                        wordCount: recognizedText.split(/\s+/).length
+                    });
+
+                    // Update result display
+                    const resultDisplay = document.getElementById('mouse-text-result');
+                    if (resultDisplay) {
+                        resultDisplay.textContent = recognizedText || 'No text detected';
+                    }
+
+                } catch (error) {
+                    console.error('=== OCR Process Error ===', {
+                        error: error.message,
+                        stack: error.stack,
+                        tesseractState: {
+                            exists: typeof Tesseract !== 'undefined',
+                            psmExists: typeof Tesseract?.PSM !== 'undefined',
+                            workerExists: !!tesseractWorker
+                        }
+                    });
+                }
+
+                if (this.isReading) {
+                    setTimeout(() => this.readText(), this.captureUpdateInterval);
+                }
+            }
+
+            startReading() {
+                if (this.isReading) return;
+                this.isReading = true;
+                this.readText();
+                
+                // Update UI
+                const statusElement = document.getElementById('mouse-ocr-status');
+                const toggleButton = document.getElementById('toggle-mouse-ocr');
+                if (statusElement) {
+                    statusElement.textContent = 'Active';
+                    statusElement.className = 'status-text mouse-ocr-active';
+                }
+                if (toggleButton) {
+                    toggleButton.textContent = 'Stop Mouse OCR';
+                }
+            }
+
+            stopReading() {
+                this.isReading = false;
+                
+                // Update UI
+                const statusElement = document.getElementById('mouse-ocr-status');
+                const toggleButton = document.getElementById('toggle-mouse-ocr');
+                if (statusElement) {
+                    statusElement.textContent = 'Inactive';
+                    statusElement.className = 'status-text mouse-ocr-inactive';
+                }
+                if (toggleButton) {
+                    toggleButton.textContent = 'Start Mouse OCR';
+                }
+            }
+
+            terminate() {
+                this.stopReading();
+                if (this.mouseTrackingInterval) {
+                    clearInterval(this.mouseTrackingInterval);
+                    this.mouseTrackingInterval = null;
+                }
+            }
+        }
+
+        // Initialize mouse text OCR
+        let doorTextReader = null;
+
+        document.addEventListener('DOMContentLoaded', function() {
+            // Initialize the door text reader
+            console.log('=== Mouse Text OCR Initialization ===', {
+                tesseractAvailable: typeof tesseractWorker !== 'undefined',
+                alt1Available: !!window.alt1,
+                pixelPermission: window.alt1?.permissionPixel,
+                canvasElement: !!document.getElementById('mouseTextCanvas'),
+                toggleButton: !!document.getElementById('toggle-mouse-ocr')
+            });
+
+            doorTextReader = new DoorTextReader();
+
+            // Set up toggle button
+            const toggleButton = document.getElementById('toggle-mouse-ocr');
+            if (toggleButton) {
+                toggleButton.addEventListener('click', function() {
+                    if (!doorTextReader) {
+                        console.error('DoorTextReader not initialized');
+                        return;
+                    }
+                    
+                    console.log('=== Mouse Text OCR Toggle ===', {
+                        currentState: doorTextReader.isReading ? 'active' : 'inactive',
+                        newState: doorTextReader.isReading ? 'stopping' : 'starting',
+                        lastRecognizedText: doorTextReader.lastRecognizedText,
+                        mousePosition: doorTextReader.lastMousePosition
+                    });
+
+                    if (doorTextReader.isReading) {
+                        doorTextReader.stopReading();
+                    } else {
+                        doorTextReader.startReading();
+                    }
+                });
+            }
+        });
 
         // Function to automatically check rooms with keys
         async function checkRoomsWithKeys() {
