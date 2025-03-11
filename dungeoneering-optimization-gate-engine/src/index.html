@@ -1371,16 +1371,14 @@
                     cell.dataset.row = r;
                     cell.dataset.col = c;
                     
-                    // Add event listener for right-click to show context menu
+                    // Use the unified click handler
                     cell.addEventListener('contextmenu', function(e) {
                         e.preventDefault();
-                        showContextMenu(e, this);
+                        handleGridCellClick(e, this);
                     });
                     
-                    // Add event listener for left-click to show clear menu
                     cell.addEventListener('click', function(e) {
-                        e.preventDefault();
-                        showCellMenu(e, this);
+                        handleGridCellClick(e, this);
                     });
                     
                     mapGrid.appendChild(cell);
@@ -1419,47 +1417,57 @@
             const width = rect.width;
             const height = rect.height;
             
+            console.log("=== OCR Region Debug ===", {
+                cell: {
+                    row: cell.dataset.row,
+                    col: cell.dataset.col
+                },
+                region: {
+                    x, y, width, height
+                }
+            });
+            
             // Create a temporary canvas for preprocessing
             const tempCanvas = document.createElement('canvas');
             tempCanvas.width = width;
             tempCanvas.height = height;
             const tempCtx = tempCanvas.getContext('2d');
 
-            // Extract and draw the cell image
-            const imageData = ctx.getImageData(x, y, width, height);
-            tempCtx.putImageData(imageData, 0, 0);
-
-            // Preprocess the image
-            const processedImageData = tempCtx.getImageData(0, 0, width, height);
-            const data = processedImageData.data;
-
-            // Convert to grayscale and increase contrast
-            for (let i = 0; i < data.length; i += 4) {
-                const r = data[i];
-                const g = data[i + 1];
-                const b = data[i + 2];
-                
-                // Convert to grayscale
-                const gray = (r + g + b) / 3;
-                
-                // Apply threshold for black and white conversion
-                const threshold = 128;
-                const val = gray > threshold ? 255 : 0;
-                
-                data[i] = val;     // R
-                data[i + 1] = val; // G
-                data[i + 2] = val; // B
-            }
-
-            // Put the processed image back
-            tempCtx.putImageData(processedImageData, 0, 0);
-            
             try {
+                // Extract and draw the cell image
+                const imageData = ctx.getImageData(x, y, width, height);
+                tempCtx.putImageData(imageData, 0, 0);
+
+                // Preprocess the image
+                const processedImageData = tempCtx.getImageData(0, 0, width, height);
+                const data = processedImageData.data;
+
+                // Convert to grayscale and increase contrast
+                for (let i = 0; i < data.length; i += 4) {
+                    const r = data[i];
+                    const g = data[i + 1];
+                    const b = data[i + 2];
+                    
+                    // Convert to grayscale
+                    const gray = (r + g + b) / 3;
+                    
+                    // Apply threshold for black and white conversion
+                    const threshold = 128;
+                    const val = gray > threshold ? 255 : 0;
+                    
+                    data[i] = val;     // R
+                    data[i + 1] = val; // G
+                    data[i + 2] = val; // B
+                }
+
+                // Put the processed image back
+                tempCtx.putImageData(processedImageData, 0, 0);
+                
                 // Set optimal parameters for symbol detection
                 await tesseractWorker.setParameters({
                     tessedit_char_whitelist: '?',
-                    tessedit_pageseg_mode: '10', // Treat as single character
-                    tessedit_ocr_engine_mode: '2', // Use Legacy + LSTM mode
+                    tessedit_pageseg_mode: '10',
+                    tessedit_ocr_engine_mode: '2',
                     tessjs_create_pdf: '0',
                     tessjs_create_hocr: '0',
                     tessjs_create_tsv: '0',
@@ -1472,6 +1480,18 @@
                 const result = await tesseractWorker.recognize(tempCanvas);
                 const text = result.data.text.trim();
                 const confidence = result.data.confidence;
+
+                console.log("=== Question Mark Detection ===", {
+                    cell: {
+                        row: cell.dataset.row,
+                        col: cell.dataset.col
+                    },
+                    ocrResult: {
+                        text: text,
+                        confidence: confidence,
+                        hasQuestionMark: text.includes('?')
+                    }
+                });
                 
                 // Show feedback with confidence level
                 let feedback = document.getElementById('room-feedback');
@@ -1501,62 +1521,25 @@
 
         // Function to show the context menu
         async function showContextMenu(event, cell) {
-            console.log("showContextMenu called", event, cell);
-            
-            // Create or get a feedback element for showing OCR status
-            let feedback = document.getElementById('room-feedback');
-            if (!feedback) {
-                feedback = document.createElement('div');
-                feedback.id = 'room-feedback';
-                document.body.appendChild(feedback);
-            }
-            
-            // Position the feedback near the cursor
-            feedback.style.left = `${event.clientX + 10}px`;
-            feedback.style.top = `${event.clientY + 10}px`;
-            
-            // Show "Checking..." message
-            feedback.textContent = "Checking room...";
-            feedback.style.display = 'block';
-            
-            // Check if the cell contains a question mark
-            const isLocked = await hasQuestionMark(cell);
-            
-            if (!isLocked) {
-                console.log("Room is Not Locked");
-                feedback.textContent = "Room is Not Locked";
-                
-                // Check if the cell has a key (color and shape) but not a gatestone
-                if (cell.dataset.color && cell.dataset.shape && !cell.dataset.gatestone) {
-                    console.log("Clearing key from unlocked room");
-                    // Remove the key image
-                    const existingImg = cell.querySelector('img');
-                    if (existingImg) {
-                        cell.removeChild(existingImg);
-                    }
-                    
-                    // Remove key data attributes
-                    delete cell.dataset.color;
-                    delete cell.dataset.shape;
-                    
-                    // Save the updated cell state
-                    saveCellState(cell);
+            console.log("=== Show Context Menu ===", {
+                currentMenuStates: {
+                    contextMenuVisible: menuElements.contextMenu?.classList.contains('visible'),
+                    shapeMenuVisible: menuElements.shapeMenu?.classList.contains('visible'),
+                    cellMenuVisible: menuElements.cellMenu?.classList.contains('visible'),
+                    skillTierMenuVisible: menuElements.skillTierMenu?.classList.contains('visible')
                 }
-                
-                // Hide the feedback after 2 seconds
-                setTimeout(() => {
-                    feedback.style.display = 'none';
-                }, 2000);
-                
+            });
+
+            // Validate cell has a room before proceeding
+            if (!await validateCellInteraction(event, cell)) {
                 return;
             }
-            
-            const contextMenu = document.getElementById('context-menu');
-            if (!contextMenu) {
+
+            if (!menuElements.contextMenu) {
                 console.error("Context menu element not found");
                 return;
             }
-            
+
             // Set the active cell
             activeCell = cell;
             
@@ -1565,8 +1548,6 @@
             
             // Position based on the current dungeon size
             let posX, posY;
-            
-            // Get the current dungeon size from settings
             const dungeonSize = settings.dungeonSize;
             
             // Adjust position based on dungeon size
@@ -1580,17 +1561,16 @@
                 posX = 107;
                 posY = 90;
             } else {
-                // Default fallback
                 posX = 30;
                 posY = 20;
             }
             
             // Position the context menu
-            contextMenu.style.left = `${posX}px`;
-            contextMenu.style.top = `${posY}px`;
+            menuElements.contextMenu.style.left = `${posX}px`;
+            menuElements.contextMenu.style.top = `${posY}px`;
             
             // Make the context menu visible
-            contextMenu.classList.add('visible');
+            menuElements.contextMenu.classList.add('visible');
             
             // Add event listeners to color options
             document.querySelectorAll('.color-option').forEach(option => {
@@ -1601,16 +1581,6 @@
                     showShapeMenu();
                 };
             });
-            
-            // Add a click event listener to the document to hide the context menu when clicking elsewhere
-            setTimeout(() => {
-                document.addEventListener('click', hideContextMenu);
-            }, 0);
-            
-            // Prevent the default context menu
-            event.preventDefault();
-            event.stopPropagation();
-            return false;
         }
         
         // Function to show the shape menu after color selection
@@ -1727,11 +1697,9 @@
         // Function to hide the context menu
         function hideContextMenu(event) {
             console.log("hideContextMenu called");
-            const contextMenu = document.getElementById('context-menu');
-            if (contextMenu) {
-                contextMenu.classList.remove('visible');
+            if (menuElements.contextMenu) {
+                menuElements.contextMenu.classList.remove('visible');
             }
-            document.removeEventListener('click', hideContextMenu);
         }
         
         // Function to hide the shape menu
@@ -2584,25 +2552,46 @@
         }
 
         // Function to show the cell menu
-        function showCellMenu(event, cell) {
-            console.log("showCellMenu called", event, cell);
-            
-            const cellMenu = document.getElementById('cell-menu');
-            if (!cellMenu) {
+        async function showCellMenu(event, cell) {
+            console.log("=== Cell Menu Debug ===", {
+                cell: {
+                    row: cell.dataset.row,
+                    col: cell.dataset.col
+                },
+                menuState: {
+                    isVisible: menuElements.cellMenu?.classList.contains('visible'),
+                    hasGatestoneSection: !!menuElements.cellMenu?.querySelector('.gatestone-options')
+                }
+            });
+
+            // Validate cell has a room before proceeding
+            if (!await validateCellInteraction(event, cell)) {
+                return;
+            }
+
+            if (!menuElements.cellMenu) {
                 console.error("Cell menu element not found");
                 return;
             }
-            
+
+            // Check if the room is locked
+            const isLocked = await hasQuestionMark(cell);
+            console.log("=== Room Lock Status ===", {
+                cell: {
+                    row: cell.dataset.row,
+                    col: cell.dataset.col
+                },
+                isLocked: isLocked
+            });
+
             // Set the active cell
             activeCell = cell;
             
-            // Position based on the current dungeon size - use the same position as the context menu
+            // Position based on the current dungeon size
             let posX, posY;
-            
-            // Get the current dungeon size from settings
             const dungeonSize = settings.dungeonSize;
             
-            // Adjust position based on dungeon size - use the same values as in showContextMenu
+            // Adjust position based on dungeon size
             if (dungeonSize === 'small') {
                 posX = 38;
                 posY = 20;
@@ -2613,46 +2602,43 @@
                 posX = 107;
                 posY = 90;
             } else {
-                // Default fallback
                 posX = 30;
                 posY = 20;
             }
             
             // Position the cell menu
-            cellMenu.style.left = `${posX}px`;
-            cellMenu.style.top = `${posY}px`;
+            menuElements.cellMenu.style.left = `${posX}px`;
+            menuElements.cellMenu.style.top = `${posY}px`;
             
             // Only show the clear option if the cell has content
-            const clearOption = cellMenu.querySelector('.clear-option');
+            const clearOption = menuElements.cellMenu.querySelector('.clear-option');
             if (clearOption) {
-                if (cell.querySelector('img')) {
-                    clearOption.style.display = 'block';
-                } else {
-                    clearOption.style.display = 'none';
-                }
+                clearOption.style.display = cell.querySelector('img') ? 'block' : 'none';
+            }
+
+            // Show/hide gatestone options based on room lock status
+            const gatestoneSection = menuElements.cellMenu.querySelector('.gatestone-options');
+            if (gatestoneSection) {
+                gatestoneSection.style.display = isLocked ? 'none' : 'block';
+                console.log("=== Gatestone Section Toggle ===", {
+                    isLockedRoom: isLocked,
+                    gatestoneSection: {
+                        exists: true,
+                        wasVisible: gatestoneSection.style.display !== 'none'
+                    }
+                });
             }
             
             // Make the cell menu visible
-            cellMenu.classList.add('visible');
-            
-            // Add a click event listener to the document to hide the cell menu when clicking elsewhere
-            setTimeout(() => {
-                document.addEventListener('click', hideCellMenu);
-            }, 0);
-            
-            // Prevent the default click behavior
-            event.preventDefault();
-            event.stopPropagation();
+            menuElements.cellMenu.classList.add('visible');
         }
         
         // Function to hide the cell menu
         function hideCellMenu(event) {
             console.log("hideCellMenu called");
-            const cellMenu = document.getElementById('cell-menu');
-            if (cellMenu) {
-                cellMenu.classList.remove('visible');
+            if (menuElements.cellMenu) {
+                menuElements.cellMenu.classList.remove('visible');
             }
-            document.removeEventListener('click', hideCellMenu);
         }
 
         // Function to clear the active cell
@@ -2950,6 +2936,225 @@ Processed Image (for debugging):`;
             delete cell.dataset.blocked;
             delete cell.dataset.skillTier;
         }
+
+        // Add new room validation functions
+        function hasValidRoomColors(imageData) {
+            const roomColors = [
+                [183, 152, 92],
+                [140, 105, 52],
+                [137, 102, 50],
+                [144, 109, 58]
+            ];
+            
+            const data = imageData.data;
+            let colorCounts = {
+                total: 0
+            };
+            
+            // Check each pixel
+            for (let i = 0; i < data.length; i += 4) {
+                const r = data[i];
+                const g = data[i + 1];
+                const b = data[i + 2];
+                
+                for (const [tr, tg, tb] of roomColors) {
+                    // Allow small color variation
+                    if (Math.abs(r - tr) <= 5 && 
+                        Math.abs(g - tg) <= 5 && 
+                        Math.abs(b - tb) <= 5) {
+                        const colorKey = `${tr},${tg},${tb}`;
+                        colorCounts[colorKey] = (colorCounts[colorKey] || 0) + 1;
+                        colorCounts.total++;
+                    }
+                }
+            }
+            
+            console.log("Color Analysis:", {
+                cellSize: imageData.width * imageData.height,
+                colorCounts,
+                hasRoom: colorCounts.total > 0
+            });
+            
+            return colorCounts.total > 0;
+        }
+
+        async function analyzeCell(cell) {
+            console.log("=== Cell Analysis Debug ===");
+            
+            const mapCanvas = document.getElementById('mapBackgroundCanvas');
+            if (!mapCanvas) {
+                console.log("Map canvas not found");
+                return false;
+            }
+            
+            const rect = cell.getBoundingClientRect();
+            const mapRect = mapCanvas.getBoundingClientRect();
+            
+            // Calculate relative position
+            const x = rect.left - mapRect.left;
+            const y = rect.top - mapRect.top;
+            
+            console.log("Cell Position:", {
+                x, y,
+                width: rect.width,
+                height: rect.height,
+                cellRect: rect,
+                mapRect: mapRect
+            });
+            
+            try {
+                const ctx = mapCanvas.getContext('2d');
+                const imageData = ctx.getImageData(x, y, rect.width, rect.height);
+                return hasValidRoomColors(imageData);
+            } catch (error) {
+                console.error("Analysis error:", error);
+                return false;
+            }
+        }
+
+        async function validateCellInteraction(event, cell) {
+            console.log("Validating cell interaction");
+            
+            const isValid = await analyzeCell(cell);
+            console.log("Cell validation result:", isValid);
+            
+            if (!isValid) {
+                console.log("Preventing interaction - no room detected");
+                // Show feedback to user
+                let feedback = document.getElementById('room-feedback');
+                if (!feedback) {
+                    feedback = document.createElement('div');
+                    feedback.id = 'room-feedback';
+                    document.body.appendChild(feedback);
+                }
+                feedback.textContent = 'No room detected in this cell';
+                feedback.style.display = 'block';
+                feedback.style.left = `${event.clientX + 10}px`;
+                feedback.style.top = `${event.clientY + 10}px`;
+                
+                // Hide feedback after 2 seconds
+                setTimeout(() => {
+                    feedback.style.display = 'none';
+                }, 2000);
+                
+                event.preventDefault();
+                event.stopPropagation();
+                return false;
+            }
+            
+            return true;
+        }
+
+        // Add menu tracking variables
+        let isProcessingMenu = false;
+        let lastMenuOperation = null;
+
+        // Add unified click handler
+        function handleGridCellClick(event, cell) {
+            console.log('=== Grid Cell Click Handler ===', {
+                type: event.type,
+                button: event.button,
+                isRightClick: event.type === 'contextmenu',
+                isLeftClick: event.type === 'click',
+                timestamp: new Date().toISOString(),
+                isProcessingMenu: isProcessingMenu,
+                lastMenuOperation: lastMenuOperation
+            });
+
+            // Prevent menu processing if already in progress
+            if (isProcessingMenu) {
+                console.log('Menu operation already in progress, skipping');
+                event.preventDefault();
+                return;
+            }
+
+            try {
+                isProcessingMenu = true;
+                lastMenuOperation = event.type;
+
+                // Always hide all menus first
+                console.log('Hiding all menus before processing click');
+                hideAllMenus();
+
+                // Process the click based on type
+                if (event.type === 'contextmenu') {
+                    console.log('Processing right-click menu');
+                    showContextMenu(event, cell);
+                } else if (event.type === 'click') {
+                    console.log('Processing left-click menu');
+                    showCellMenu(event, cell);
+                }
+
+            } finally {
+                isProcessingMenu = false;
+            }
+        }
+
+        // Add menu elements caching
+        const menuElements = {
+            contextMenu: null,
+            shapeMenu: null,
+            cellMenu: null,
+            skillTierMenu: null
+        };
+
+        // Function to initialize menu references
+        function initializeMenuReferences() {
+            console.log('Initializing menu references');
+            
+            menuElements.contextMenu = document.getElementById('context-menu');
+            menuElements.shapeMenu = document.getElementById('shape-menu');
+            menuElements.cellMenu = document.getElementById('cell-menu');
+            menuElements.skillTierMenu = document.getElementById('skill-tier-menu');
+            
+            console.log('Menu elements cached:', {
+                contextMenuFound: !!menuElements.contextMenu,
+                shapeMenuFound: !!menuElements.shapeMenu,
+                cellMenuFound: !!menuElements.cellMenu,
+                skillTierMenuFound: !!menuElements.skillTierMenu
+            });
+        }
+
+        // Modify hideAllMenus to use cached references
+        function hideAllMenus() {
+            console.log('=== Hiding All Menus ===', {
+                calledBy: new Error().stack.split('\n')[2].trim(),
+                timestamp: new Date().toISOString()
+            });
+            
+            const menuStates = {};
+            const visibleMenus = [];
+            
+            // Check and log each menu's state
+            for (const [menuName, menuElement] of Object.entries(menuElements)) {
+                const wasVisible = menuElement?.classList.contains('visible');
+                menuStates[menuName] = {
+                    wasVisible,
+                    element: !!menuElement
+                };
+                
+                if (wasVisible) {
+                    visibleMenus.push(menuName);
+                    menuElement.classList.remove('visible');
+                }
+            }
+            
+            console.log('Menu visibility changes:', {
+                before: visibleMenus,
+                after: Object.entries(menuElements)
+                    .filter(([_, element]) => element?.classList.contains('visible'))
+                    .map(([name]) => name),
+                menuStates
+            });
+        }
+
+        // Document ready function
+        document.addEventListener('DOMContentLoaded', function() {
+            // Initialize menu references
+            initializeMenuReferences();
+            
+            // Rest of existing initialization...
+        });
     </script>
     <!-- Include the bundled JavaScript file -->
     <script src="index.bundle.js"></script>
