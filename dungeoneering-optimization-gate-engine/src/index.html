@@ -865,6 +865,30 @@
         .mouse-ocr-inactive {
             color: #dcddde !important;
         }
+
+        /* Add close button styles */
+        .close-button {
+            position: absolute;
+            top: 2px;
+            right: 2px;
+            width: 16px;
+            height: 16px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            color: #dcddde;
+            font-size: 14px;
+            font-weight: bold;
+            background-color: #36393f;
+            border-radius: 3px;
+            z-index: 1001;
+        }
+
+        .close-button:hover {
+            background-color: #40444b;
+            color: #ffffff;
+        }
     </style>
 </head>
 <body>
@@ -984,6 +1008,7 @@
 
     <!-- Context Menu for Grid Cells -->
     <div id="context-menu" class="context-menu">
+        <div class="close-button" onclick="hideAllMenus()">×</div>
         <div class="context-menu-section">
             <div class="context-menu-title">Select Color</div>
             <div class="color-options">
@@ -1009,6 +1034,7 @@
 
     <!-- Shape Menu (shown after color selection) -->
     <div id="shape-menu" class="context-menu">
+        <div class="close-button" onclick="hideAllMenus()">×</div>
         <div class="context-menu-section">
             <div class="context-menu-title">Select Shape</div>
             <div class="shape-options" id="shape-options-container">
@@ -1019,6 +1045,7 @@
 
     <!-- Cell Menu (shown on left-click) -->
     <div id="cell-menu" class="context-menu">
+        <div class="close-button" onclick="hideAllMenus()">×</div>
         <div class="context-menu-section">
             <div class="context-menu-title">Cell Options</div>
             <div class="clear-option" onclick="clearCell()">Clear Cell</div>
@@ -1046,6 +1073,7 @@
 
     <!-- Skill Tier Menu -->
     <div id="skill-tier-menu" class="context-menu">
+        <div class="close-button" onclick="hideAllMenus()">×</div>
         <div class="context-menu-section">
             <div class="context-menu-title">Select Skill Tier</div>
             <div class="skill-tier-options">
@@ -1543,6 +1571,9 @@
         // Function to show a specific view
         function showView(viewId, clickedItem) {
             console.log("Show view called for:", viewId);
+            
+            // Close any open menus first
+            hideAllMenus();
             
             // Update active nav item
             var navItems = document.querySelectorAll(".nav-item");
