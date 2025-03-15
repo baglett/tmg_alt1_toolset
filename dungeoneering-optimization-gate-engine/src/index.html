@@ -155,7 +155,7 @@
         .compact-mode .map-container {
             border: none;
         }
-        
+
         .map-container.small {
             width: 128px;
             height: 128px;
@@ -333,7 +333,7 @@
             z-index: 1000;
             display: none;
             overflow: hidden;
-            max-width: 140px; /* Reduced from 160px */
+            max-width: 130px; /* Reduced from 160px */
             font-size: 11px; /* Smaller font size */
             width: auto; /* Allow menu to shrink to content */
         }
@@ -382,12 +382,13 @@
             display: flex;
             align-items: center;
             justify-content: center;
-            font-weight: bold;
+            font-weight: bold;  /* Text is already bold */
             margin: 1px 0; /* Vertical margin only */
             font-size: 9px; /* Reduced from 10px */
             padding: 0; /* No padding */
             text-align: center; /* Center text */
             flex: 1; /* Make options take equal width */
+            text-shadow: -1px -1px 0 #000 /* Make the text outline black */  
         }
         
         .color-option:hover {
@@ -433,10 +434,10 @@
             height: 10px; /* Reduced from 12px */
             margin-right: 2px; /* Minimal margin */
         }
-        
+
         /* Shape menu specific styles to match color menu width */
         #shape-menu {
-            width: 140px; /* Match the max-width of context-menu */
+            width: 130px; /* Match the max-width of context-menu */
         }
 
         /* Anchor point styles */
@@ -622,7 +623,7 @@
             background-color: #2f3136;
             border-radius: 3px;
         }
-        
+
         .form-group label {
             display: block;
             margin-bottom: 2px;
@@ -630,7 +631,7 @@
             font-size: 12px;
             color: #b9bbbe;
         }
-        
+
         .form-group select {
             width: 100%;
             padding: 4px;
@@ -640,12 +641,12 @@
             border-radius: 3px;
             font-size: 12px;
         }
-        
+
         .form-group select:focus {
             outline: none;
             border-color: #5865f2;
         }
-        
+
         .btn {
             padding: 4px 8px;
             background-color: #5865f2;
@@ -658,7 +659,7 @@
             min-width: 90px;
             text-align: center;
         }
-        
+
         .btn:hover {
             background-color: #4752c4;
         }
@@ -682,30 +683,44 @@
         
         /* Gatestone options styles */
         .gatestone-options {
-            margin-top: 4px;
+            display: inline-flex;
+            flex-wrap: nowrap;
+            flex-direction: row;
+            align-items: center;
+            justify-content: flex-start;
+            gap: 2px;
+            padding: 4px;
+            margin: 2px;
+            background-color: #40444b;
+            border-radius: 2px;
+            width: max-content;
+            height: 28px;
         }
         
         .gatestone-option {
-            display: flex;
+            position: relative;
+            display: inline-flex;
             align-items: center;
-            padding: 4px 8px;
+            justify-content: center;
+            padding: 2px;
             cursor: pointer;
-            background-color: #40444b;
-            border-radius: 2px;
-            font-size: 11px;
-            margin: 4px;
-            font-weight: bold;
+            width: 24px;
+            height: 24px;
+            min-width: 24px;
+            flex: 0 0 24px;
+            transition: background-color 0.2s;
         }
         
         .gatestone-option:hover {
-            background-color: #5865f2;
+            background-color: #4f545c;
         }
         
         .gatestone-preview {
-            width: 16px;
-            height: 16px;
-            margin-right: 6px;
-            object-fit: contain;
+            width: 20px;
+            height: 20px;
+            display: block;
+            margin: 0;
+            padding: 0;
         }
 
         /* Room feedback styles */
@@ -746,13 +761,16 @@
         .blocked-room-option {
             display: flex;
             align-items: center;
-            padding: 4px 8px;
+            justify-content: flex-start; /* Change to flex-start to better control spacing */
+            padding: 1px 8px;
             cursor: pointer;
             background-color: #40444b;
             border-radius: 2px;
             font-size: 11px;
             margin: 4px;
             font-weight: bold;
+            height: 24px; /* Fixed height to ensure consistent centering */
+            line-height: 24px; /* Match the height for vertical text centering */
         }
         
         .blocked-room-option:hover {
@@ -762,8 +780,10 @@
         .blocked-room-preview {
             width: 16px;
             height: 16px;
-            margin-right: 6px;
+            margin-right: 8px; /* Increased from 6px for better spacing */
             object-fit: contain;
+            display: inline-flex; /* Add this to ensure proper alignment */
+            vertical-align: middle; /* Add this to ensure vertical alignment */
         }
 
         .skill-option {
@@ -889,6 +909,61 @@
             background-color: #40444b;
             color: #ffffff;
         }
+
+        /* Add styles for cached key option */
+        .cached-key-option {
+            padding: 8px;
+            cursor: pointer;
+            background-color: #40444b;
+            border-radius: 2px;
+            font-size: 11px;
+            margin: 4px;
+            display: none;
+        }
+
+        .cached-key-option:hover {
+            background-color: #5865f2;
+        }
+
+        .cached-key-preview {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .cached-key-preview img {
+            width: 20px;
+            height: 20px;
+            object-fit: contain;
+        }
+
+        .cached-key-preview span {
+            color: #4CAF50;
+            font-weight: bold;
+        }
+
+        /* Add Alt1 installation section styles */
+        #alt1-install-container {
+            margin: 15px 0;
+            padding: 10px;
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 4px;
+        }
+
+        .alt1-install-link {
+            display: inline-block;
+            background-color: #7289da;
+            color: white;
+            padding: 5px 10px;
+            border-radius: 3px;
+            text-decoration: none;
+            font-weight: bold;
+            transition: background-color 0.2s;
+        }
+
+        .alt1-install-link:hover {
+            background-color: #5b6eae;
+        }
     </style>
 </head>
 <body>
@@ -921,6 +996,13 @@
             
             <div class="view active" id="settings-view">
                 <h2 class="view-header">Settings</h2>
+                
+                <!-- Add Alt1 Installation Section -->
+                <div id="alt1-install-container">
+                    <div class="section-title">Alt1 Toolkit Integration</div>
+                    <div id="output"></div>
+                </div>
+                
                 <div class="settings-form">
                     <div class="form-group">
                         <label for="dungeon-size">Dungeon Size:</label>
@@ -940,7 +1022,7 @@
                         <div class="anchor-adjustment-controls">
                             <div class="adjustment-row">
                                 <button class="btn adjustment-btn" onclick="adjustAnchorPoint(0, -1)">↑</button>
-                            </div>
+                    </div>
                             <div class="adjustment-row">
                                 <button class="btn adjustment-btn" onclick="adjustAnchorPoint(-1, 0)">←</button>
                                 <button class="btn adjustment-btn" onclick="adjustAnchorPoint(1, 0)">→</button>
@@ -1047,25 +1129,27 @@
     <div id="cell-menu" class="context-menu">
         <div class="close-button" onclick="hideAllMenus()">×</div>
         <div class="context-menu-section">
-            <div class="context-menu-title">Cell Options</div>
+            <div class="context-menu-title">Room Options</div>
+            <div class="cached-key-option" onclick="applyCachedKey()">
+                <div class="cached-key-preview">
+                    <!-- Content will be updated dynamically -->
+                </div>
+            </div>
             <div class="clear-option" onclick="clearCell()">Clear Cell</div>
             <div class="gatestone-options">
-                <div class="gatestone-option" onclick="addGatestone('Gatestone')">
+                <div class="gatestone-option" onclick="addGatestone('Gatestone')" title="Gatestone">
                     <img src="../assets/gatestones/Gatestone.png" alt="Gatestone" class="gatestone-preview">
-                    <span>Gatestone</span>
                 </div>
-                <div class="gatestone-option" onclick="addGatestone('Gatestone_2')">
+                <div class="gatestone-option" onclick="addGatestone('Gatestone_2')" title="Gatestone 2">
                     <img src="../assets/gatestones/Gatestone_2.png" alt="Gatestone 2" class="gatestone-preview">
-                    <span>Gatestone 2</span>
                 </div>
-                <div class="gatestone-option" onclick="addGatestone('Group_Gatestone')">
+                <div class="gatestone-option" onclick="addGatestone('Group_Gatestone')" title="Group Gatestone">
                     <img src="../assets/gatestones/Group_Gatestone.png" alt="Group Gatestone" class="gatestone-preview">
-                    <span>Group Gatestone</span>
                 </div>
             </div>
             <div class="blocked-room-option" onclick="addBlockedRoom()">
                 <img src="../assets/rooms/blocked_room.png" alt="Blocked Room" class="blocked-room-preview">
-                <span>Blocked Room</span>
+                <span>Blocked</span>
             </div>
             <div class="skill-option" onclick="showSkillTierMenu()">Select Skill Tier</div>
         </div>
@@ -1230,6 +1314,7 @@
                 this.canvas = document.getElementById('mouseTextCanvas');
                 this.ctx = this.canvas.getContext('2d');
                 this.ctx.imageSmoothingEnabled = false;
+                this.cachedKey = null;  // Add cached key storage
                 this.startMouseTracking();
             }
 
@@ -1265,13 +1350,10 @@
             async readText() {
                 if (!this.isReading || !tesseractWorker || !window.alt1) return;
 
-                console.log('=== OCR Process Debug ===', {
-                    tesseractAvailable: typeof Tesseract !== 'undefined',
-                    tesseractVersion: Tesseract?.version,
-                    workerExists: !!tesseractWorker,
-                    workerState: tesseractWorker ? 'ready' : 'not ready',
-                    psmExists: typeof Tesseract?.PSM !== 'undefined',
-                    psmValue: Tesseract?.PSM?.SINGLE_LINE
+                console.log('=== Key Detection Debug ===', {
+                    timestamp: new Date().toISOString(),
+                    previousCachedKey: this.cachedKey,
+                    lastRecognizedText: this.lastRecognizedText
                 });
 
                 try {
@@ -1290,7 +1372,7 @@
                     const region = this.getCaptureRegion();
                     console.log('=== Mouse Text OCR Capture ===', {
                         timestamp: new Date().toISOString(),
-                        region,
+                        region: region,
                         mousePosition: this.lastMousePosition,
                         captureInterval: now - this.lastCaptureTime
                     });
@@ -1317,57 +1399,70 @@
                     this.canvas.height = region.height;
                     this.ctx.putImageData(imgData, 0, 0);
 
-                    // Ensure Tesseract and PSM are available
-                    if (!Tesseract || typeof Tesseract.PSM === 'undefined') {
-                        console.error('Tesseract or PSM not properly initialized');
-                        await loadTesseract(); // Try reloading Tesseract
-                        if (!Tesseract || typeof Tesseract.PSM === 'undefined') {
-                            throw new Error('Failed to initialize Tesseract PSM');
-                        }
-                    }
-
-                    console.log('=== OCR Parameters Setup ===', {
-                        timestamp: new Date().toISOString(),
-                        tesseractPSM: Tesseract.PSM,
-                        psmSingleLine: Tesseract.PSM.SINGLE_LINE,
-                        workerExists: !!tesseractWorker,
-                        canvasSize: {
-                            width: this.canvas.width,
-                            height: this.canvas.height
-                        }
+                    // Set OCR parameters optimized for door text
+                    await tesseractWorker.setParameters({
+                        tessedit_char_whitelist: 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789 -',
+                        tessedit_pageseg_mode: '7', // Treat the image as a single text line
                     });
 
-                    // Set OCR parameters with proper PSM validation
-                    const ocrParams = {
-                        tessedit_char_whitelist: 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789 \'"-:,.!?()[]{}',
-                    };
-
-                    // Only add PSM if it's available
-                    if (typeof Tesseract?.PSM?.SINGLE_LINE !== 'undefined') {
-                        ocrParams.tessedit_pageseg_mode = Tesseract.PSM.SINGLE_LINE;
-                    }
-
-                    await tesseractWorker.setParameters(ocrParams);
-
                     const startTime = performance.now();
-                    // Perform OCR
                     const result = await tesseractWorker.recognize(this.canvas);
                     const endTime = performance.now();
                     const recognizedText = result.data.text.trim();
                     this.lastRecognizedText = recognizedText;
 
-                    console.log('=== Mouse Text OCR Result ===', {
+                    console.log('=== OCR Result ===', {
                         timestamp: new Date().toISOString(),
                         text: recognizedText,
                         confidence: result.data.confidence,
-                        processingTime: endTime - startTime,
-                        wordCount: recognizedText.split(/\s+/).length
+                        processingTime: endTime - startTime
                     });
+
+                    // Check for door unlock text pattern
+                    const keyMatch = recognizedText.match(/Unlock\s+(\w+)\s+(\w+)\s+door/i);
+                    if (keyMatch) {
+                        const [_, color, shape] = keyMatch;
+                        const normalizedColor = color.charAt(0).toUpperCase() + color.slice(1).toLowerCase();
+                        const normalizedShape = shape.charAt(0).toUpperCase() + shape.slice(1).toLowerCase();
+
+                        console.log('=== Key Match Found ===', {
+                            timestamp: new Date().toISOString(),
+                            fullMatch: keyMatch[0],
+                            color: normalizedColor,
+                            shape: normalizedShape,
+                            isValidColor: this.isValidKeyColor(normalizedColor),
+                            isValidShape: this.isValidKeyShape(normalizedShape)
+                        });
+
+                        if (this.isValidKeyColor(normalizedColor) && this.isValidKeyShape(normalizedShape)) {
+                            const newKey = {
+                                color: normalizedColor,
+                                shape: normalizedShape,
+                                timestamp: Date.now()
+                            };
+
+                            // Only update if it's a different key
+                            if (!this.cachedKey || 
+                                this.cachedKey.color !== newKey.color || 
+                                this.cachedKey.shape !== newKey.shape) {
+                                
+                                console.log('=== Key Cache Updated ===', {
+                                    timestamp: new Date().toISOString(),
+                                    previousKey: this.cachedKey,
+                                    newKey: newKey
+                                });
+
+                                this.cachedKey = newKey;
+                                this.updateCachedKeyDisplay();
+                            }
+                        }
+                    }
 
                     // Update result display
                     const resultDisplay = document.getElementById('mouse-text-result');
                     if (resultDisplay) {
                         resultDisplay.textContent = recognizedText || 'No text detected';
+                        this.updateCachedKeyDisplay();
                     }
 
                 } catch (error) {
@@ -1376,7 +1471,6 @@
                         stack: error.stack,
                         tesseractState: {
                             exists: typeof Tesseract !== 'undefined',
-                            psmExists: typeof Tesseract?.PSM !== 'undefined',
                             workerExists: !!tesseractWorker
                         }
                     });
@@ -1384,6 +1478,46 @@
 
                 if (this.isReading) {
                     setTimeout(() => this.readText(), this.captureUpdateInterval);
+                }
+            }
+
+            isValidKeyColor(color) {
+                const validColors = ['Yellow', 'Crimson', 'Blue', 'Purple', 'Orange', 'Green', 'Gold', 'Silver'];
+                return validColors.includes(color);
+            }
+
+            isValidKeyShape(shape) {
+                const validShapes = ['Pentagon', 'Triangle', 'Shield', 'Wedge', 'Rectangle', 'Crescent', 'Corner', 'Diamond'];
+                return validShapes.includes(shape);
+            }
+
+            updateCachedKeyDisplay() {
+                const resultDisplay = document.getElementById('mouse-text-result');
+                if (!resultDisplay) return;
+
+                // Remove any existing key info
+                const existingKeyInfo = resultDisplay.querySelector('.cached-key-info');
+                if (existingKeyInfo) {
+                    resultDisplay.removeChild(existingKeyInfo);
+                }
+
+                // Add new key info if we have a cached key
+                if (this.cachedKey) {
+                    const keyInfo = document.createElement('div');
+                    keyInfo.className = 'cached-key-info';
+                    keyInfo.style.marginTop = '8px';
+                    keyInfo.style.padding = '4px';
+                    keyInfo.style.backgroundColor = '#40444b';
+                    keyInfo.style.borderRadius = '3px';
+                    keyInfo.style.color = '#4CAF50';
+                    keyInfo.innerHTML = `
+                        <div style="font-weight: bold;">Cached Key:</div>
+                        <div>${this.cachedKey.color} ${this.cachedKey.shape}</div>
+                        <div style="font-size: 10px; color: #dcddde;">
+                            ${this.cachedKey.color}_${this.cachedKey.shape}_key.png
+                        </div>
+                    `;
+                    resultDisplay.appendChild(keyInfo);
                 }
             }
 
@@ -1511,25 +1645,25 @@
             try {
                 // Initialize Tesseract worker
                 await initTesseractWorker();
-                
-                // Setup Alt1 status
-                setupAlt1();
-                
+            
+            // Setup Alt1 status
+            setupAlt1();
+            
                 // Rest of initialization...
-                // Periodically check Alt1 status
-                setInterval(setupAlt1, 5000);
+            // Periodically check Alt1 status
+            setInterval(setupAlt1, 5000);
                 
                 // Set up automatic room checking every 2 seconds
                 setInterval(checkRoomsWithKeys, 2000);
-                
-                // Load settings from localStorage
-                loadSettings();
-                
-                // Update map size based on settings
-                updateMapSize();
-                
-                // Initialize grid
-                initializeGrid();
+            
+            // Load settings from localStorage
+            loadSettings();
+            
+            // Update map size based on settings
+            updateMapSize();
+            
+            // Initialize grid
+            initializeGrid();
                 
                 // Add keyboard shortcuts for anchor point adjustment
                 document.addEventListener('keydown', handleKeyboardShortcuts);
@@ -1892,7 +2026,7 @@
                 return false;
             }
         }
-
+        
         // Function to show the context menu
         async function showContextMenu(event, cell) {
             console.log("=== Show Context Menu ===", {
@@ -1913,7 +2047,7 @@
                 console.error("Context menu element not found");
                 return;
             }
-
+            
             // Set the active cell
             activeCell = cell;
             
@@ -1926,10 +2060,10 @@
             
             // Adjust position based on dungeon size
             if (dungeonSize === 'small') {
-                posX = 38;
+                posX = 30;
                 posY = 20;
             } else if (dungeonSize === 'medium') {
-                posX = 38;
+                posX = 30;
                 posY = 100;
             } else if (dungeonSize === 'large') {
                 posX = 107;
@@ -2521,7 +2655,7 @@
                 console.log("Running in Alt1 browser");
                 document.body.classList.add('alt1-mode');
             }
-            
+
             console.log("Re-initializing context menu event listeners");
             
             // Add right-click event listeners to all grid cells
@@ -2537,8 +2671,8 @@
                 cell.addEventListener('click', function(e) {
                     console.log("Click event triggered on cell");
                     showCellMenu(e, this);
-                });
             });
+        });
             
             // Add window resize event listener
             window.addEventListener('resize', handleWindowResize);
@@ -2930,12 +3064,16 @@
             console.log("=== Cell Menu Debug ===", {
                 cell: {
                     row: cell.dataset.row,
-                    col: cell.dataset.col
+                    col: cell.dataset.col,
+                    hasExistingKey: !!cell.querySelector('img[src*="key.png"]'),
+                    hasBlockedRoom: !!cell.querySelector('img[src*="blocked_room.png"]'),
+                    hasSkillTier: !!cell.querySelector('.skill-tier')
                 },
-                menuState: {
-                    isVisible: menuElements.cellMenu?.classList.contains('visible'),
-                    hasGatestoneSection: !!menuElements.cellMenu?.querySelector('.gatestone-options')
-                }
+                cachedKey: doorTextReader?.cachedKey ? {
+                    color: doorTextReader.cachedKey.color,
+                    shape: doorTextReader.cachedKey.shape,
+                    timestamp: doorTextReader.cachedKey.timestamp
+                } : null
             });
 
             // Validate cell has a room before proceeding
@@ -2950,25 +3088,17 @@
 
             // Check if the room is locked
             const isLocked = await hasQuestionMark(cell);
-            console.log("=== Room Lock Status ===", {
-                cell: {
-                    row: cell.dataset.row,
-                    col: cell.dataset.col
-                },
-                isLocked: isLocked
-            });
-
+            
             // Set the active cell
             activeCell = cell;
-            
-            // Position based on the current dungeon size
+
+            // Position menu (existing positioning code...)
             let posX, posY;
             const dungeonSize = settings.dungeonSize;
             
-            // Adjust position based on dungeon size
             if (dungeonSize === 'small') {
                 posX = 38;
-                posY = 20;
+                posY = 10;
             } else if (dungeonSize === 'medium') {
                 posX = 38;
                 posY = 100;
@@ -2980,29 +3110,64 @@
                 posY = 20;
             }
             
-            // Position the cell menu
             menuElements.cellMenu.style.left = `${posX}px`;
             menuElements.cellMenu.style.top = `${posY}px`;
-            
-            // Only show the clear option if the cell has content
-            const clearOption = menuElements.cellMenu.querySelector('.clear-option');
-            if (clearOption) {
-                clearOption.style.display = cell.querySelector('img') ? 'block' : 'none';
+
+            // Get all menu sections
+            const menuSections = {
+                cachedKeyOption: menuElements.cellMenu.querySelector('.cached-key-option'),
+                clearOption: menuElements.cellMenu.querySelector('.clear-option'),
+                gatestoneSection: menuElements.cellMenu.querySelector('.gatestone-options'),
+                blockedRoomOption: menuElements.cellMenu.querySelector('.blocked-room-option'),
+                skillTierOption: menuElements.cellMenu.querySelector('.skill-option')
+            };
+
+            // Update cached key option if available
+            if (isLocked && doorTextReader?.cachedKey && menuSections.cachedKeyOption) {
+                const keyFile = `${doorTextReader.cachedKey.color}_${doorTextReader.cachedKey.shape}_key.png`;
+                const keyPreview = menuSections.cachedKeyOption.querySelector('.cached-key-preview');
+                
+                if (keyPreview) {
+                    keyPreview.innerHTML = `
+                        <img src="../assets/keys/${keyFile}" alt="${doorTextReader.cachedKey.color} ${doorTextReader.cachedKey.shape} key">
+                        <span>Apply ${doorTextReader.cachedKey.color} ${doorTextReader.cackedKey.shape} Key</span>
+                    `;
+                }
+                menuSections.cachedKeyOption.style.display = 'block';
+            } else if (menuSections.cachedKeyOption) {
+                menuSections.cachedKeyOption.style.display = 'none';
             }
 
-            // Show/hide gatestone options based on room lock status
-            const gatestoneSection = menuElements.cellMenu.querySelector('.gatestone-options');
-            if (gatestoneSection) {
-                gatestoneSection.style.display = isLocked ? 'none' : 'block';
-                console.log("=== Gatestone Section Toggle ===", {
-                    isLockedRoom: isLocked,
-                    gatestoneSection: {
-                        exists: true,
-                        wasVisible: gatestoneSection.style.display !== 'none'
-                    }
-                });
+            // Show/hide other options
+            if (menuSections.clearOption) {
+                menuSections.clearOption.style.display = cell.querySelector('img') ? 'block' : 'none';
             }
-            
+
+            if (menuSections.gatestoneSection) {
+                menuSections.gatestoneSection.style.display = isLocked ? 'none' : 'block';
+            }
+
+            // Only show blocked room option for locked rooms
+            if (menuSections.blockedRoomOption) {
+                menuSections.blockedRoomOption.style.display = isLocked ? 'block' : 'none';
+            }
+
+            // Always show skill tier option
+            if (menuSections.skillTierOption) {
+                menuSections.skillTierOption.style.display = 'block';
+            }
+
+            console.log("=== Final Menu State ===", {
+                timestamp: new Date().toISOString(),
+                isLocked,
+                hasCachedKey: !!doorTextReader?.cachedKey,
+                menuOptions: Object.fromEntries(
+                    Object.entries(menuSections).map(([key, element]) => 
+                        [key, element?.style.display]
+                    )
+                )
+            });
+
             // Make the cell menu visible
             menuElements.cellMenu.classList.add('visible');
         }
@@ -3230,8 +3395,8 @@ Processed Image (for debugging):`;
             let posX, posY;
             
             if (dungeonSize === 'small') {
-                posX = 38;
-                posY = 20;
+                posX = 30;
+                posY = 10;
             } else if (dungeonSize === 'medium') {
                 posX = 38;
                 posY = 100;
@@ -3240,7 +3405,7 @@ Processed Image (for debugging):`;
                 posY = 90;
             } else {
                 posX = 30;
-                posY = 20;
+                posY = 10;
             }
 
             skillTierMenu.style.left = `${posX}px`;
@@ -3401,15 +3566,15 @@ Processed Image (for debugging):`;
                     feedback.id = 'room-feedback';
                     document.body.appendChild(feedback);
                 }
-                feedback.textContent = 'No room detected in this cell';
+                feedback.textContent = 'No Room';
                 feedback.style.display = 'block';
-                feedback.style.left = `${event.clientX + 10}px`;
-                feedback.style.top = `${event.clientY + 10}px`;
+                feedback.style.left = '50px';
+                feedback.style.top = '50px';
                 
                 // Hide feedback after 2 seconds
                 setTimeout(() => {
                     feedback.style.display = 'none';
-                }, 2000);
+                }, 1000);
                 
                 event.preventDefault();
                 event.stopPropagation();
@@ -3528,6 +3693,69 @@ Processed Image (for debugging):`;
             initializeMenuReferences();
             
             // Rest of existing initialization...
+        });
+
+        // Function to apply cached key
+        function applyCachedKey() {
+            if (!activeCell || !doorTextReader?.cachedKey) {
+                console.log("=== Apply Cached Key Failed ===", {
+                    hasActiveCell: !!activeCell,
+                    hasCachedKey: !!doorTextReader?.cachedKey
+                });
+                return;
+            }
+
+            const { color, shape } = doorTextReader.cachedKey;
+            
+            console.log("=== Applying Cached Key ===", {
+                timestamp: new Date().toISOString(),
+                cell: {
+                    row: activeCell.dataset.row,
+                    col: activeCell.dataset.col
+                },
+                key: {
+                    color,
+                    shape,
+                    keyFile: `${color}_${shape}_key.png`
+                }
+            });
+
+            // Apply the key while maintaining the cache
+            applyKeyToCell(color, shape);
+            
+            // Hide the menu but don't clear the cache
+            hideCellMenu();
+
+            console.log("=== Cached Key Status ===", {
+                timestamp: new Date().toISOString(),
+                cachedKey: doorTextReader?.cachedKey,
+                isCacheMaintained: !!(doorTextReader?.cachedKey?.color === color && doorTextReader?.cachedKey?.shape === shape)
+            });
+        }
+
+        // Add Alt1 detection and installation code
+        document.addEventListener('DOMContentLoaded', function() {
+            // Check if we are running inside alt1
+            if (window.alt1) {
+                // Tell alt1 about the app
+                alt1.identifyAppUrl("./appconfig.json");
+            } else {
+                // Create the installation URL
+                const currentUrl = window.location.href;
+                const baseUrl = currentUrl.substring(0, currentUrl.lastIndexOf('/') + 1);
+                let addappurl = `alt1://addapp/${baseUrl}appconfig.json`;
+                
+                console.log('Alt1 installation URL:', addappurl);
+                
+                const output = document.getElementById('output');
+                if (output) {
+                    output.insertAdjacentHTML("beforeend", `
+                        Alt1 not detected. <a href='${addappurl}' class="alt1-install-link">Click here</a> to add this app to Alt1
+                    `);
+                }
+            }
+            
+            // Rest of your existing DOMContentLoaded code...
         });
     </script>
     <!-- Include the bundled JavaScript file -->
