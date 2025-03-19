@@ -1,0 +1,17 @@
+{
+    "appName": "Door Text Reader",
+    "description": "Reads door text in RuneScape",
+    "appUrl": "/index.html",
+    "configUrl": "/appconfig.json",
+    "defaultWidth": 400,
+    "defaultHeight": 300,
+    "minWidth": 300,
+    "minHeight": 200,
+    "maxWidth": 800,
+    "maxHeight": 600,
+    "requestHandlers": [],
+    "activators": [],
+    "permissions": "pixel,gamestate,overlay",
+    "killOnClose": true,
+    "version": "1.1.61"
+} 

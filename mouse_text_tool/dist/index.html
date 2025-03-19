@@ -1,0 +1,290 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Door Text Reader</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background: #2b2b2b;
+            color: #ffffff;
+            text-align: center;
+            max-width: 800px;
+            margin: 0 auto;
+        }
+        .title-container {
+            margin-bottom: 20px;
+        }
+        .title {
+            font-size: 24px;
+            display: inline;
+            margin-right: 5px;
+        }
+        .version {
+            background: #4CAF50;
+            color: white;
+            padding: 2px 6px;
+            border-radius: 3px;
+            font-size: 12px;
+        }
+        #alt1-status {
+            margin: 20px 0;
+            padding: 15px;
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 4px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+        }
+        #alt1-status:not(.detected) {
+            color: #ff4444;
+        }
+        #alt1-status.detected {
+            color: #4CAF50;
+            cursor: default;
+        }
+        .scan-container {
+            margin: 20px auto;
+            max-width: 400px;
+        }
+        #viewport, #croppedViewport {
+            margin: 10px auto;
+            padding: 10px;
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 4px;
+            width: 100%;
+            height: 60px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+        }
+        #viewport canvas, #croppedViewport canvas {
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+            image-rendering: pixelated;
+        }
+        .viewport-label {
+            font-size: 14px;
+            color: #aaa;
+            margin-bottom: 5px;
+            text-align: left;
+        }
+        #output {
+            margin: 20px auto;
+            padding: 15px;
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 4px;
+            min-height: 30px;
+            white-space: pre-wrap;
+            font-size: 16px;
+            width: 100%;
+            box-sizing: border-box;
+        }
+        .button {
+            background: #4CAF50;
+            color: white;
+            padding: 12px 24px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 16px;
+            margin: 10px auto;
+            display: block;
+            width: 200px;
+            transition: background-color 0.3s;
+        }
+        .button:hover {
+            background: #45a049;
+        }
+        .button.scanning {
+            background: #f44336;
+        }
+        .button.scanning:hover {
+            background: #d32f2f;
+        }
+        .install-button {
+            background: #4CAF50;
+            color: white;
+            padding: 8px 16px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+            white-space: nowrap;
+            transition: background-color 0.3s;
+        }
+        .install-button:hover {
+            background: #45a049;
+        }
+        .checkbox-container {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            margin: 10px 0;
+        }
+        .checkbox-container input[type="checkbox"] {
+            width: 16px;
+            height: 16px;
+            cursor: pointer;
+        }
+        .checkbox-container label {
+            cursor: pointer;
+            user-select: none;
+        }
+        .info-panel {
+            margin: 10px auto;
+            padding: 10px;
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 4px;
+            font-family: monospace;
+            font-size: 12px;
+            text-align: left;
+            color: #aaa;
+        }
+        .settings-section {
+            margin-bottom: 20px;
+        }
+        .setting {
+            margin-bottom: 10px;
+        }
+    </style>
+</head>
+<body>
+    <div class="title-container">
+        <span class="title">Door Text Reader</span>
+        <span class="version">v1.1.61</span>
+    </div>
+
+    <div id="alt1-status">
+        <span>Checking Alt1 status...</span>
+        <button class="install-button" style="display: none;">
+            Add to Alt1
+        </button>
+    </div>
+
+    <div class="scan-container">
+        <!-- Separate info panel for mouse position and capture details -->
+        <div class="info-panel">
+            <div id="mousePosition">Mouse Position: (0, 0)</div>
+            <div id="captureRegion">Capture Region: (0, 0) 250x30</div>
+        </div>
+        
+        <div class="viewport-label">Original Capture:</div>
+        <div id="viewport">
+            <canvas id="previewCanvas" width="200" height="100"></canvas>
+        </div>
+        
+        <div class="viewport-label">Cropped Image (For OCR):</div>
+        <div id="croppedViewport">
+            <canvas id="croppedCanvas" width="200" height="100"></canvas>
+        </div>
+        
+        <div class="checkbox-container">
+            <input type="checkbox" id="showPreviewBox" checked>
+            <label for="showPreviewBox">Toggle scanning preview box</label>
+        </div>
+        <button id="toggleScan" class="button">Start Scanning</button>
+        <div id="output"></div>
+
+        <div class="settings-section">
+            <h3>Display Settings</h3>
+            <div class="setting">
+                <input type="checkbox" id="enablePreviewBox" checked>
+                <label for="enablePreviewBox">Show preview box</label>
+            </div>
+        </div>
+
+        <div class="settings-section">
+            <h3>Text Box Detection</h3>
+            <div class="setting">
+                <input type="checkbox" id="enableTextBoxDetection" checked>
+                <label for="enableTextBoxDetection">Enable text box detection</label>
+            </div>
+            <div class="setting">
+                <label for="borderColorThreshold">Border color threshold:</label>
+                <input type="range" id="borderColorThreshold" min="5" max="50" value="20" step="1">
+                <span id="borderColorThresholdValue">20</span>
+            </div>
+            <div class="setting">
+                <label for="cropMargin">Crop margin (pixels):</label>
+                <input type="range" id="cropMargin" min="0" max="10" value="2" step="1">
+                <span id="cropMarginValue">2</span>
+            </div>
+            <div class="setting">
+                <input type="checkbox" id="showDebugOverlay">
+                <label for="showDebugOverlay">Show debug overlay</label>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Initialize Alt1 globals
+        window.alt1 = window.alt1 || null;
+        window.A1lib = window.A1lib || null;
+
+        // Check Alt1 status and setup installation button
+        function setupAlt1Button() {
+            const btn = document.querySelector('.install-button');
+            const status = document.querySelector('#alt1-status span');
+            const statusContainer = document.querySelector('#alt1-status');
+
+            if (window.alt1) {
+                status.textContent = 'Alt1 detected!';
+                statusContainer.classList.add('detected');
+                btn.style.display = 'none';
+            } else {
+                status.textContent = 'Alt1 not detected - Click button to install';
+                btn.style.display = 'inline-block';
+                
+                // Setup installation URL
+                btn.onclick = function() {
+                    const currentUrl = window.location.href;
+                    const baseUrl = currentUrl.substring(0, currentUrl.lastIndexOf('/'));
+                    const installUrl = 'alt1://addapp/' + baseUrl + '/appconfig.json';
+                    window.location.href = installUrl;
+                };
+            }
+        }
+
+        // Initialize everything
+        async function initialize() {
+            try {
+                // Setup Alt1 button first
+                setupAlt1Button();
+                
+                // Load our bundle
+                await new Promise((resolve, reject) => {
+                    const script = document.createElement('script');
+                    script.src = 'index.bundle.js';
+                    script.onload = resolve;
+                    script.onerror = (e) => {
+                        console.error('Failed to load script:', e);
+                        reject(e);
+                    };
+                    document.body.appendChild(script);
+                });
+                
+                console.log('All scripts loaded successfully');
+            } catch (error) {
+                console.error('Script loading error:', error);
+                const status = document.querySelector('#alt1-status span');
+                status.textContent = 'Error loading scripts - Please refresh';
+                status.style.color = 'red';
+            }
+        }
+
+        // Start initialization when the page loads
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', initialize);
+        } else {
+            initialize();
+        }
+    </script>
+</body>
+</html>
