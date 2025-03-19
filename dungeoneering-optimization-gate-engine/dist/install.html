@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Install Dungeon Grid</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 20px;
+            background-color: #222;
+            color: #fff;
+            font-family: Arial, sans-serif;
+            text-align: center;
+        }
+        h1 {
+            font-size: 24px;
+            margin: 0 0 20px 0;
+            color: #ffcc00;
+        }
+        p {
+            font-size: 16px;
+            margin: 0 0 20px 0;
+            color: #ccc;
+        }
+        .install-button {
+            display: inline-block;
+            background-color: #4CAF50;
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 16px;
+            text-decoration: none;
+        }
+        .install-button:hover {
+            background-color: #45a049;
+        }
+        .status {
+            margin-top: 20px;
+            font-size: 14px;
+            color: #999;
+        }
+        .features {
+            margin: 20px auto;
+            max-width: 600px;
+            text-align: left;
+            background-color: #333;
+            padding: 15px;
+            border-radius: 5px;
+        }
+        .features h2 {
+            font-size: 18px;
+            color: #ffcc00;
+            margin-top: 0;
+        }
+        .features ul {
+            padding-left: 20px;
+        }
+        .features li {
+            margin-bottom: 8px;
+        }
+        .grid-preview {
+            margin: 20px auto;
+            width: 140px;
+            height: 140px;
+            background-color: #111;
+            border: 1px solid #444;
+            position: relative;
+        }
+        .grid-preview::before {
+            content: "";
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-image: linear-gradient(to right, rgba(200, 200, 50, 0.8) 1px, transparent 1px),
+                              linear-gradient(to bottom, rgba(200, 200, 50, 0.8) 1px, transparent 1px);
+            background-size: 35px 35px;
+        }
+        .grid-preview::after {
+            content: "";
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            border: 1px solid white;
+        }
+    </style>
+</head>
+<body>
+    <h1>Dungeoneering Gate Engine Installation</h1>
+    <p>Click the button below to install the Dungeoneering Gate Engine app in Alt1 Toolkit.</p>
+    
+    <div class="grid-preview"></div>
+    
+    <div class="features">
+        <h2>Features:</h2>
+        <ul>
+            <li>Automatically read door text by hovering your mouse over it</li>
+            <li>Track your position in the dungeon with minimap integration</li>
+            <li>Interactive grid for mapping dungeoneering layouts</li>
+            <li>Place markers for important locations (keys, boss, start, gates)</li>
+        </ul>
+    </div>
+    
+    <a href="#" id="installButton" class="install-button">Install Dungeoneering Gate Engine</a>
+    <div id="status" class="status"></div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const installButton = document.getElementById('installButton');
+            const statusElement = document.getElementById('status');
+            
+            // Check if Alt1 is available
+            if (window.alt1) {
+                // Tell alt1 about the app
+                // This makes alt1 show the add app button when running inside the embedded browser
+                // Also updates app settings if they are changed
+                alt1.identifyAppUrl("./appconfig.json");
+                statusElement.textContent = 'Alt1 Toolkit detected. You can install the app.';
+            } else {
+                statusElement.textContent = 'Alt1 Toolkit not detected.';
+                
+                // Create the installation URL for the main application
+                // Use the absolute path to ensure we're installing the correct app
+                const currentUrl = window.location.href;
+                const baseUrl = currentUrl.substring(0, currentUrl.lastIndexOf('/') + 1);
+                let addappurl = `alt1://addapp/${baseUrl}appconfig.json`;
+                
+                console.log('Alt1 installation URL:', addappurl);
+                
+                // Set up the installation URL
+                installButton.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    window.location.href = addappurl;
+                });
+            }
+        });
+    </script>
+</body>
+</html> 

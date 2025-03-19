@@ -1,0 +1,4045 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dungeoneering Optimization Gate Engine</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #36393f;
+            color: #dcddde;
+            overflow: hidden; /* Prevent scrollbars */
+        }
+        
+        /* Main container */
+        .container {
+            display: flex;
+            height: 100vh;
+            width: 100vw;
+            overflow: hidden;
+        }
+        
+        /* Sidebar styles */
+        .sidebar {
+            width: 32px;
+            background-color: #2f3136;
+            height: 100%;
+            padding: 4px;
+            display: flex;
+            flex-direction: column;
+        }
+        
+        /* Header section of sidebar */
+        .sidebar-header {
+            padding: 6px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            border-bottom: 1px solid #202225;
+        }
+        
+        /* App title in sidebar */
+        .sidebar-title {
+            display: none;
+        }
+        
+        /* Navigation links container */
+        .nav-links {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+        
+        /* Individual nav items */
+        .nav-item {
+            width: 24px;
+            height: 24px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 3px;
+            cursor: pointer;
+            color: #dcddde;
+            transition: background-color 0.2s;
+        }
+        
+        .nav-item:hover {
+            background-color: #5865f2;
+        }
+        
+        .nav-item.active {
+            background-color: #5865f2;
+        }
+        
+        /* Icon in nav items */
+        .nav-icon {
+            font-size: 12px;
+            line-height: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        /* Text in nav items */
+        .nav-text {
+            display: none;
+        }
+        
+        /* Main content area */
+        .content {
+            flex: 1;
+            padding: 5px;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+        }
+        
+        /* Content area in compact mode */
+        .compact-mode .content {
+            padding: 0;
+        }
+        
+        /* View containers */
+        .view {
+            display: none;
+            overflow: hidden;
+        }
+        
+        .view.active {
+            display: flex;
+            flex-direction: column;
+            height: 100%;
+        }
+        
+        /* Map view in compact mode */
+        .compact-mode #map-view {
+            padding: 0;
+            margin: 0;
+        }
+
+        /* Map wrapper in compact mode */
+        .compact-mode .map-wrapper {
+            padding: 0;
+            margin: 0;
+        }
+
+        /* View header styles */
+        .view-header {
+            margin: 0 0 5px 0;
+            font-size: 16px;
+            text-align: center;
+            padding-bottom: 3px;
+            border-bottom: 1px solid #40444b;
+        }
+
+        .map-wrapper {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            flex: 1;
+            overflow: hidden;
+            padding: 0;
+            margin: 0;
+        }
+
+        .map-container {
+            background-color: #202225;
+            border: 1px solid #40444b;
+            position: relative;
+            overflow: hidden;
+            transition: width 0.3s, height 0.3s;
+            cursor: pointer;
+            flex-shrink: 0;
+            flex-grow: 0;
+            padding: 0;
+            margin: 0;
+        }
+
+        /* In compact mode, remove border */
+        .compact-mode .map-container {
+            border: none;
+        }
+
+        .map-container.small {
+            width: 128px;
+            height: 128px;
+            min-width: 128px;
+            min-height: 128px;
+            max-width: 128px;
+            max-height: 128px;
+        }
+
+        .map-container.medium {
+            width: 128px;
+            height: 268px;
+            min-width: 128px;
+            min-height: 268px;
+            max-width: 128px;
+            max-height: 268px;
+        }
+
+        .map-container.large {
+            width: 268px;
+            height: 268px;
+            min-width: 268px;
+            min-height: 268px;
+            max-width: 268px;
+            max-height: 268px;
+        }
+        
+        /* Map background canvas */
+        .map-background {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 1;
+        }
+
+        .map-grid {
+            display: grid;
+            width: 100%;
+            height: 100%;
+            padding: 0;
+            margin: 0;
+            gap: 0;
+            position: relative;
+            z-index: 2;
+        }
+
+        .map-grid.small {
+            grid-template-columns: repeat(4, 32px);
+            grid-template-rows: repeat(4, 32px);
+        }
+
+        .map-grid.medium {
+            grid-template-columns: repeat(4, 32px);
+            grid-template-rows: repeat(8, 33.5px);
+        }
+
+        .map-grid.large {
+            grid-template-columns: repeat(8, 33.5px);
+            grid-template-rows: repeat(8, 33.5px);
+        }
+
+        .grid-cell {
+            border: 1px solid rgba(64, 68, 75, 0.8);
+            background-color: rgba(47, 49, 54, 0.4); /* More transparent background */
+            width: 30px;
+            height: 30px;
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            position: relative; /* For proper z-index stacking */
+        }
+
+        /* Grid cell with key image */
+        .grid-cell img {
+            width: 60%; /* Reduced from 100% */
+            height: 60%; /* Reduced from 100% */
+            object-fit: contain;
+            position: relative;
+            z-index: 3; /* Make sure images are above the background */
+            margin: 20%; /* Add margin to center the smaller image */
+            filter: drop-shadow(0px 0px 1px black);
+            image-rendering: pixelated;
+        }
+
+        /* Alt1 specific styles */
+        .alt1-info {
+            font-size: 12px;
+            color: #a0a0a0;
+            margin-top: 5px;
+            text-align: center;
+        }
+
+        /* Save feedback message */
+        .save-feedback {
+            font-size: 12px;
+            color: #4CAF50;
+            margin-top: 5px;
+            height: 16px;
+            transition: opacity 0.5s;
+            opacity: 0;
+            text-align: center;
+        }
+        
+        .save-feedback.visible {
+            opacity: 1;
+        }
+
+        /* Compact mode for small windows */
+        .compact-mode .view-header {
+            font-size: 14px;
+            margin-bottom: 3px;
+        }
+
+        .compact-mode .map-info {
+            font-size: 11px;
+            margin-top: 3px;
+        }
+
+        .compact-mode .alt1-info {
+            display: none;
+        }
+        
+        /* Alt1 Status Indicator Styles */
+        .status-row {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            margin-top: 2px;
+        }
+        .status-indicator {
+            display: inline-block;
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+        }
+        .status-indicator.detected {
+            background-color: #4CAF50;
+            box-shadow: 0 0 3px #4CAF50;
+        }
+        .status-indicator.not-detected {
+            background-color: #ff4444;
+            box-shadow: 0 0 3px #ff4444;
+        }
+        .status-text {
+            font-weight: bold;
+            font-size: 11px;
+        }
+        .status-text.detected {
+            color: #4CAF50;
+        }
+        .status-text.not-detected {
+            color: #ff4444;
+        }
+        .alt1-install-link {
+            display: inline-block;
+            background-color: #7289da;
+            color: white;
+            padding: 5px 10px;
+            border-radius: 3px;
+            text-decoration: none;
+            font-weight: bold;
+            transition: background-color 0.2s;
+        }
+        .alt1-install-link:hover {
+            background-color: #5b6eae;
+        }
+        
+        /* Context Menu Styles */
+        .context-menu {
+            position: absolute;
+            background-color: #36393f;
+            border: 1px solid #202225;
+            border-radius: 3px;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.5);
+            z-index: 1000;
+            display: none;
+            overflow: hidden;
+            max-width: 130px; /* Reduced from 160px */
+            font-size: 11px; /* Smaller font size */
+            width: auto; /* Allow menu to shrink to content */
+        }
+        
+        .context-menu.visible {
+            display: block;
+        }
+        
+        .context-menu-section {
+            padding: 1px; /* Minimal padding */
+            border-bottom: 1px solid #202225;
+        }
+        
+        .context-menu-section:last-child {
+            border-bottom: none;
+        }
+        
+        .context-menu-title {
+            font-size: 10px; /* Smaller title */
+            color: #b9bbbe;
+            margin: 1px 0; /* Minimal margin */
+            font-weight: bold;
+            text-align: center; /* Center the title */
+        }
+        
+        .color-options {
+            display: flex;
+            flex-direction: column; /* Stack rows vertically */
+            gap: 1px; /* Minimal gap */
+            align-items: center; /* Center items */
+        }
+        
+        .color-row {
+            display: flex;
+            flex-direction: row;
+            gap: 2px;
+            width: 100%;
+        }
+        
+        .color-option {
+            width: 60px; /* Reduced from 70px */
+            height: 16px; /* Reduced from 18px */
+            border-radius: 2px;
+            cursor: pointer;
+            border: 1px solid #202225;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;  /* Text is already bold */
+            margin: 1px 0; /* Vertical margin only */
+            font-size: 9px; /* Reduced from 10px */
+            padding: 0; /* No padding */
+            text-align: center; /* Center text */
+            flex: 1; /* Make options take equal width */
+            text-shadow: -1px -1px 0 #000 /* Make the text outline black */  
+        }
+        
+        .color-option:hover {
+            transform: scale(1.02);
+            box-shadow: 0 0 3px rgba(255, 255, 255, 0.3);
+        }
+        
+        .shape-options {
+            display: flex;
+            flex-direction: column; /* Stack rows vertically */
+            gap: 1px; /* Minimal gap */
+            align-items: center; /* Center items */
+        }
+        
+        .shape-row {
+            display: flex;
+            flex-direction: row;
+            gap: 2px;
+            width: 100%;
+        }
+        
+        .shape-option {
+            width: 60px; /* Reduced from 70px */
+            height: 16px; /* Reduced from 18px */
+            display: flex;
+            align-items: center;
+            justify-content: flex-start;
+            padding: 0 1px; /* Minimal horizontal padding */
+            cursor: pointer;
+            background-color: #40444b;
+            border-radius: 2px;
+            font-size: 9px; /* Reduced from 10px */
+            margin: 1px 0; /* Vertical margin only */
+            flex: 1; /* Make options take equal width */
+        }
+        
+        .shape-option:hover {
+            background-color: #5865f2;
+        }
+        
+        .shape-preview {
+            width: 10px; /* Reduced from 12px */
+            height: 10px; /* Reduced from 12px */
+            margin-right: 2px; /* Minimal margin */
+            image-rendering: pixelated;
+        }
+
+        /* Shape menu specific styles to match color menu width */
+        #shape-menu {
+            width: 130px; /* Match the max-width of context-menu */
+        }
+
+        /* Anchor point styles */
+        .anchor-point-controls {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-top: 2px;
+        }
+
+        .coordinates-display {
+            font-family: monospace;
+            font-size: 11px;
+            color: #aaaaaa;
+            margin-top: 4px;
+            min-height: 14px;
+            background-color: #202225;
+            padding: 2px 4px;
+            border-radius: 2px;
+        }
+
+        /* Crosshair styles for anchor point placement */
+        .crosshair {
+            position: absolute;
+            pointer-events: none;
+            z-index: 9999;
+            display: none;
+        }
+
+        .crosshair.active {
+            display: block;
+        }
+
+        .crosshair-h, .crosshair-v {
+            position: absolute;
+            background-color: rgba(255, 255, 0, 0.7);
+        }
+
+        .crosshair-h {
+            height: 1px;
+            width: 100%;
+            top: 50%;
+            left: 0;
+        }
+
+        .crosshair-v {
+            width: 1px;
+            height: 100%;
+            left: 50%;
+            top: 0;
+        }
+
+        .crosshair-center {
+            position: absolute;
+            width: 5px;
+            height: 5px;
+            background-color: rgba(255, 255, 0, 0.9);
+            border-radius: 50%;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+        }
+
+        .anchor-active {
+            color: #4CAF50;
+            font-weight: bold;
+        }
+
+        .anchor-inactive {
+            color: #aaaaaa;
+        }
+
+        /* Anchor adjustment controls */
+        .anchor-adjustment-controls {
+            margin-top: 10px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 4px;
+        }
+        
+        .adjustment-row {
+            display: flex;
+            gap: 4px;
+            justify-content: center;
+        }
+        
+        .adjustment-btn {
+            min-width: 30px;
+            width: 30px;
+            height: 30px;
+            padding: 0;
+            font-size: 14px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .shortcut-note {
+            font-size: 10px;
+            color: #aaaaaa;
+            margin-top: 4px;
+            text-align: center;
+            font-style: italic;
+        }
+
+        /* Settings form styles */
+        .settings-form {
+            padding: 15px;
+            background-color: #2f3136;
+            border-radius: 5px;
+            margin-bottom: 20px;
+        }
+        
+        /* Screen Capture Preview styles */
+        .screen-capture-preview {
+            margin-top: 10px;
+            border: 1px solid #4f545c;
+            border-radius: 4px;
+            padding: 10px;
+            background-color: #202225;
+            display: flex;
+            justify-content: center;
+        }
+        
+        .screen-capture-controls {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-top: 2px;
+        }
+        
+        .capture-active {
+            color: #4CAF50;
+            font-weight: bold;
+        }
+        
+        .capture-inactive {
+            color: #aaaaaa;
+        }
+        
+        #capturePreviewCanvas {
+            border: 1px solid rgba(79, 84, 92, 0.5);
+            border-radius: 2px;
+            max-width: 100%;
+            height: auto;
+        }
+        
+        /* Alt1 Status styles */
+        #alt1-status-indicator {
+            margin-top: 5px;
+        }
+        
+        .status-item {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 4px;
+        }
+        
+        .status-label {
+            font-weight: bold;
+        }
+        
+        .status-value {
+            padding: 2px 6px;
+            border-radius: 3px;
+        }
+        
+        .status-ok {
+            background-color: #43b581;
+            color: #fff;
+        }
+        
+        .status-error {
+            background-color: #f04747;
+            color: #fff;
+        }
+        
+        /* Form group styles */
+        .form-group {
+            margin-bottom: 6px;
+            padding: 5px;
+            background-color: #2f3136;
+            border-radius: 3px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 2px;
+            font-weight: bold;
+            font-size: 12px;
+            color: #b9bbbe;
+        }
+
+        .form-group select {
+            width: 100%;
+            padding: 4px;
+            background-color: #40444b;
+            color: #dcddde;
+            border: 1px solid #202225;
+            border-radius: 3px;
+            font-size: 12px;
+        }
+
+        .form-group select:focus {
+            outline: none;
+            border-color: #5865f2;
+        }
+
+        .btn {
+            padding: 4px 8px;
+            background-color: #5865f2;
+            color: #ffffff;
+            border: none;
+            border-radius: 3px;
+            cursor: pointer;
+            font-size: 11px;
+            font-weight: bold;
+            min-width: 90px;
+            text-align: center;
+        }
+
+        .btn:hover {
+            background-color: #4752c4;
+        }
+
+        /* Clear menu styles */
+        .clear-option {
+            padding: 6px 8px;
+            cursor: pointer;
+            background-color: #40444b;
+            border-radius: 2px;
+            font-size: 11px;
+            margin: 4px;
+            text-align: center;
+            font-weight: bold;
+            color: #ff4747; /* Red color for clear action */
+        }
+        
+        .clear-option:hover {
+            background-color: #5865f2;
+        }
+        
+        /* Gatestone options styles */
+        .gatestone-options {
+            display: inline-flex;
+            flex-wrap: nowrap;
+            flex-direction: row;
+            align-items: center;
+            justify-content: flex-start;
+            gap: 2px;
+            padding: 4px;
+            margin: 2px;
+            background-color: #40444b;
+            border-radius: 2px;
+            width: max-content;
+            height: 28px;
+        }
+        
+        .gatestone-option {
+            position: relative;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            padding: 2px;
+            cursor: pointer;
+            width: 24px;
+            height: 24px;
+            min-width: 24px;
+            flex: 0 0 24px;
+            transition: background-color 0.2s;
+        }
+        
+        .gatestone-option:hover {
+            background-color: #4f545c;
+        }
+        
+        .gatestone-preview {
+            width: 20px;
+            height: 20px;
+            display: block;
+            margin: 0;
+            padding: 0;
+            image-rendering: pixelated;
+        }
+
+        /* Room feedback styles */
+        #room-feedback {
+            display: none;
+            position: absolute;
+            background-color: rgba(0, 0, 0, 0.8);
+            color: #ffffff;
+            padding: 5px 10px;
+            border-radius: 3px;
+            font-size: 12px;
+            z-index: 1000;
+            pointer-events: none;
+        }
+
+        /* Add styles for OCR testing section */
+        .ocr-test-controls {
+            margin-top: 8px;
+            display: flex;
+            gap: 8px;
+            align-items: center;
+        }
+
+        .ocr-test-result {
+            margin-top: 8px;
+            padding: 8px;
+            background-color: #202225;
+            border-radius: 3px;
+            font-family: monospace;
+            font-size: 12px;
+            color: #dcddde;
+            min-height: 20px;
+            white-space: pre-wrap;
+            word-break: break-all;
+        }
+
+        /* Add styles for blocked room and skill options */
+        .blocked-room-option {
+            display: flex;
+            align-items: center;
+            justify-content: flex-start; /* Change to flex-start to better control spacing */
+            padding: 1px 8px;
+            cursor: pointer;
+            background-color: #40444b;
+            border-radius: 2px;
+            font-size: 11px;
+            margin: 4px;
+            font-weight: bold;
+            height: 24px; /* Fixed height to ensure consistent centering */
+            line-height: 24px; /* Match the height for vertical text centering */
+        }
+        
+        .blocked-room-option:hover {
+            background-color: #5865f2;
+        }
+        
+        .blocked-room-preview {
+            width: 16px;
+            height: 16px;
+            margin-right: 8px; /* Increased from 6px for better spacing */
+            object-fit: contain;
+            display: inline-flex; /* Add this to ensure proper alignment */
+            vertical-align: middle; /* Add this to ensure vertical alignment */
+            image-rendering: pixelated;
+        }
+
+        .skill-option {
+            padding: 6px 8px;
+            cursor: pointer;
+            background-color: #40444b;
+            border-radius: 2px;
+            font-size: 11px;
+            margin: 4px;
+            text-align: center;
+            font-weight: bold;
+        }
+        
+        .skill-option:hover {
+            background-color: #5865f2;
+        }
+
+        .skill-tier-options {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 4px;
+            padding: 4px;
+        }
+
+        .skill-tier-option {
+            padding: 4px 8px;
+            cursor: pointer;
+            background-color: #40444b;
+            border-radius: 2px;
+            font-size: 11px;
+            text-align: center;
+            font-weight: bold;
+            color: #dcddde;
+        }
+
+        .skill-tier-option:hover {
+            background-color: #5865f2;
+        }
+
+        .grid-cell .skill-tier {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 12px;
+            font-weight: bold;
+            color: #ffffff;
+            text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.8);
+            pointer-events: none;
+        }
+
+        /* Mouse Text OCR styles */
+        .mouse-text-controls {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 8px;
+        }
+
+        .viewport-container {
+            margin: 10px 0;
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 4px;
+            padding: 8px;
+        }
+
+        .viewport-label {
+            font-size: 12px;
+            color: #b9bbbe;
+            margin-bottom: 4px;
+        }
+
+        #mouse-text-viewport {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            background: #202225;
+            border: 1px solid #40444b;
+            border-radius: 3px;
+            padding: 4px;
+            margin: 4px 0;
+        }
+
+        #mouseTextCanvas {
+            max-width: 100%;
+            height: auto;
+            image-rendering: pixelated;
+        }
+
+        #mouse-text-result {
+            min-height: 20px;
+            margin-top: 8px;
+        }
+
+        .mouse-ocr-active {
+            color: #4CAF50 !important;
+        }
+
+        .mouse-ocr-inactive {
+            color: #dcddde !important;
+        }
+
+        /* Add close button styles */
+        .close-button {
+            position: absolute;
+            top: 2px;
+            right: 2px;
+            width: 16px;
+            height: 16px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            color: #dcddde;
+            font-size: 14px;
+            font-weight: bold;
+            background-color: #36393f;
+            border-radius: 3px;
+            z-index: 1001;
+        }
+
+        .close-button:hover {
+            background-color: #40444b;
+            color: #ffffff;
+        }
+
+        /* Add styles for cached key option */
+        .cached-key-option {
+            padding: 8px;
+            cursor: pointer;
+            background-color: #40444b;
+            border-radius: 2px;
+            font-size: 11px;
+            margin: 4px;
+            display: none;
+        }
+
+        .cached-key-option:hover {
+            background-color: #5865f2;
+        }
+
+        .cached-key-preview {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .cached-key-preview img {
+            width: 20px;
+            height: 20px;
+            object-fit: contain;
+        }
+
+        .cached-key-preview span {
+            color: #4CAF50;
+            font-weight: bold;
+        }
+
+        /* Add Alt1 installation section styles */
+        #alt1-install-container {
+            margin: 15px 0;
+            padding: 10px;
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 4px;
+        }
+
+        .alt1-install-link {
+            display: inline-block;
+            background-color: #7289da;
+            color: white;
+            padding: 5px 10px;
+            border-radius: 3px;
+            text-decoration: none;
+            font-weight: bold;
+            transition: background-color 0.2s;
+        }
+
+        .alt1-install-link:hover {
+            background-color: #5b6eae;
+        }
+
+        /* Add black outline to all game-related images */
+        .gatestone-preview,
+        .blocked-room-preview,
+        .shape-preview,
+        .cached-key-preview img,
+        .grid-cell img {
+            filter: drop-shadow(0 0 1px rgba(0, 0, 0, 1));
+            -webkit-filter: drop-shadow(0 0 1px rgba(0, 0, 0, 1));
+            image-rendering: pixelated;
+        }
+
+        /* Ensure specific image sizes are maintained */
+        .gatestone-preview {
+            width: 20px;
+            height: 20px;
+            display: block;
+            margin: 0;
+            padding: 0;
+        }
+
+        .blocked-room-preview {
+            width: 16px;
+            height: 16px;
+            margin-right: 8px;
+            object-fit: contain;
+            display: inline-flex;
+            vertical-align: middle;
+        }
+
+        .shape-preview {
+            width: 10px;
+            height: 10px;
+            margin-right: 2px;
+        }
+
+        /* Settings layout styles */
+        .settings-container {
+            display: flex;
+            height: 100%;
+        }
+
+        .settings-tabs {
+            width: 40px;
+            background-color: #2f3136;
+            display: flex;
+            flex-direction: column;
+            padding: 4px;
+            gap: 4px;
+        }
+
+        .tab-button {
+            width: 32px;
+            height: 32px;
+            border-radius: 4px;
+            border: none;
+            background-color: #40444b;
+            color: #dcddde;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: background-color 0.2s;
+        }
+
+        .tab-button:hover {
+            background-color: #5865f2;
+        }
+
+        .tab-button.active {
+            background-color: #5865f2;
+        }
+
+        .tab-button i {
+            font-size: 16px;
+        }
+
+        .settings-content {
+            flex: 1;
+            padding: 10px;
+        }
+
+        .settings-panel {
+            display: none;
+        }
+
+        .settings-panel.active {
+            display: block;
+        }
+
+        .settings-section {
+            background: rgba(0, 0, 0, 0.2);
+            border-radius: 4px;
+            padding: 8px;
+            margin-bottom: 8px;
+        }
+
+        .settings-section-title {
+            font-size: 14px;
+            color: #dcddde;
+            margin-bottom: 8px;
+            font-weight: bold;
+        }
+
+        /* Update existing form styles to be more compact */
+        .form-group {
+            margin-bottom: 8px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 4px;
+            font-size: 12px;
+        }
+
+        .nav-bar {
+            width: 40px;
+            background-color: #2f3136;
+            height: 100%;
+            padding: 8px 4px;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .nav-list {
+            list-style: none;
+            margin: 0;
+            padding: 0;
+            width: 100%;
+        }
+
+        .nav-item {
+            width: 32px;
+            height: 32px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 4px;
+            cursor: pointer;
+            color: #dcddde;
+            transition: background-color 0.2s;
+            margin-bottom: 4px;
+        }
+
+        .nav-item:hover {
+            background-color: #5865f2;
+        }
+
+        .nav-item.active {
+            background-color: #5865f2;
+        }
+
+        .nav-icon {
+            font-size: 14px;
+            line-height: 1;
+        }
+
+        /* Settings styles */
+        .settings-container {
+            height: 100%;
+            padding: 12px;
+        }
+
+        .settings-section {
+            background: rgba(0, 0, 0, 0.2);
+            border-radius: 4px;
+            padding: 8px;
+            margin-bottom: 8px;
+        }
+
+        .settings-section-title {
+            font-size: 14px;
+            color: #dcddde;
+            margin-bottom: 8px;
+            font-weight: bold;
+        }
+
+        /* Compact settings styles */
+        .settings-container {
+            padding: 8px;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            max-width: 280px;
+        }
+
+        .settings-header {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 4px 8px;
+            background: rgba(0, 0, 0, 0.2);
+            border-radius: 4px;
+        }
+
+        .control-stack {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+
+        .control-row {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            height: 24px;
+        }
+
+        .control-row select,
+        .control-row button {
+            flex: 1;
+        }
+
+        .status-text {
+            font-size: 12px;
+            padding: 2px 6px;
+            border-radius: 3px;
+            background: rgba(0, 0, 0, 0.2);
+            min-width: 45px;
+            text-align: center;
+        }
+
+        .capture-preview-container {
+            position: relative;
+            width: 268px;
+            height: 268px;
+            margin-top: 24px;
+        }
+
+        .capture-controls {
+            position: absolute;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 1;
+        }
+
+        .capture-controls.top {
+            top: 0;
+            left: 50%;
+            transform: translateX(-50%);
+        }
+
+        .capture-controls.bottom {
+            bottom: 0;
+            left: 50%;
+            transform: translateX(-50%);
+        }
+
+        .capture-controls.left {
+            left: 0;
+            top: 50%;
+            transform: translateY(-50%);
+        }
+
+        .capture-controls.right {
+            right: 0;
+            top: 50%;
+            transform: translateY(-50%);
+        }
+
+        .arrow-btn {
+            width: 20px;
+            height: 20px;
+            padding: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 12px;
+            background: rgba(79, 84, 92, 0.9);
+            border: none;
+            color: white;
+            cursor: pointer;
+            border-radius: 2px;
+            backdrop-filter: blur(2px);
+        }
+
+        .arrow-btn:hover {
+            background: rgba(88, 101, 242, 0.9);
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Navigation -->
+        <div class="sidebar" id="sidebar">
+            <ul class="nav-list">
+                <li class="nav-item" data-view="map-view" onclick="showView('map-view', this)">
+                    <div class="nav-icon">🗺️</div>
+                </li>
+                <li class="nav-item active" data-view="settings-view" onclick="showView('settings-view', this)">
+                    <div class="nav-icon">⚙️</div>
+                </li>
+                <li class="nav-item" data-view="ocr-view" onclick="showView('ocr-view', this)">
+                    <div class="nav-icon">🔍</div>
+                </li>
+            </ul>
+        </div>
+        
+        <!-- Content Views -->
+        <div class="content">
+            <!-- Map View -->
+            <div class="view" id="map-view">
+                <div class="map-wrapper">
+                    <div id="map-container" class="map-container small">
+                        <canvas id="mapBackgroundCanvas" class="map-background"></canvas>
+                        <div id="map-grid" class="map-grid small"></div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Settings View -->
+            <div class="view" id="settings-view">
+                <div class="settings-container">
+                    <!-- Alt1 Status -->
+                    <div class="settings-header">
+                        <span class="status-text">Alt1:</span>
+                        <div id="output"></div>
+                    </div>
+
+                    <!-- Stacked Controls -->
+                    <div class="control-stack">
+                        <div class="control-row">
+                            <select id="dungeon-size" class="btn secondary" onchange="updateDungeonSize(this.value)">
+                                <option value="small">Small (4x4)</option>
+                                <option value="medium">Medium (4x8)</option>
+                                <option value="large">Large (8x8)</option>
+                            </select>
+                        </div>
+                        <div class="control-row">
+                            <button id="set-anchor-button" class="btn secondary" onclick="startAnchorPointPlacement()">Set Anchor</button>
+                            <span id="anchor-status" class="status-text">Not Set</span>
+                        </div>
+                        <div class="control-row">
+                            <button id="toggle-capture-button" class="btn" onclick="toggleCapturePreview()">Stop Capture</button>
+                            <span id="capture-status" class="status-text capture-active">Active</span>
+                        </div>
+                    </div>
+
+                    <!-- Capture Preview with Controls -->
+                    <div class="capture-preview-container">
+                        <div class="capture-controls top">
+                            <button class="arrow-btn" onclick="adjustAnchorPoint(0, -1)">↑</button>
+                        </div>
+                        <div class="capture-controls bottom">
+                            <button class="arrow-btn" onclick="adjustAnchorPoint(0, 1)">↓</button>
+                        </div>
+                        <div class="capture-controls left">
+                            <button class="arrow-btn" onclick="adjustAnchorPoint(-1, 0)">←</button>
+                        </div>
+                        <div class="capture-controls right">
+                            <button class="arrow-btn" onclick="adjustAnchorPoint(1, 0)">→</button>
+                        </div>
+                        <canvas id="capturePreviewCanvas" width="268" height="268"></canvas>
+                    </div>
+                </div>
+            </div>
+
+            <!-- OCR View -->
+            <div class="view" id="ocr-view">
+                <div class="settings-container">
+                    <div class="settings-section">
+                        <div class="settings-section-title">Mouse Text OCR</div>
+                        <div class="mouse-text-controls">
+                            <button id="start-mouse-ocr" class="btn" onclick="toggleMouseOCR()">Start Mouse OCR</button>
+                            <span id="mouse-ocr-status" class="status-text">Inactive</span>
+                        </div>
+                        <div id="mouse-text-viewport"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Context Menu for Grid Cells -->
+    <div id="context-menu" class="context-menu">
+        <div class="close-button" onclick="hideAllMenus()">×</div>
+        <div class="context-menu-section">
+            <div class="context-menu-title">Select Color</div>
+            <div class="color-options">
+                <div class="color-row">
+                    <div class="color-option" style="background-color: #333333; color: #ffff00;" data-color="Yellow" title="Yellow">Yellow</div>
+                    <div class="color-option" style="background-color: #333333; color: #dc143c;" data-color="Crimson" title="Crimson">Crimson</div>
+                </div>
+                <div class="color-row">
+                    <div class="color-option" style="background-color: #333333; color: #0000ff;" data-color="Blue" title="Blue">Blue</div>
+                    <div class="color-option" style="background-color: #333333; color: #800080;" data-color="Purple" title="Purple">Purple</div>
+                </div>
+                <div class="color-row">
+                    <div class="color-option" style="background-color: #333333; color: #ffa500;" data-color="Orange" title="Orange">Orange</div>
+                    <div class="color-option" style="background-color: #333333; color: #00ff00;" data-color="Green" title="Green">Green</div>
+                </div>
+                <div class="color-row">
+                    <div class="color-option" style="background-color: #333333; color: #ffd700;" data-color="Gold" title="Gold">Gold</div>
+                    <div class="color-option" style="background-color: #333333; color: #c0c0c0;" data-color="Silver" title="Silver">Silver</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Shape Menu (shown after color selection) -->
+    <div id="shape-menu" class="context-menu">
+        <div class="close-button" onclick="hideAllMenus()">×</div>
+        <div class="context-menu-section">
+            <div class="context-menu-title">Select Shape</div>
+            <div class="shape-options" id="shape-options-container">
+                <!-- Shape options will be dynamically populated with preview images -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Cell Menu (shown on left-click) -->
+    <div id="cell-menu" class="context-menu">
+        <div class="close-button" onclick="hideAllMenus()">×</div>
+        <div class="context-menu-section">
+            <div class="context-menu-title">Room Options</div>
+            <div class="cached-key-option" onclick="applyCachedKey()">
+                <div class="cached-key-preview">
+                    <!-- Content will be updated dynamically -->
+                </div>
+            </div>
+            <div class="clear-option" onclick="clearCell()">Clear Cell</div>
+            <div class="gatestone-options">
+                <div class="gatestone-option" onclick="addGatestone('Gatestone')" title="Gatestone">
+                    <img src="../assets/gatestones/Gatestone.png" alt="Gatestone" class="gatestone-preview">
+                </div>
+                <div class="gatestone-option" onclick="addGatestone('Gatestone_2')" title="Gatestone 2">
+                    <img src="../assets/gatestones/Gatestone_2.png" alt="Gatestone 2" class="gatestone-preview">
+                </div>
+                <div class="gatestone-option" onclick="addGatestone('Group_Gatestone')" title="Group Gatestone">
+                    <img src="../assets/gatestones/Group_Gatestone.png" alt="Group Gatestone" class="gatestone-preview">
+                </div>
+            </div>
+            <div class="blocked-room-option" onclick="addBlockedRoom()">
+                <img src="../assets/rooms/blocked_room.png" alt="Blocked Room" class="blocked-room-preview">
+                <span>Blocked</span>
+            </div>
+            <div class="skill-option" onclick="showSkillTierMenu()">Select Skill Tier</div>
+        </div>
+    </div>
+
+    <!-- Skill Tier Menu -->
+    <div id="skill-tier-menu" class="context-menu">
+        <div class="close-button" onclick="hideAllMenus()">×</div>
+        <div class="context-menu-section">
+            <div class="context-menu-title">Select Skill Tier</div>
+            <div class="skill-tier-options">
+                <!-- Will be populated dynamically -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Crosshair for anchor point placement -->
+    <div id="crosshair" class="crosshair">
+        <div class="crosshair-h"></div>
+        <div class="crosshair-v"></div>
+        <div class="crosshair-center"></div>
+    </div>
+
+    <!-- Include Tesseract.js for OCR -->
+    <script src="https://cdn.jsdelivr.net/npm/tesseract.js@4.1.1/dist/tesseract.min.js"></script>
+    <script>
+        // Load Tesseract.js directly without integrity checks
+        async function loadTesseract() {
+            return new Promise((resolve, reject) => {
+                if (typeof Tesseract !== 'undefined') {
+                    console.log('Tesseract.js already loaded');
+                    resolve();
+                } else {
+                    console.error('Tesseract.js not loaded');
+                    reject(new Error('Tesseract.js not loaded'));
+                }
+            });
+        }
+
+        // Initialize Tesseract worker
+        let tesseractWorker = null;
+        let isInitializingWorker = false;
+
+        // Function to initialize Tesseract worker
+        async function initTesseractWorker() {
+            if (tesseractWorker !== null) return;
+            if (isInitializingWorker) return;
+
+            console.log('=== Tesseract Initialization Debug ===', {
+                tesseractExists: typeof Tesseract !== 'undefined',
+                tesseractVersion: Tesseract?.version,
+                psmExists: typeof Tesseract?.PSM !== 'undefined',
+                psmValue: Tesseract?.PSM,
+                workerStatus: tesseractWorker ? 'initialized' : 'not initialized'
+            });
+
+            isInitializingWorker = true;
+
+            try {
+                // First ensure Tesseract.js is loaded
+                if (typeof Tesseract === 'undefined') {
+                    console.log('Loading Tesseract.js...');
+                    await loadTesseract();
+                }
+
+                console.log('Creating Tesseract worker...');
+                tesseractWorker = await Tesseract.createWorker({
+                    workerPath: 'https://cdn.jsdelivr.net/npm/tesseract.js@4.1.1/dist/worker.min.js',
+                    langPath: 'https://tessdata.projectnaptha.com/4.0.0',
+                    logger: m => {
+                        console.log('=== Tesseract Worker Event ===', {
+                            status: m.status,
+                            progress: m.progress,
+                            workerId: tesseractWorker?.id
+                        });
+                        // Update initialization status in UI
+                        let feedback = document.getElementById('room-feedback');
+                        // if (feedback) {
+                        //     feedback.textContent = `Initializing OCR: ${m.status}`;
+                        //     feedback.style.display = 'block';
+                        // }
+                    },
+                    errorHandler: err => {
+                        console.error('=== Tesseract Worker Error ===', {
+                            error: err.message,
+                            workerId: tesseractWorker?.id,
+                            workerState: tesseractWorker ? 'exists' : 'null'
+                        });
+                        let feedback = document.getElementById('room-feedback');
+                        if (feedback) {
+                            feedback.textContent = `OCR Error: ${err.message}`;
+                            feedback.style.display = 'block';
+                        }
+                    }
+                });
+
+                console.log('=== Tesseract Worker Created ===', {
+                    workerExists: !!tesseractWorker,
+                    workerId: tesseractWorker?.id,
+                    psmAfterInit: typeof Tesseract?.PSM !== 'undefined'
+                });
+                
+                console.log('Loading language...');
+                await tesseractWorker.loadLanguage('eng');
+                
+                console.log('Initializing...');
+                await tesseractWorker.initialize('eng');
+                
+                console.log('Setting parameters...');
+                await tesseractWorker.setParameters({
+                    tessedit_char_whitelist: '?',
+                });
+                
+                console.log('Tesseract worker initialized successfully');
+                
+                // Clear any initialization messages
+                let feedback = document.getElementById('room-feedback');
+                if (feedback) {
+                    feedback.style.display = 'none';
+                }
+            } catch (error) {
+                console.error('Failed to initialize Tesseract worker:', error);
+                // Show error in UI
+                let feedback = document.getElementById('room-feedback');
+                if (feedback) {
+                    feedback.textContent = `OCR Init Error: ${error.message}`;
+                    feedback.style.display = 'block';
+                    setTimeout(() => {
+                        feedback.style.display = 'none';
+                    }, 5000);
+                }
+                tesseractWorker = null;
+            } finally {
+                isInitializingWorker = false;
+            }
+        }
+
+        // Initialize when document is ready
+        document.addEventListener('DOMContentLoaded', async function() {
+            try {
+                await initTesseractWorker();
+            } catch (error) {
+                console.error('Error initializing Tesseract:', error);
+            }
+        });
+
+        // Initialize Alt1 globals
+        window.alt1 = window.alt1 || null;
+
+        // DoorTextReader class for mouse text OCR
+        class DoorTextReader {
+            constructor() {
+                this.isReading = false;
+                this.lastMousePosition = { x: 0, y: 0 };
+                this.lastCaptureTime = 0;
+                this.captureUpdateInterval = 250;
+                this.mouseTrackingInterval = null;
+                this.lastRecognizedText = '';
+                this.captureWidth = 250;
+                this.captureHeight = 35;
+                this.captureYOffset = 30;
+                this.canvas = document.getElementById('mouseTextCanvas');
+                this.ctx = this.canvas.getContext('2d');
+                this.ctx.imageSmoothingEnabled = false;
+                this.cachedKey = null;  // Add cached key storage
+                this.startMouseTracking();
+            }
+
+            startMouseTracking() {
+                if (this.mouseTrackingInterval) {
+                    clearInterval(this.mouseTrackingInterval);
+                }
+
+                this.mouseTrackingInterval = setInterval(() => {
+                    const pos = getAlt1MousePosition();
+                    if (pos) {
+                        this.lastMousePosition = pos;
+                        if (this.isReading) {
+                            this.readText();
+                        }
+                    }
+                }, 100);
+            }
+
+            getCaptureRegion() {
+                const { x, y } = this.lastMousePosition;
+                const captureX = Math.round(x - (this.captureWidth / 2));
+                const captureY = y + this.captureYOffset;
+                
+                return {
+                    x: captureX,
+                    y: captureY,
+                    width: this.captureWidth,
+                    height: this.captureHeight
+                };
+            }
+
+            async readText() {
+                if (!this.isReading || !tesseractWorker || !window.alt1) return;
+
+                console.log('=== Key Detection Debug ===', {
+                    timestamp: new Date().toISOString(),
+                    previousCachedKey: this.cachedKey,
+                    lastRecognizedText: this.lastRecognizedText
+                });
+
+                try {
+                    if (!window.alt1.permissionPixel) {
+                        console.error('Pixel permission not enabled');
+                        return;
+                    }
+
+                    const now = Date.now();
+                    if (now - this.lastCaptureTime < this.captureUpdateInterval) {
+                        setTimeout(() => this.readText(), 50);
+                        return;
+                    }
+                    this.lastCaptureTime = now;
+
+                    const region = this.getCaptureRegion();
+                    console.log('=== Mouse Text OCR Capture ===', {
+                        timestamp: new Date().toISOString(),
+                        region: region,
+                        mousePosition: this.lastMousePosition,
+                        captureInterval: now - this.lastCaptureTime
+                    });
+
+                    let imgData = null;
+
+                    try {
+                        const img = a1lib.captureHoldFullRs();
+                        if (img) {
+                            imgData = img.toData(region.x, region.y, region.width, region.height);
+                        }
+                    } catch (error) {
+                        console.error('Failed to capture screen:', error);
+                        return;
+                    }
+
+                    if (!imgData) {
+                        console.error('Failed to capture screen region');
+                        return;
+                    }
+
+                    // Update canvas with captured image
+                    this.canvas.width = region.width;
+                    this.canvas.height = region.height;
+                    this.ctx.putImageData(imgData, 0, 0);
+
+                    // Set OCR parameters optimized for door text
+                    await tesseractWorker.setParameters({
+                        tessedit_char_whitelist: 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789 -',
+                        tessedit_pageseg_mode: '7', // Treat the image as a single text line
+                    });
+
+                    const startTime = performance.now();
+                    const result = await tesseractWorker.recognize(this.canvas);
+                    const endTime = performance.now();
+                    const recognizedText = result.data.text.trim();
+                    this.lastRecognizedText = recognizedText;
+
+                    console.log('=== OCR Result ===', {
+                        timestamp: new Date().toISOString(),
+                        text: recognizedText,
+                        confidence: result.data.confidence,
+                        processingTime: endTime - startTime
+                    });
+
+                    // Check for door unlock text pattern
+                    const keyMatch = recognizedText.match(/Unlock\s+(\w+)\s+(\w+)\s+door/i);
+                    if (keyMatch) {
+                        const [_, color, shape] = keyMatch;
+                        const normalizedColor = color.charAt(0).toUpperCase() + color.slice(1).toLowerCase();
+                        const normalizedShape = shape.charAt(0).toUpperCase() + shape.slice(1).toLowerCase();
+
+                        console.log('=== Key Match Found ===', {
+                            timestamp: new Date().toISOString(),
+                            fullMatch: keyMatch[0],
+                            color: normalizedColor,
+                            shape: normalizedShape,
+                            isValidColor: this.isValidKeyColor(normalizedColor),
+                            isValidShape: this.isValidKeyShape(normalizedShape)
+                        });
+
+                        if (this.isValidKeyColor(normalizedColor) && this.isValidKeyShape(normalizedShape)) {
+                            const newKey = {
+                                color: normalizedColor,
+                                shape: normalizedShape,
+                                timestamp: Date.now()
+                            };
+
+                            // Only update if it's a different key
+                            if (!this.cachedKey || 
+                                this.cachedKey.color !== newKey.color || 
+                                this.cachedKey.shape !== newKey.shape) {
+                                
+                                console.log('=== Key Cache Updated ===', {
+                                    timestamp: new Date().toISOString(),
+                                    previousKey: this.cachedKey,
+                                    newKey: newKey
+                                });
+
+                                this.cachedKey = newKey;
+                                this.updateCachedKeyDisplay();
+                            }
+                        }
+                    }
+
+                    // Update result display
+                    const resultDisplay = document.getElementById('mouse-text-result');
+                    if (resultDisplay) {
+                        resultDisplay.textContent = recognizedText || 'No text detected';
+                        this.updateCachedKeyDisplay();
+                    }
+
+                } catch (error) {
+                    console.error('=== OCR Process Error ===', {
+                        error: error.message,
+                        stack: error.stack,
+                        tesseractState: {
+                            exists: typeof Tesseract !== 'undefined',
+                            workerExists: !!tesseractWorker
+                        }
+                    });
+                }
+
+                if (this.isReading) {
+                    setTimeout(() => this.readText(), this.captureUpdateInterval);
+                }
+            }
+
+            isValidKeyColor(color) {
+                const validColors = ['Yellow', 'Crimson', 'Blue', 'Purple', 'Orange', 'Green', 'Gold', 'Silver'];
+                return validColors.includes(color);
+            }
+
+            isValidKeyShape(shape) {
+                const validShapes = ['Pentagon', 'Triangle', 'Shield', 'Wedge', 'Rectangle', 'Crescent', 'Corner', 'Diamond'];
+                return validShapes.includes(shape);
+            }
+
+            updateCachedKeyDisplay() {
+                const resultDisplay = document.getElementById('mouse-text-result');
+                if (!resultDisplay) return;
+
+                // Remove any existing key info
+                const existingKeyInfo = resultDisplay.querySelector('.cached-key-info');
+                if (existingKeyInfo) {
+                    resultDisplay.removeChild(existingKeyInfo);
+                }
+
+                // Add new key info if we have a cached key
+                if (this.cachedKey) {
+                    const keyInfo = document.createElement('div');
+                    keyInfo.className = 'cached-key-info';
+                    keyInfo.style.marginTop = '8px';
+                    keyInfo.style.padding = '4px';
+                    keyInfo.style.backgroundColor = '#40444b';
+                    keyInfo.style.borderRadius = '3px';
+                    keyInfo.style.color = '#4CAF50';
+                    keyInfo.innerHTML = `
+                        <div style="font-weight: bold;">Cached Key:</div>
+                        <div>${this.cachedKey.color} ${this.cachedKey.shape}</div>
+                        <div style="font-size: 10px; color: #dcddde;">
+                            ${this.cachedKey.color}_${this.cachedKey.shape}_key.png
+                        </div>
+                    `;
+                    resultDisplay.appendChild(keyInfo);
+                }
+            }
+
+            startReading() {
+                if (this.isReading) return;
+                this.isReading = true;
+                this.readText();
+                
+                // Update UI
+                const statusElement = document.getElementById('mouse-ocr-status');
+                const toggleButton = document.getElementById('toggle-mouse-ocr');
+                if (statusElement) {
+                    statusElement.textContent = 'Active';
+                    statusElement.className = 'status-text mouse-ocr-active';
+                }
+                if (toggleButton) {
+                    toggleButton.textContent = 'Stop Mouse OCR';
+                }
+            }
+
+            stopReading() {
+                this.isReading = false;
+                
+                // Update UI
+                const statusElement = document.getElementById('mouse-ocr-status');
+                const toggleButton = document.getElementById('toggle-mouse-ocr');
+                if (statusElement) {
+                    statusElement.textContent = 'Inactive';
+                    statusElement.className = 'status-text mouse-ocr-inactive';
+                }
+                if (toggleButton) {
+                    toggleButton.textContent = 'Start Mouse OCR';
+                }
+            }
+
+            terminate() {
+                this.stopReading();
+                if (this.mouseTrackingInterval) {
+                    clearInterval(this.mouseTrackingInterval);
+                    this.mouseTrackingInterval = null;
+                }
+            }
+        }
+
+        // Initialize mouse text OCR
+        let doorTextReader = null;
+
+        document.addEventListener('DOMContentLoaded', function() {
+            // Initialize the door text reader
+            console.log('=== Mouse Text OCR Initialization ===', {
+                tesseractAvailable: typeof tesseractWorker !== 'undefined',
+                alt1Available: !!window.alt1,
+                pixelPermission: window.alt1?.permissionPixel,
+                canvasElement: !!document.getElementById('mouseTextCanvas'),
+                toggleButton: !!document.getElementById('toggle-mouse-ocr')
+            });
+
+            doorTextReader = new DoorTextReader();
+
+            // Set up toggle button
+            const toggleButton = document.getElementById('toggle-mouse-ocr');
+            if (toggleButton) {
+                toggleButton.addEventListener('click', function() {
+                    if (!doorTextReader) {
+                        console.error('DoorTextReader not initialized');
+                        return;
+                    }
+                    
+                    console.log('=== Mouse Text OCR Toggle ===', {
+                        currentState: doorTextReader.isReading ? 'active' : 'inactive',
+                        newState: doorTextReader.isReading ? 'stopping' : 'starting',
+                        lastRecognizedText: doorTextReader.lastRecognizedText,
+                        mousePosition: doorTextReader.lastMousePosition
+                    });
+
+                    if (doorTextReader.isReading) {
+                        doorTextReader.stopReading();
+                    } else {
+                        doorTextReader.startReading();
+                    }
+                });
+            }
+        });
+
+        // Function to automatically check rooms with keys
+        async function checkRoomsWithKeys() {
+            // Skip if capture is not active
+            if (!isCaptureActive) return;
+            
+            // Get all cells with keys (has color and shape but not gatestone)
+            const cells = document.querySelectorAll('.grid-cell');
+            for (const cell of cells) {
+                if (cell.dataset.color && cell.dataset.shape && !cell.dataset.gatestone) {
+                    const isLocked = await hasQuestionMark(cell);
+                    if (!isLocked) {
+                        console.log("Found unlocked room with key, clearing...");
+                        // Remove the key image
+                        const existingImg = cell.querySelector('img');
+                        if (existingImg) {
+                            cell.removeChild(existingImg);
+                        }
+                        
+                        // Remove key data attributes
+                        delete cell.dataset.color;
+                        delete cell.dataset.shape;
+                        
+                        // Save the updated cell state
+                        saveCellState(cell);
+                    }
+                }
+            }
+        }
+
+        // Document ready function
+        document.addEventListener('DOMContentLoaded', async function() {
+            console.log("Document loaded");
+            
+            // Create feedback element early
+            let feedback = document.createElement('div');
+            feedback.id = 'room-feedback';
+            document.body.appendChild(feedback);
+            feedback.textContent = 'Initializing OCR...';
+            feedback.style.display = 'block';
+            
+            try {
+                // Initialize Tesseract worker
+                await initTesseractWorker();
+            
+            // Setup Alt1 status
+            setupAlt1();
+            
+                // Rest of initialization...
+            // Periodically check Alt1 status
+            setInterval(setupAlt1, 5000);
+                
+                // Set up automatic room checking every 2 seconds
+                setInterval(checkRoomsWithKeys, 2000);
+            
+            // Load settings from localStorage
+            loadSettings();
+            
+            // Update map size based on settings
+            updateMapSize();
+            
+            // Initialize grid
+            initializeGrid();
+                
+                // Add keyboard shortcuts for anchor point adjustment
+                document.addEventListener('keydown', handleKeyboardShortcuts);
+            } catch (error) {
+                console.error('Error during initialization:', error);
+                feedback.textContent = `Init Error: ${error.message}`;
+                feedback.style.display = 'block';
+                setTimeout(() => {
+                    feedback.style.display = 'none';
+                }, 5000);
+            }
+        });
+
+        // Check if Alt1 is available and setup installation
+        function setupAlt1() {
+            const statusIndicatorDiv = document.getElementById('alt1-status-indicator');
+            
+            if (window.alt1) {
+                // Alt1 detected, identify the app
+                alt1.identifyAppUrl("./appconfig.json");
+                
+                // Update the status indicator
+                statusIndicatorDiv.innerHTML = `
+                    <div class="status-item"><span class="status-label">Alt1:</span> <span class="status-value status-ok">Detected</span></div>
+                `;
+            } else {
+                // Alt1 not detected, create installation link
+                const currentUrl = window.location.href;
+                const baseUrl = currentUrl.substring(0, currentUrl.lastIndexOf('/') + 1);
+                const addappurl = `alt1://addapp/${baseUrl}appconfig.json`;
+                
+                // Update the status indicator
+                statusIndicatorDiv.innerHTML = `
+                    <div class="status-item"><span class="status-label">Alt1:</span> <span class="status-value status-error">Not Detected</span></div>
+                `;
+            }
+        }
+
+        // Function to show a specific view
+        function showView(viewId, clickedItem) {
+            console.log("Show view called for:", viewId);
+            
+            // Close any open menus first
+            hideAllMenus();
+            
+            // Update active nav item
+            var navItems = document.querySelectorAll(".nav-item");
+            navItems.forEach(function(item) {
+                item.classList.remove("active");
+            });
+            clickedItem.classList.add("active");
+            
+            // Update active view
+            var views = document.querySelectorAll(".view");
+            views.forEach(function(view) {
+                view.classList.remove("active");
+            });
+            
+            var viewToShow = document.getElementById(viewId);
+            if (viewToShow) {
+                viewToShow.classList.add("active");
+            }
+
+            // Reset any custom styles applied to views
+            resetViewStyles();
+
+            // If switching to map view, update the map size and background
+            if (viewId === 'map-view') {
+                updateMapSize();
+                // Enable compact mode for map view
+                document.body.classList.add('compact-mode');
+                // Force an update of the map background
+                if (isCaptureActive && settings.anchorPoint) {
+                    // Trigger a screen capture to update the map background
+                    updateCapturePreview();
+                }
+            }
+        }
+
+        // Function to reset view styles
+        function resetViewStyles() {
+            // Reset any inline styles applied to views
+            document.querySelectorAll('.view').forEach(function(view) {
+                view.style.display = '';
+                view.style.flexDirection = '';
+                view.style.alignItems = '';
+                view.style.justifyContent = '';
+            });
+            
+            // Remove compact mode
+            document.body.classList.remove('compact-mode');
+            
+            // Don't hide crosshair if we're setting an anchor point
+            if (!isSettingAnchorPoint) {
+                const crosshair = document.getElementById('crosshair');
+                if (crosshair) {
+                    crosshair.classList.remove('active');
+                }
+            }
+        }
+
+        // Settings management
+        let settings = {
+            dungeonSize: "small", // Default value
+            mapState: {}, // Store cell states here
+            anchorPoint: null, // Store anchor point coordinates
+            captureActive: true // Default to active
+        };
+
+        // Function to save a specific setting
+        function saveSetting(key, value) {
+            settings[key] = value;
+            console.log(`Setting ${key} updated to: ${value}`);
+            
+            // Auto-save to localStorage
+            localStorage.setItem("dungeonSettings", JSON.stringify(settings));
+            console.log("Settings auto-saved to localStorage");
+            
+            // Show save feedback
+            showSaveFeedback();
+            
+            // Apply changes immediately
+            if (key === 'dungeonSize') {
+                updateMapSize();
+            }
+        }
+        
+        // Function to show save feedback
+        function showSaveFeedback() {
+            const feedback = document.getElementById('save-feedback');
+            if (!feedback) return;
+            
+            feedback.textContent = 'Settings saved!';
+            feedback.classList.add('visible');
+            
+            // Hide the feedback after 2 seconds
+            setTimeout(() => {
+                feedback.classList.remove('visible');
+            }, 2000);
+        }
+
+        // Function to update dungeon size
+        function updateDungeonSize(value) {
+            saveSetting('dungeonSize', value);
+            updateCapturePreviewSize();
+        }
+
+        // Function to update map size based on settings
+        function updateMapSize() {
+            const mapContainer = document.getElementById('map-container');
+            const mapGrid = document.getElementById('map-grid');
+            
+            if (!mapContainer || !mapGrid) return;
+            
+            // Remove all size classes
+            mapContainer.classList.remove('small', 'medium', 'large');
+            mapGrid.classList.remove('small', 'medium', 'large');
+            
+            // Add the appropriate size class
+            mapContainer.classList.add(settings.dungeonSize);
+            mapGrid.classList.add(settings.dungeonSize);
+            
+            // Clear and recreate grid cells
+            mapGrid.innerHTML = '';
+            createGridCells(settings.dungeonSize);
+            
+            // Update the map background canvas size
+            const mapCanvas = document.getElementById('mapBackgroundCanvas');
+            if (mapCanvas) {
+                // Set canvas dimensions to match the container
+                mapCanvas.width = mapContainer.clientWidth;
+                mapCanvas.height = mapContainer.clientHeight;
+                
+                // Redraw the background if we have an anchor point and capture is active
+                if (settings.anchorPoint && isCaptureActive) {
+                    // Trigger a screen capture to update the map background
+                    updateCapturePreview();
+                } else {
+                    // Just fill with a dark color
+                    const ctx = mapCanvas.getContext('2d');
+                    ctx.fillStyle = '#202225';
+                    ctx.fillRect(0, 0, mapCanvas.width, mapCanvas.height);
+                }
+            }
+        }
+        
+        // Function to create grid cells based on dungeon size
+        function createGridCells(size) {
+            const mapGrid = document.getElementById('map-grid');
+            if (!mapGrid) return;
+            
+            let rows = 4, cols = 4;
+            
+            switch(size) {
+                case 'small':
+                    rows = 4;
+                    cols = 4;
+                    break;
+                case 'medium':
+                    rows = 8;
+                    cols = 4;
+                    break;
+                case 'large':
+                    rows = 8;
+                    cols = 8;
+                    break;
+            }
+            
+            for (let r = 0; r < rows; r++) {
+                for (let c = 0; c < cols; c++) {
+                    const cell = document.createElement('div');
+                    cell.className = 'grid-cell';
+                    cell.dataset.row = r;
+                    cell.dataset.col = c;
+                    
+                    // Use the unified click handler
+                    cell.addEventListener('contextmenu', function(e) {
+                        e.preventDefault();
+                        handleGridCellClick(e, this);
+                    });
+                    
+                    cell.addEventListener('click', function(e) {
+                        handleGridCellClick(e, this);
+                    });
+                    
+                    mapGrid.appendChild(cell);
+                }
+            }
+        }
+        
+        // Variables to track the currently active cell and selected color
+        let activeCell = null;
+        let selectedColor = null;
+        
+        // Function to check if a cell contains a question mark
+        async function hasQuestionMark(cell) {
+            if (!tesseractWorker) {
+                console.log('Tesseract worker not initialized');
+                // Try to initialize again
+                await initTesseractWorker();
+                if (!tesseractWorker) {
+                    return false;
+                }
+            }
+
+            // Get the map background canvas
+            const mapCanvas = document.getElementById('mapBackgroundCanvas');
+            if (!mapCanvas) return false;
+
+            const ctx = mapCanvas.getContext('2d');
+            
+            // Get cell position and dimensions
+            const rect = cell.getBoundingClientRect();
+            const mapRect = mapCanvas.getBoundingClientRect();
+            
+            // Calculate relative position in the canvas
+            const x = rect.left - mapRect.left;
+            const y = rect.top - mapRect.top;
+            const width = rect.width;
+            const height = rect.height;
+            
+            console.log("=== OCR Region Debug ===", {
+                cell: {
+                    row: cell.dataset.row,
+                    col: cell.dataset.col
+                },
+                region: {
+                    x, y, width, height
+                }
+            });
+            
+            // Create a temporary canvas for preprocessing
+            const tempCanvas = document.createElement('canvas');
+            tempCanvas.width = width;
+            tempCanvas.height = height;
+            const tempCtx = tempCanvas.getContext('2d');
+
+            try {
+                // Extract and draw the cell image
+                const imageData = ctx.getImageData(x, y, width, height);
+                tempCtx.putImageData(imageData, 0, 0);
+
+                // Preprocess the image
+                const processedImageData = tempCtx.getImageData(0, 0, width, height);
+                const data = processedImageData.data;
+
+                // Convert to grayscale and increase contrast
+                for (let i = 0; i < data.length; i += 4) {
+                    const r = data[i];
+                    const g = data[i + 1];
+                    const b = data[i + 2];
+                    
+                    // Convert to grayscale
+                    const gray = (r + g + b) / 3;
+                    
+                    // Apply threshold for black and white conversion
+                    const threshold = 128;
+                    const val = gray > threshold ? 255 : 0;
+                    
+                    data[i] = val;     // R
+                    data[i + 1] = val; // G
+                    data[i + 2] = val; // B
+                }
+
+                // Put the processed image back
+                tempCtx.putImageData(processedImageData, 0, 0);
+                
+                // Set optimal parameters for symbol detection
+                await tesseractWorker.setParameters({
+                    tessedit_char_whitelist: '?',
+                    tessedit_pageseg_mode: '10',
+                    tessedit_ocr_engine_mode: '2',
+                    tessjs_create_pdf: '0',
+                    tessjs_create_hocr: '0',
+                    tessjs_create_tsv: '0',
+                    tessjs_create_box: '0',
+                    tessjs_create_unlv: '0',
+                    tessjs_create_osd: '0'
+                });
+
+                // Perform OCR
+                const result = await tesseractWorker.recognize(tempCanvas);
+                const text = result.data.text.trim();
+                const confidence = result.data.confidence;
+
+                console.log("=== Question Mark Detection ===", {
+                    cell: {
+                        row: cell.dataset.row,
+                        col: cell.dataset.col
+                    },
+                    ocrResult: {
+                        text: text,
+                        confidence: confidence,
+                        hasQuestionMark: text.includes('?')
+                    }
+                });
+                
+                // Show feedback with confidence level
+                let feedback = document.getElementById('room-feedback');
+                if (!feedback) {
+                    feedback = document.createElement('div');
+                    feedback.id = 'room-feedback';
+                    document.body.appendChild(feedback);
+                }
+                
+                const hasQuestionMark = text.includes('?');
+                // feedback.textContent = hasQuestionMark ? 
+                //     `Locked Room (${confidence.toFixed(1)}% confident)` : 
+                //     'Not a locked room';
+                feedback.style.display = 'block';
+                
+                // Hide the feedback after 2 seconds
+                setTimeout(() => {
+                    feedback.style.display = 'none';
+                }, 2000);
+                
+                return hasQuestionMark;
+            } catch (error) {
+                console.error('Error during OCR:', error);
+                return false;
+            }
+        }
+        
+        // Function to show the context menu
+        async function showContextMenu(event, cell) {
+            console.log("=== Show Context Menu ===", {
+                currentMenuStates: {
+                    contextMenuVisible: menuElements.contextMenu?.classList.contains('visible'),
+                    shapeMenuVisible: menuElements.shapeMenu?.classList.contains('visible'),
+                    cellMenuVisible: menuElements.cellMenu?.classList.contains('visible'),
+                    skillTierMenuVisible: menuElements.skillTierMenu?.classList.contains('visible')
+                }
+            });
+
+            // Validate cell has a room before proceeding
+            if (!await validateCellInteraction(event, cell)) {
+                return;
+            }
+
+            if (!menuElements.contextMenu) {
+                console.error("Context menu element not found");
+                return;
+            }
+            
+            // Set the active cell
+            activeCell = cell;
+            
+            // Reset selected color
+            selectedColor = null;
+            
+            // Position based on the current dungeon size
+            let posX, posY;
+            const dungeonSize = settings.dungeonSize;
+            
+            // Adjust position based on dungeon size
+            if (dungeonSize === 'small') {
+                posX = 30;
+                posY = 20;
+            } else if (dungeonSize === 'medium') {
+                posX = 30;
+                posY = 100;
+            } else if (dungeonSize === 'large') {
+                posX = 107;
+                posY = 90;
+            } else {
+                posX = 30;
+                posY = 20;
+            }
+            
+            // Position the context menu
+            menuElements.contextMenu.style.left = `${posX}px`;
+            menuElements.contextMenu.style.top = `${posY}px`;
+            
+            // Make the context menu visible
+            menuElements.contextMenu.classList.add('visible');
+            
+            // Add event listeners to color options
+            document.querySelectorAll('.color-option').forEach(option => {
+                option.onclick = function() {
+                    console.log("Color option clicked:", this.dataset.color);
+                    selectedColor = this.dataset.color;
+                    hideContextMenu();
+                    showShapeMenu();
+                };
+            });
+        }
+        
+        // Function to show the shape menu after color selection
+        function showShapeMenu() {
+            console.log("showShapeMenu called with color:", selectedColor);
+            
+            const shapeMenu = document.getElementById('shape-menu');
+            if (!shapeMenu) {
+                console.error("Shape menu element not found");
+                return;
+            }
+            
+            const shapeOptionsContainer = document.getElementById('shape-options-container');
+            if (!shapeOptionsContainer) {
+                console.error("Shape options container not found");
+                return;
+            }
+            
+            // Clear previous shape options
+            shapeOptionsContainer.innerHTML = '';
+            
+            // Define available shapes
+            const shapes = [
+                "pentagon", "triangle", "shield", "wedge", 
+                "rectangle", "crescent", "corner", "diamond"
+            ];
+            
+            // Create shape rows for two-column layout
+            for (let i = 0; i < shapes.length; i += 2) {
+                const shapeRow = document.createElement('div');
+                shapeRow.className = 'shape-row';
+                
+                // Create first shape option in the row
+                const shapeOption1 = createShapeOption(shapes[i]);
+                shapeRow.appendChild(shapeOption1);
+                
+                // Create second shape option if available
+                if (i + 1 < shapes.length) {
+                    const shapeOption2 = createShapeOption(shapes[i + 1]);
+                    shapeRow.appendChild(shapeOption2);
+                }
+                
+                // Add row to container
+                shapeOptionsContainer.appendChild(shapeRow);
+            }
+            
+            // Position based on the current dungeon size - use the same position as the color menu
+            let posX, posY;
+            
+            // Get the current dungeon size from settings
+            const dungeonSize = settings.dungeonSize;
+            
+            // Adjust position based on dungeon size - use the same values as in showContextMenu
+            if (dungeonSize === 'small') {
+                posX = 38;
+                posY = 20;
+            } else if (dungeonSize === 'medium') {
+                posX = 38;
+                posY = 100;
+            } else if (dungeonSize === 'large') {
+                posX = 107;
+                posY = 90;
+            } else {
+                // Default fallback
+                posX = 30;
+                posY = 20;
+            }
+            
+            // Position the shape menu
+            shapeMenu.style.left = `${posX}px`;
+            shapeMenu.style.top = `${posY}px`;
+            
+            // Make the shape menu visible
+            shapeMenu.classList.add('visible');
+            
+            // Add a click event listener to the document to hide the shape menu when clicking elsewhere
+            setTimeout(() => {
+                document.addEventListener('click', hideShapeMenu);
+            }, 0);
+        }
+        
+        // Helper function to create a shape option
+        function createShapeOption(shape) {
+            const shapeOption = document.createElement('div');
+            shapeOption.className = 'shape-option';
+            shapeOption.dataset.shape = shape;
+            shapeOption.title = shape.charAt(0).toUpperCase() + shape.slice(1);
+            
+            // Create preview image
+            const previewImg = document.createElement('img');
+            previewImg.className = 'shape-preview';
+            previewImg.src = `../assets/keys/${selectedColor}_${shape}_key.png`;
+            previewImg.alt = `${selectedColor} ${shape}`;
+            
+            // Add shape name
+            const shapeName = document.createElement('span');
+            shapeName.textContent = shape.charAt(0).toUpperCase() + shape.slice(1);
+            shapeName.style.fontSize = '9px';
+            
+            // Add to shape option
+            shapeOption.appendChild(previewImg);
+            shapeOption.appendChild(shapeName);
+            
+            // Add click event
+            shapeOption.onclick = function() {
+                console.log("Shape option clicked:", this.dataset.shape);
+                applyKeyToCell(selectedColor, this.dataset.shape);
+                hideShapeMenu();
+            };
+            
+            return shapeOption;
+        }
+        
+        // Function to hide the context menu
+        function hideContextMenu(event) {
+            console.log("hideContextMenu called");
+            if (menuElements.contextMenu) {
+                menuElements.contextMenu.classList.remove('visible');
+            }
+        }
+        
+        // Function to hide the shape menu
+        function hideShapeMenu(event) {
+            console.log("hideShapeMenu called");
+            const shapeMenu = document.getElementById('shape-menu');
+            if (shapeMenu) {
+                shapeMenu.classList.remove('visible');
+            }
+            document.removeEventListener('click', hideShapeMenu);
+        }
+        
+        // Function to apply a key image to the active cell
+        function applyKeyToCell(color, shape) {
+            if (!activeCell || !color || !shape || color === 'none' || shape === 'none') return;
+            
+            // Remove any existing image
+            const existingImg = activeCell.querySelector('img');
+            if (existingImg) {
+                activeCell.removeChild(existingImg);
+            }
+            
+            // Store the color and shape as data attributes
+            activeCell.dataset.color = color;
+            activeCell.dataset.shape = shape;
+            
+            // Add the key image
+            const img = document.createElement('img');
+            img.src = `../assets/keys/${color}_${shape}_key.png`;
+            img.alt = `${color} ${shape} key`;
+            activeCell.appendChild(img);
+            
+            // Save the cell state
+            saveCellState(activeCell);
+        }
+        
+        // Function to save the state of a cell
+        function saveCellState(cell) {
+            const row = cell.dataset.row;
+            const col = cell.dataset.col;
+            
+            // Get the current color, shape, and gatestone
+            const color = cell.dataset.color || '';
+            const shape = cell.dataset.shape || '';
+            const gatestone = cell.dataset.gatestone || '';
+            const blocked = cell.dataset.blocked || '';
+            const skillTier = cell.dataset.skillTier || '';
+            
+            // Create a cell state object
+            const cellState = { row, col, color, shape, gatestone, blocked, skillTier };
+            
+            // Get the current map state from settings or initialize a new one
+            if (!settings.mapState) {
+                settings.mapState = {};
+            }
+            
+            // Create a key for this cell
+            const cellKey = `${row}-${col}`;
+            
+            // Save the cell state
+            settings.mapState[cellKey] = cellState;
+            
+            // Save to localStorage
+            localStorage.setItem("dungeonSettings", JSON.stringify(settings));
+            console.log(`Cell state saved for ${row},${col}`);
+        }
+        
+        // Function to load cell states from settings
+        function loadCellStates() {
+            if (!settings.mapState) return;
+            
+            // Get all grid cells
+            const cells = document.querySelectorAll('.grid-cell');
+            
+            // Loop through each cell
+            cells.forEach(cell => {
+                const row = cell.dataset.row;
+                const col = cell.dataset.col;
+                const cellKey = `${row}-${col}`;
+                
+                // Check if we have a saved state for this cell
+                if (settings.mapState[cellKey]) {
+                    const state = settings.mapState[cellKey];
+                    
+                    // Apply the color and shape if they exist
+                    if (state.color && state.shape && state.color !== 'none' && state.shape !== 'none') {
+                        cell.dataset.color = state.color;
+                        cell.dataset.shape = state.shape;
+                        
+                        const img = document.createElement('img');
+                        img.src = `../assets/keys/${state.color}_${state.shape}_key.png`;
+                        img.alt = `${state.color} ${state.shape} key`;
+                        cell.appendChild(img);
+                    }
+                    // Apply the gatestone if it exists
+                    else if (state.gatestone && state.gatestone !== 'none') {
+                        cell.dataset.gatestone = state.gatestone;
+                        
+                        const img = document.createElement('img');
+                        img.src = `../assets/gatestones/${state.gatestone}.png`;
+                        img.alt = state.gatestone.replace('_', ' ');
+                        cell.appendChild(img);
+                    }
+                    // Apply blocked room if it exists
+                    else if (state.blocked === 'true') {
+                        cell.dataset.blocked = 'true';
+                        
+                        const img = document.createElement('img');
+                        img.src = '../assets/rooms/blocked_room.png';
+                        img.alt = 'Blocked Room';
+                        cell.appendChild(img);
+                    }
+                    // Apply skill tier if it exists
+                    else if (state.skillTier) {
+                        cell.dataset.skillTier = state.skillTier;
+                        
+                        const tierText = document.createElement('div');
+                        tierText.className = 'skill-tier';
+                        tierText.textContent = `T${state.skillTier}`;
+                        cell.appendChild(tierText);
+                    }
+                }
+            });
+        }
+        
+        // Update the initializeGrid function to also load cell states
+        function initializeGrid() {
+            // Create initial grid cells
+            createGridCells(settings.dungeonSize);
+            
+            // Load saved cell states
+            loadCellStates();
+        }
+        
+        // Function to load settings from localStorage
+        function loadSettings() {
+            console.log("Loading settings from localStorage");
+            
+            const savedSettings = localStorage.getItem("dungeonSettings");
+            console.log("Raw saved settings:", savedSettings);
+            
+            if (savedSettings) {
+                try {
+                    settings = JSON.parse(savedSettings);
+                    console.log("Parsed settings:", settings);
+                    console.log("Anchor point from loaded settings:", settings.anchorPoint);
+                    
+                    // Apply saved settings to form elements
+                    document.getElementById("dungeon-size").value = settings.dungeonSize;
+                    
+                    // Update anchor point status
+                    const anchorStatus = document.getElementById('anchor-status');
+                    if (anchorStatus) {
+                        anchorStatus.textContent = settings.anchorPoint ? "Set" : "Not set";
+                        anchorStatus.className = "status-text " + (settings.anchorPoint ? "anchor-active" : "anchor-inactive");
+                    }
+                    
+                    // Update anchor point display
+                    updateAnchorPointDisplay();
+                } catch (e) {
+                    console.error("Error loading saved settings:", e);
+                }
+            } else {
+                console.log("No saved settings found");
+            }
+        }
+        
+        // Variables for anchor point placement
+        let isSettingAnchorPoint = false;
+        let anchorPointInterval = null;
+        
+        // Function to start anchor point placement
+        function startAnchorPointPlacement() {
+            if (isSettingAnchorPoint) return;
+            
+            console.log("Starting anchor point placement");
+            isSettingAnchorPoint = true;
+            
+            // Update UI
+            const anchorStatus = document.getElementById('anchor-status');
+            const setAnchorButton = document.getElementById('set-anchor-button');
+            
+            if (anchorStatus) {
+                anchorStatus.textContent = "Press SPACE to set anchor point";
+                anchorStatus.className = "status-text anchor-active";
+            }
+            
+            if (setAnchorButton) {
+                setAnchorButton.textContent = "Cancel";
+                setAnchorButton.onclick = cancelAnchorPointPlacement;
+            }
+            
+            // Show crosshair
+            const crosshair = document.getElementById('crosshair');
+            if (crosshair) {
+                crosshair.classList.add('active');
+            }
+            
+            // Start tracking mouse position
+            anchorPointInterval = setInterval(updateCrosshairPosition, 50);
+            
+            // Add space key listener
+            document.addEventListener('keydown', handleAnchorKeyPress);
+        }
+        
+        // Function to update crosshair position
+        function updateCrosshairPosition() {
+            if (!window.alt1) return;
+            
+            const mousePos = getAlt1MousePosition();
+            if (!mousePos) return;
+            
+            const crosshair = document.getElementById('crosshair');
+            if (!crosshair) return;
+            
+            crosshair.style.left = `${mousePos.x - 50}px`;
+            crosshair.style.top = `${mousePos.y - 50}px`;
+            crosshair.style.width = '100px';
+            crosshair.style.height = '100px';
+        }
+
+        // Function to get Alt1 mouse position
+        function getAlt1MousePosition() {
+            if (!window.alt1) {
+                console.log("Alt1 not available");
+                return null;
+            }
+            
+            try {
+                const pos = alt1.mousePosition;
+                console.log("Raw Alt1 mouse position:", pos);
+                
+                if (pos === -1) {
+                    console.log("Invalid mouse position (-1)");
+                    return null;
+                }
+                
+                const x = pos >>> 16;
+                const y = pos & 0xFFFF;
+                console.log("Decoded mouse position:", { x, y });
+                
+                return {
+                    x: x,
+                    y: y
+                };
+            } catch (e) {
+                console.error("Error getting mouse position:", e);
+                return null;
+            }
+        }
+        
+        // Function to handle key press during anchor point placement
+        function handleAnchorKeyPress(e) {
+            if (e.code === 'Space' || e.key === ' ') {
+                e.preventDefault();
+                setAnchorPoint();
+            } else if (e.code === 'Escape' || e.key === 'Escape') {
+                e.preventDefault();
+                cancelAnchorPointPlacement();
+            }
+        }
+        
+        // Function to set the anchor point
+        function setAnchorPoint() {
+            console.log("setAnchorPoint called");
+            
+            if (!isSettingAnchorPoint) {
+                console.log("Not in anchor point setting mode");
+                return;
+            }
+            
+            if (!window.alt1) {
+                console.log("Alt1 not available");
+                return;
+            }
+            
+            const mousePos = getAlt1MousePosition();
+            console.log("Mouse position from getAlt1MousePosition:", mousePos);
+            
+            if (!mousePos) {
+                console.log("Failed to get mouse position");
+                return;
+            }
+            
+            // Save anchor point
+            settings.anchorPoint = {
+                x: mousePos.x,
+                y: mousePos.y
+            };
+            
+            console.log("Anchor point saved:", settings.anchorPoint);
+            
+            // Save settings
+            localStorage.setItem("dungeonSettings", JSON.stringify(settings));
+            console.log("Settings saved to localStorage");
+            
+            // Update UI
+            updateAnchorPointDisplay();
+            
+            // End placement mode
+            endAnchorPointPlacement();
+            
+            // Show feedback
+            showSaveFeedback();
+        }
+        
+        // Function to adjust the anchor point by a specified amount
+        function adjustAnchorPoint(deltaX, deltaY) {
+            // Check if anchor point is set
+            if (!settings.anchorPoint) {
+                console.log("Cannot adjust anchor point: not set");
+                return;
+            }
+            
+            // Adjust the anchor point coordinates
+            settings.anchorPoint.x += deltaX;
+            settings.anchorPoint.y += deltaY;
+            
+            console.log("Anchor point adjusted to:", settings.anchorPoint);
+            
+            // Save settings
+            localStorage.setItem("dungeonSettings", JSON.stringify(settings));
+            console.log("Settings saved to localStorage");
+            
+            // If capture is active, update the preview
+            if (isCaptureActive) {
+                updateCapturePreview();
+            }
+        }
+        
+        // Function to cancel anchor point placement
+        function cancelAnchorPointPlacement() {
+            console.log("Cancelling anchor point placement");
+            endAnchorPointPlacement();
+        }
+        
+        // Function to end anchor point placement mode
+        function endAnchorPointPlacement() {
+            isSettingAnchorPoint = false;
+            
+            // Update UI
+            const anchorStatus = document.getElementById('anchor-status');
+            const setAnchorButton = document.getElementById('set-anchor-button');
+            
+            if (anchorStatus) {
+                anchorStatus.textContent = settings.anchorPoint ? "Set" : "Not set";
+                anchorStatus.className = "status-text " + (settings.anchorPoint ? "anchor-active" : "anchor-inactive");
+            }
+            
+            if (setAnchorButton) {
+                setAnchorButton.textContent = "Set Anchor";
+                setAnchorButton.onclick = startAnchorPointPlacement;
+            }
+            
+            // Hide crosshair
+            const crosshair = document.getElementById('crosshair');
+            if (crosshair) {
+                crosshair.classList.remove('active');
+            }
+            
+            // Stop tracking mouse position
+            if (anchorPointInterval) {
+                clearInterval(anchorPointInterval);
+                anchorPointInterval = null;
+            }
+            
+            // Remove space key listener
+            document.removeEventListener('keydown', handleAnchorKeyPress);
+        }
+        
+        // Function to update anchor point display
+        function updateAnchorPointDisplay() {
+            console.log("updateAnchorPointDisplay called");
+            
+            const coordinatesDisplay = document.getElementById('anchor-coordinates');
+            if (!coordinatesDisplay) {
+                console.log("Coordinates display element not found");
+                return;
+            }
+            
+            console.log("Current settings.anchorPoint:", settings.anchorPoint);
+            
+            if (settings.anchorPoint) {
+                const displayText = `X: ${settings.anchorPoint.x}, Y: ${settings.anchorPoint.y}`;
+                console.log("Setting coordinates display to:", displayText);
+                coordinatesDisplay.textContent = displayText;
+            } else {
+                console.log("No anchor point set, displaying undefined");
+                coordinatesDisplay.textContent = 'X: undefined, Y: undefined';
+            }
+        }
+
+        // Function to handle keyboard shortcuts
+        function handleKeyboardShortcuts(e) {
+            // Only process if we're in the settings view and not setting an anchor point
+            if (isSettingAnchorPoint || !document.getElementById('settings-view').classList.contains('active')) {
+                return;
+            }
+            
+            // Check if anchor point is set
+            if (!settings.anchorPoint) {
+                return;
+            }
+            
+            // Check for arrow keys
+            switch (e.key) {
+                case 'ArrowUp':
+                    adjustAnchorPoint(0, -1);
+                    e.preventDefault();
+                    break;
+                case 'ArrowDown':
+                    adjustAnchorPoint(0, 1);
+                    e.preventDefault();
+                    break;
+                case 'ArrowLeft':
+                    adjustAnchorPoint(-1, 0);
+                    e.preventDefault();
+                    break;
+                case 'ArrowRight':
+                    adjustAnchorPoint(1, 0);
+                    e.preventDefault();
+                    break;
+            }
+        }
+
+        // Load settings and initialize the app on page load
+        document.addEventListener('DOMContentLoaded', function() {
+            // Try to load saved settings
+            loadSettings();
+            
+            // Update anchor point display
+            updateAnchorPointDisplay();
+            
+            // Initialize Alt1 status
+            updateAlt1Status();
+            
+            // Initialize screen capture preview
+            initScreenCapturePreview();
+            
+            // Initialize map background
+            initMapBackground();
+            
+            // Check if we're running in Alt1
+            if (window.alt1) {
+                console.log("Running in Alt1 browser");
+                document.body.classList.add('alt1-mode');
+            }
+
+            console.log("Re-initializing context menu event listeners");
+            
+            // Add right-click event listeners to all grid cells
+            document.querySelectorAll('.grid-cell').forEach(cell => {
+                cell.addEventListener('contextmenu', function(e) {
+                    console.log("Context menu event triggered on cell");
+                    e.preventDefault();
+                    showContextMenu(e, this);
+                    return false;
+                });
+                
+                // Add left-click event listeners to all grid cells
+                cell.addEventListener('click', function(e) {
+                    console.log("Click event triggered on cell");
+                    showCellMenu(e, this);
+            });
+        });
+            
+            // Add window resize event listener
+            window.addEventListener('resize', handleWindowResize);
+        });
+        
+        // Function to handle window resize events
+        function handleWindowResize() {
+            // Update the map background canvas size
+            const mapCanvas = document.getElementById('mapBackgroundCanvas');
+            const mapContainer = document.getElementById('map-container');
+            
+            if (mapCanvas && mapContainer) {
+                // Set canvas dimensions to match the container
+                mapCanvas.width = mapContainer.clientWidth;
+                mapCanvas.height = mapContainer.clientHeight;
+                
+                // Redraw the background if we have an anchor point and capture is active
+                if (settings.anchorPoint && isCaptureActive) {
+                    // Trigger a screen capture to update the map background
+                    updateCapturePreview();
+                } else {
+                    // Just fill with a dark color
+                    const ctx = mapCanvas.getContext('2d');
+                    ctx.fillStyle = '#202225';
+                    ctx.fillRect(0, 0, mapCanvas.width, mapCanvas.height);
+                }
+            }
+        }
+        
+        // Function to update Alt1 status
+        function updateAlt1Status() {
+            const statusIndicator = document.getElementById('alt1-status-indicator');
+            if (!statusIndicator) return;
+            
+            if (window.alt1) {
+                let statusHTML = '<div class="status-item"><span class="status-label">Alt1:</span> <span class="status-value status-ok">Detected</span></div>';
+                
+                // Check pixel permission
+                statusHTML += '<div class="status-item"><span class="status-label">Pixel Permission:</span> ';
+                statusHTML += window.alt1.permissionPixel ? 
+                    '<span class="status-value status-ok">Granted</span>' : 
+                    '<span class="status-value status-error">Not Granted</span>';
+                statusHTML += '</div>';
+                
+                // Check overlay permission
+                statusHTML += '<div class="status-item"><span class="status-label">Overlay Permission:</span> ';
+                statusHTML += window.alt1.permissionOverlay ? 
+                    '<span class="status-value status-ok">Granted</span>' : 
+                    '<span class="status-value status-error">Not Granted</span>';
+                statusHTML += '</div>';
+                
+                statusIndicator.innerHTML = statusHTML;
+            } else {
+                // Generate Alt1 install URL
+                const appUrl = encodeURIComponent(window.location.href);
+                const addappurl = `alt1://addapp/${appUrl}`;
+                
+                statusIndicator.innerHTML = `
+                    <div class="status-item">
+                        <span class="status-label">Alt1:</span> 
+                        <span class="status-value status-error">Not Detected</span>
+                    </div>
+                    <div class="status-item">
+                        <a href='${addappurl}' class="alt1-install-link">Install in Alt1</a>
+                    </div>
+                `;
+            }
+        }
+        
+        // Screen capture preview functions
+        let capturePreviewInterval = null;
+        let isCaptureActive = true;
+        
+        // Function to toggle capture preview on/off
+        function toggleCapturePreview() {
+            isCaptureActive = !isCaptureActive;
+            
+            // Update UI
+            const captureStatus = document.getElementById('capture-status');
+            const toggleButton = document.getElementById('toggle-capture-button');
+            
+            if (captureStatus) {
+                captureStatus.textContent = isCaptureActive ? "Active" : "Inactive";
+                captureStatus.className = "status-text " + (isCaptureActive ? "capture-active" : "capture-inactive");
+            }
+            
+            if (toggleButton) {
+                toggleButton.textContent = isCaptureActive ? "Stop Capture" : "Start Capture";
+            }
+            
+            // Start or stop the capture preview
+            if (isCaptureActive) {
+                startCapturePreview();
+            } else {
+                stopCapturePreview();
+                
+                // Clear the canvas and show "Capture stopped" message
+                const canvas = document.getElementById('capturePreviewCanvas');
+                if (canvas) {
+                    const ctx = canvas.getContext('2d');
+                    ctx.clearRect(0, 0, canvas.width, canvas.height);
+                    ctx.fillStyle = '#202225';
+                    ctx.fillRect(0, 0, canvas.width, canvas.height);
+                    ctx.fillStyle = '#dcddde';
+                    ctx.font = '14px Arial';
+                    ctx.textAlign = 'center';
+                    ctx.textBaseline = 'middle';
+                    ctx.fillText('Capture stopped', canvas.width / 2, canvas.height / 2);
+                    
+                    // Draw a border
+                    ctx.strokeStyle = '#43b581';
+                    ctx.lineWidth = 2;
+                    ctx.strokeRect(0, 0, canvas.width, canvas.height);
+                }
+            }
+            
+            // Save the capture state in settings
+            saveSetting('captureActive', isCaptureActive);
+        }
+        
+        // Function to initialize screen capture preview
+        function initScreenCapturePreview() {
+            const canvas = document.getElementById('capturePreviewCanvas');
+            if (!canvas) return;
+            
+            // Set initial canvas size based on dungeon size
+            updateCapturePreviewSize();
+            
+            // Load capture active state from settings
+            isCaptureActive = settings.captureActive !== undefined ? settings.captureActive : true;
+            
+            // Update UI to match the current state
+            const captureStatus = document.getElementById('capture-status');
+            const toggleButton = document.getElementById('toggle-capture-button');
+            
+            if (captureStatus) {
+                captureStatus.textContent = isCaptureActive ? "Active" : "Inactive";
+                captureStatus.className = "status-text " + (isCaptureActive ? "capture-active" : "capture-inactive");
+            }
+            
+            if (toggleButton) {
+                toggleButton.textContent = isCaptureActive ? "Stop Capture" : "Start Capture";
+            }
+            
+            // Start the preview if active
+            if (isCaptureActive) {
+                startCapturePreview();
+            } else {
+                // Show "Capture stopped" message
+                const ctx = canvas.getContext('2d');
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+                ctx.fillStyle = '#202225';
+                ctx.fillRect(0, 0, canvas.width, canvas.height);
+                ctx.fillStyle = '#dcddde';
+                ctx.font = '14px Arial';
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'middle';
+                ctx.fillText('Capture stopped', canvas.width / 2, canvas.height / 2);
+                
+                // Draw a border
+                ctx.strokeStyle = '#43b581';
+                ctx.lineWidth = 2;
+                ctx.strokeRect(0, 0, canvas.width, canvas.height);
+            }
+        }
+        
+        // Function to start capture preview updates
+        function startCapturePreview() {
+            if (capturePreviewInterval) {
+                clearInterval(capturePreviewInterval);
+            }
+            
+            capturePreviewInterval = setInterval(updateCapturePreview, 1000); // Update every second
+            updateCapturePreview(); // Initial update
+        }
+        
+        // Function to stop capture preview updates
+        function stopCapturePreview() {
+            if (capturePreviewInterval) {
+                clearInterval(capturePreviewInterval);
+                capturePreviewInterval = null;
+            }
+        }
+        
+        // Function to update capture preview size based on dungeon size
+        function updateCapturePreviewSize() {
+            const canvas = document.getElementById('capturePreviewCanvas');
+            if (!canvas) return;
+            
+            // Set canvas size based on dungeon size
+            switch(settings.dungeonSize) {
+                case 'small':
+                    canvas.width = 128;
+                    canvas.height = 128;
+                    break;
+                case 'medium':
+                    canvas.width = 128;
+                    canvas.height = 268;
+                    break;
+                case 'large':
+                    canvas.width = 268;
+                    canvas.height = 268;
+                    break;
+            }
+            
+            // Clear the canvas
+            const ctx = canvas.getContext('2d');
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            
+            // Draw a border
+            ctx.strokeStyle = '#43b581';
+            ctx.lineWidth = 2;
+            ctx.strokeRect(0, 0, canvas.width, canvas.height);
+        }
+        
+        // Function to update the capture preview
+        function updateCapturePreview() {
+            // Skip if capture is not active
+            if (!isCaptureActive) return;
+            
+            if (!window.alt1 || !window.alt1.permissionPixel) {
+                console.log("Alt1 not available or pixel permission not granted");
+                return;
+            }
+            
+            const canvas = document.getElementById('capturePreviewCanvas');
+            if (!canvas) return;
+            
+            // Check if anchor point is set
+            if (!settings.anchorPoint) {
+                const ctx = canvas.getContext('2d');
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+                ctx.fillStyle = '#202225';
+                ctx.fillRect(0, 0, canvas.width, canvas.height);
+                ctx.fillStyle = '#dcddde';
+                ctx.font = '14px Arial';
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'middle';
+                ctx.fillText('Set anchor point first', canvas.width / 2, canvas.height / 2);
+                return;
+            }
+            
+            try {
+                // Calculate capture region (anchor point is top-right corner)
+                const captureRegion = getCaptureRegion();
+                
+                // Capture the screen
+                const img = window.a1lib.captureHoldFullRs();
+                if (!img) {
+                    console.error("Failed to capture screen");
+                    return;
+                }
+                
+                // Extract the region
+                const imgData = img.toData(
+                    captureRegion.x, 
+                    captureRegion.y, 
+                    captureRegion.width, 
+                    captureRegion.height
+                );
+                
+                // Draw to canvas
+                const ctx = canvas.getContext('2d');
+                ctx.putImageData(imgData, 0, 0);
+                
+                // Draw a border
+                ctx.strokeStyle = '#43b581';
+                ctx.lineWidth = 2;
+                ctx.strokeRect(0, 0, canvas.width, canvas.height);
+                
+                // Draw overlay in game
+                updateGameOverlay(captureRegion);
+                
+                // Update map background if we're in map view
+                updateMapBackground(imgData);
+            } catch (error) {
+                console.error("Error updating capture preview:", error);
+            }
+        }
+        
+        // Function to calculate capture region based on anchor point
+        function getCaptureRegion() {
+            // Get canvas dimensions
+            const canvas = document.getElementById('capturePreviewCanvas');
+            const width = canvas.width;
+            const height = canvas.height;
+            
+            // Anchor point is top-right corner of capture area
+            const x = settings.anchorPoint.x - width;
+            const y = settings.anchorPoint.y;
+            
+            return {
+                x: x,
+                y: y,
+                width: width,
+                height: height
+            };
+        }
+        
+        // Function to update the map background with the captured image
+        function updateMapBackground(imgData) {
+            const mapCanvas = document.getElementById('mapBackgroundCanvas');
+            if (!mapCanvas) return;
+            
+            // Resize the canvas to match the map container
+            const mapContainer = document.getElementById('map-container');
+            if (!mapContainer) return;
+            
+            // Set canvas dimensions to match the container
+            mapCanvas.width = mapContainer.clientWidth;
+            mapCanvas.height = mapContainer.clientHeight;
+            
+            // Draw the image data to the canvas
+            const ctx = mapCanvas.getContext('2d');
+            
+            // If we have image data, draw it
+            if (imgData) {
+                // Create a temporary canvas to handle the image data
+                const tempCanvas = document.createElement('canvas');
+                tempCanvas.width = imgData.width;
+                tempCanvas.height = imgData.height;
+                const tempCtx = tempCanvas.getContext('2d');
+                tempCtx.putImageData(imgData, 0, 0);
+                
+                // Draw the temp canvas to the map background canvas, scaling if needed
+                ctx.drawImage(tempCanvas, 0, 0, mapCanvas.width, mapCanvas.height);
+            } else {
+                // If no image data, just fill with a dark color
+                ctx.fillStyle = '#202225';
+                ctx.fillRect(0, 0, mapCanvas.width, mapCanvas.height);
+            }
+        }
+        
+        // Function to initialize the map background
+        function initMapBackground() {
+            const mapCanvas = document.getElementById('mapBackgroundCanvas');
+            if (!mapCanvas) return;
+            
+            // Resize the canvas to match the map container
+            const mapContainer = document.getElementById('map-container');
+            if (!mapContainer) return;
+            
+            // Set canvas dimensions to match the container
+            mapCanvas.width = mapContainer.clientWidth;
+            mapCanvas.height = mapContainer.clientHeight;
+            
+            // Fill with a dark color initially
+            const ctx = mapCanvas.getContext('2d');
+            ctx.fillStyle = '#202225';
+            ctx.fillRect(0, 0, mapCanvas.width, mapCanvas.height);
+        }
+        
+        // Function to update game overlay
+        function updateGameOverlay(region) {
+            // Skip if capture is not active
+            if (!isCaptureActive) return;
+            
+            if (!window.alt1 || !window.alt1.permissionOverlay) {
+                return;
+            }
+            
+            try {
+                // Clear previous overlay
+                window.alt1.overLayClearGroup("capture_preview_overlay");
+                
+                // Set overlay group
+                window.alt1.overLaySetGroup("capture_preview_overlay");
+                
+                // Draw rectangle overlay
+                window.alt1.overLayRect(
+                    0x00FF00, // Green color
+                    region.x,
+                    region.y,
+                    region.width,
+                    region.height,
+                    2000, // Duration in ms
+                    2 // Line thickness
+                );
+                
+                // Refresh the overlay
+                window.alt1.overLayRefreshGroup("capture_preview_overlay");
+            } catch (error) {
+                console.warn("Error updating game overlay:", error);
+            }
+        }
+
+        // Function to show the cell menu
+        async function showCellMenu(event, cell) {
+            console.log("=== Cell Menu Debug ===", {
+                cell: {
+                    row: cell.dataset.row,
+                    col: cell.dataset.col,
+                    hasExistingKey: !!cell.querySelector('img[src*="key.png"]'),
+                    hasBlockedRoom: !!cell.querySelector('img[src*="blocked_room.png"]'),
+                    hasSkillTier: !!cell.querySelector('.skill-tier')
+                },
+                cachedKey: doorTextReader?.cachedKey ? {
+                    color: doorTextReader.cachedKey.color,
+                    shape: doorTextReader.cachedKey.shape,
+                    timestamp: doorTextReader.cachedKey.timestamp
+                } : null
+            });
+
+            // Validate cell has a room before proceeding
+            if (!await validateCellInteraction(event, cell)) {
+                return;
+            }
+
+            if (!menuElements.cellMenu) {
+                console.error("Cell menu element not found");
+                return;
+            }
+
+            // Check if the room is locked
+            const isLocked = await hasQuestionMark(cell);
+            
+            // Set the active cell
+            activeCell = cell;
+
+            // Position menu (existing positioning code...)
+            let posX, posY;
+            const dungeonSize = settings.dungeonSize;
+            
+            if (dungeonSize === 'small') {
+                posX = 38;
+                posY = 10;
+            } else if (dungeonSize === 'medium') {
+                posX = 38;
+                posY = 100;
+            } else if (dungeonSize === 'large') {
+                posX = 107;
+                posY = 90;
+            } else {
+                posX = 30;
+                posY = 20;
+            }
+            
+            menuElements.cellMenu.style.left = `${posX}px`;
+            menuElements.cellMenu.style.top = `${posY}px`;
+
+            // Get all menu sections
+            const menuSections = {
+                cachedKeyOption: menuElements.cellMenu.querySelector('.cached-key-option'),
+                clearOption: menuElements.cellMenu.querySelector('.clear-option'),
+                gatestoneSection: menuElements.cellMenu.querySelector('.gatestone-options'),
+                blockedRoomOption: menuElements.cellMenu.querySelector('.blocked-room-option'),
+                skillTierOption: menuElements.cellMenu.querySelector('.skill-option')
+            };
+
+            // Update cached key option if available
+            if (isLocked && doorTextReader?.cachedKey && menuSections.cachedKeyOption) {
+                const keyFile = `${doorTextReader.cachedKey.color}_${doorTextReader.cachedKey.shape}_key.png`;
+                const keyPreview = menuSections.cachedKeyOption.querySelector('.cached-key-preview');
+                
+                if (keyPreview) {
+                    keyPreview.innerHTML = `
+                        <img src="../assets/keys/${keyFile}" alt="${doorTextReader.cachedKey.color} ${doorTextReader.cachedKey.shape} key">
+                        <span>Apply ${doorTextReader.cachedKey.color} ${doorTextReader.cackedKey.shape} Key</span>
+                    `;
+                }
+                menuSections.cachedKeyOption.style.display = 'block';
+            } else if (menuSections.cachedKeyOption) {
+                menuSections.cachedKeyOption.style.display = 'none';
+            }
+
+            // Show/hide other options
+            if (menuSections.clearOption) {
+                menuSections.clearOption.style.display = cell.querySelector('img') ? 'block' : 'none';
+            }
+
+            if (menuSections.gatestoneSection) {
+                menuSections.gatestoneSection.style.display = isLocked ? 'none' : 'block';
+            }
+
+            // Only show blocked room option for locked rooms
+            if (menuSections.blockedRoomOption) {
+                menuSections.blockedRoomOption.style.display = isLocked ? 'block' : 'none';
+            }
+
+            // Always show skill tier option
+            if (menuSections.skillTierOption) {
+                menuSections.skillTierOption.style.display = 'block';
+            }
+
+            console.log("=== Final Menu State ===", {
+                timestamp: new Date().toISOString(),
+                isLocked,
+                hasCachedKey: !!doorTextReader?.cachedKey,
+                menuOptions: Object.fromEntries(
+                    Object.entries(menuSections).map(([key, element]) => 
+                        [key, element?.style.display]
+                    )
+                )
+            });
+
+            // Make the cell menu visible
+            menuElements.cellMenu.classList.add('visible');
+        }
+        
+        // Function to hide the cell menu
+        function hideCellMenu(event) {
+            console.log("hideCellMenu called");
+            if (menuElements.cellMenu) {
+                menuElements.cellMenu.classList.remove('visible');
+            }
+        }
+
+        // Function to clear the active cell
+        function clearCell() {
+            if (!activeCell) {
+                console.log("No active cell to clear");
+                return;
+            }
+            
+            console.log("Clearing cell:", activeCell);
+            
+            // Use the new clearCellContent function
+            clearCellContent(activeCell);
+            
+            // Save the cell state
+            saveCellState(activeCell);
+            
+            // Hide the cell menu
+            hideCellMenu();
+        }
+        
+        // Function to add a gatestone to the active cell
+        function addGatestone(gatestoneType) {
+            if (!activeCell) {
+                console.log("No active cell to add gatestone to");
+                return;
+            }
+            
+            console.log(`Adding ${gatestoneType} to cell:`, activeCell);
+            
+            // Remove any existing image
+            const existingImg = activeCell.querySelector('img');
+            if (existingImg) {
+                activeCell.removeChild(existingImg);
+            }
+            
+            // Remove previous data attributes
+            delete activeCell.dataset.color;
+            delete activeCell.dataset.shape;
+            
+            // Set gatestone data attribute
+            activeCell.dataset.gatestone = gatestoneType;
+            
+            // Add the gatestone image
+            const img = document.createElement('img');
+            img.src = `../assets/gatestones/${gatestoneType}.png`;
+            img.alt = gatestoneType.replace('_', ' ');
+            activeCell.appendChild(img);
+            
+            // Save the cell state
+            saveCellState(activeCell);
+            
+            // Hide the cell menu
+            hideCellMenu();
+        }
+
+        // Function to test OCR on locked room image
+        async function testOCROnLockedRoom() {
+            console.log("Testing OCR on locked room image");
+            
+            // Get the result display element
+            const resultDisplay = document.getElementById('ocr-test-result');
+            if (!resultDisplay) return;
+            
+            // Show loading state
+            resultDisplay.textContent = 'Loading test image...';
+            
+            try {
+                // Create an image element
+                const img = new Image();
+                img.src = '../assets/rooms/locked_room.png';
+                
+                // Wait for image to load
+                await new Promise((resolve, reject) => {
+                    img.onload = resolve;
+                    img.onerror = () => reject(new Error('Failed to load test image'));
+                });
+                
+                // Create a canvas to draw the image
+                const canvas = document.createElement('canvas');
+                canvas.width = img.width;
+                canvas.height = img.height;
+                const ctx = canvas.getContext('2d');
+                
+                // Draw and preprocess the image
+                ctx.drawImage(img, 0, 0);
+                
+                // Get image data for preprocessing
+                const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+                const data = imageData.data;
+                
+                // Increase contrast and convert to black and white
+                for (let i = 0; i < data.length; i += 4) {
+                    const r = data[i];
+                    const g = data[i + 1];
+                    const b = data[i + 2];
+                    
+                    // Convert to grayscale first
+                    const gray = (r + g + b) / 3;
+                    
+                    // Apply threshold (adjust this value as needed)
+                    const threshold = 128;
+                    const val = gray > threshold ? 255 : 0;
+                    
+                    data[i] = val;     // R
+                    data[i + 1] = val; // G
+                    data[i + 2] = val; // B
+                }
+                
+                // Put the processed image data back
+                ctx.putImageData(imageData, 0, 0);
+                
+                // Initialize Tesseract if needed
+                if (!tesseractWorker) {
+                    resultDisplay.textContent = 'Initializing Tesseract...';
+                    await initTesseractWorker();
+                }
+                
+                // Show OCR in progress
+                resultDisplay.textContent = 'Performing OCR...';
+                
+                // Set Tesseract parameters for better symbol detection
+                await tesseractWorker.setParameters({
+                    tessedit_char_whitelist: '?',
+                    tessedit_pageseg_mode: '10', // Treat image as single character
+                    tessedit_ocr_engine_mode: '2', // Use Legacy + LSTM mode
+                    tessjs_create_pdf: '0',
+                    tessjs_create_hocr: '0',
+                    tessjs_create_tsv: '0',
+                    tessjs_create_box: '0',
+                    tessjs_create_unlv: '0',
+                    tessjs_create_osd: '0'
+                });
+                
+                // Perform OCR
+                const result = await tesseractWorker.recognize(canvas);
+                
+                // Display results and debug info
+                const text = result.data.text.trim();
+                const confidence = result.data.confidence;
+                
+                // Display the processed image for debugging
+                const debugCanvas = document.createElement('canvas');
+                debugCanvas.width = canvas.width;
+                debugCanvas.height = canvas.height;
+                debugCanvas.style.border = '1px solid red';
+                debugCanvas.style.marginTop = '10px';
+                const debugCtx = debugCanvas.getContext('2d');
+                debugCtx.drawImage(canvas, 0, 0);
+                
+                resultDisplay.innerHTML = `OCR Results:
+Text detected: "${text}"
+Confidence: ${confidence}%
+Words found: ${JSON.stringify(result.data.words, null, 2)}
+
+Processed Image (for debugging):`;
+                resultDisplay.appendChild(debugCanvas);
+                
+            } catch (error) {
+                console.error('Error during OCR test:', error);
+                resultDisplay.textContent = `Error during OCR test: ${error.message}`;
+            }
+        }
+
+        // Add new functions for blocked room and skill tiers
+        function addBlockedRoom() {
+            if (!activeCell) {
+                console.log("No active cell to add blocked room to");
+                return;
+            }
+            
+            console.log("Adding blocked room to cell:", activeCell);
+            
+            // Remove any existing image and text
+            clearCellContent(activeCell);
+            
+            // Add the blocked room image
+            const img = document.createElement('img');
+            img.src = '../assets/rooms/blocked_room.png';
+            img.alt = 'Blocked Room';
+            activeCell.appendChild(img);
+            
+            // Set blocked room data attribute
+            activeCell.dataset.blocked = 'true';
+            
+            // Save the cell state
+            saveCellState(activeCell);
+            
+            // Hide the cell menu
+            hideCellMenu();
+        }
+
+        function showSkillTierMenu() {
+            const skillTierMenu = document.getElementById('skill-tier-menu');
+            if (!skillTierMenu) return;
+
+            // Hide the cell menu
+            hideCellMenu();
+
+            // Get the skill tier options container
+            const optionsContainer = skillTierMenu.querySelector('.skill-tier-options');
+            optionsContainer.innerHTML = '';
+
+            // Create options for T1 through T12
+            for (let i = 1; i <= 12; i++) {
+                const option = document.createElement('div');
+                option.className = 'skill-tier-option';
+                option.textContent = `T${i}`;
+                option.onclick = () => addSkillTier(i);
+                optionsContainer.appendChild(option);
+            }
+
+            // Position the menu - use the same positioning logic as the cell menu
+            const dungeonSize = settings.dungeonSize;
+            let posX, posY;
+            
+            if (dungeonSize === 'small') {
+                posX = 30;
+                posY = 10;
+            } else if (dungeonSize === 'medium') {
+                posX = 38;
+                posY = 100;
+            } else if (dungeonSize === 'large') {
+                posX = 107;
+                posY = 90;
+            } else {
+                posX = 30;
+                posY = 10;
+            }
+
+            skillTierMenu.style.left = `${posX}px`;
+            skillTierMenu.style.top = `${posY}px`;
+
+            // Show the menu
+            skillTierMenu.classList.add('visible');
+
+            // Add click listener to hide menu when clicking outside
+            setTimeout(() => {
+                document.addEventListener('click', hideSkillTierMenu);
+            }, 0);
+        }
+
+        function hideSkillTierMenu(event) {
+            const skillTierMenu = document.getElementById('skill-tier-menu');
+            if (skillTierMenu) {
+                skillTierMenu.classList.remove('visible');
+            }
+            document.removeEventListener('click', hideSkillTierMenu);
+        }
+
+        function addSkillTier(tier) {
+            if (!activeCell) {
+                console.log("No active cell to add skill tier to");
+                return;
+            }
+
+            console.log(`Adding skill tier T${tier} to cell:`, activeCell);
+
+            // Remove any existing content
+            clearCellContent(activeCell);
+
+            // Create and add the skill tier text
+            const tierText = document.createElement('div');
+            tierText.className = 'skill-tier';
+            tierText.textContent = `T${tier}`;
+            activeCell.appendChild(tierText);
+
+            // Set skill tier data attribute
+            activeCell.dataset.skillTier = tier;
+
+            // Save the cell state
+            saveCellState(activeCell);
+
+            // Hide the skill tier menu
+            hideSkillTierMenu();
+        }
+
+        function clearCellContent(cell) {
+            // Remove any existing image
+            const existingImg = cell.querySelector('img');
+            if (existingImg) {
+                cell.removeChild(existingImg);
+            }
+
+            // Remove any existing skill tier text
+            const existingTier = cell.querySelector('.skill-tier');
+            if (existingTier) {
+                cell.removeChild(existingTier);
+            }
+
+            // Remove all data attributes
+            delete cell.dataset.color;
+            delete cell.dataset.shape;
+            delete cell.dataset.gatestone;
+            delete cell.dataset.blocked;
+            delete cell.dataset.skillTier;
+        }
+
+        // Add new room validation functions
+        function hasValidRoomColors(imageData) {
+            const roomColors = [
+                [183, 152, 92],
+                [140, 105, 52],
+                [137, 102, 50],
+                [144, 109, 58]
+            ];
+            
+            const data = imageData.data;
+            let colorCounts = {
+                total: 0
+            };
+            
+            // Check each pixel
+            for (let i = 0; i < data.length; i += 4) {
+                const r = data[i];
+                const g = data[i + 1];
+                const b = data[i + 2];
+                
+                for (const [tr, tg, tb] of roomColors) {
+                    // Allow small color variation
+                    if (Math.abs(r - tr) <= 5 && 
+                        Math.abs(g - tg) <= 5 && 
+                        Math.abs(b - tb) <= 5) {
+                        const colorKey = `${tr},${tg},${tb}`;
+                        colorCounts[colorKey] = (colorCounts[colorKey] || 0) + 1;
+                        colorCounts.total++;
+                    }
+                }
+            }
+            
+            console.log("Color Analysis:", {
+                cellSize: imageData.width * imageData.height,
+                colorCounts,
+                hasRoom: colorCounts.total > 0
+            });
+            
+            return colorCounts.total > 0;
+        }
+
+        async function analyzeCell(cell) {
+            console.log("=== Cell Analysis Debug ===");
+            
+            const mapCanvas = document.getElementById('mapBackgroundCanvas');
+            if (!mapCanvas) {
+                console.log("Map canvas not found");
+                return false;
+            }
+            
+            const rect = cell.getBoundingClientRect();
+            const mapRect = mapCanvas.getBoundingClientRect();
+            
+            // Calculate relative position
+            const x = rect.left - mapRect.left;
+            const y = rect.top - mapRect.top;
+            
+            console.log("Cell Position:", {
+                x, y,
+                width: rect.width,
+                height: rect.height,
+                cellRect: rect,
+                mapRect: mapRect
+            });
+            
+            try {
+                const ctx = mapCanvas.getContext('2d');
+                const imageData = ctx.getImageData(x, y, rect.width, rect.height);
+                return hasValidRoomColors(imageData);
+            } catch (error) {
+                console.error("Analysis error:", error);
+                return false;
+            }
+        }
+
+        async function validateCellInteraction(event, cell) {
+            console.log("Validating cell interaction");
+            
+            const isValid = await analyzeCell(cell);
+            console.log("Cell validation result:", isValid);
+            
+            if (!isValid) {
+                console.log("Preventing interaction - no room detected");
+                // Show feedback to user
+                let feedback = document.getElementById('room-feedback');
+                if (!feedback) {
+                    feedback = document.createElement('div');
+                    feedback.id = 'room-feedback';
+                    document.body.appendChild(feedback);
+                }
+                feedback.textContent = '';
+                feedback.style.display = 'block';
+                feedback.style.left = '50px';
+                feedback.style.top = '50px';
+                
+                // Hide feedback after 2 seconds
+                setTimeout(() => {
+                    feedback.style.display = 'none';
+                }, 1000);
+                
+                event.preventDefault();
+                event.stopPropagation();
+                return false;
+            }
+            
+            return true;
+        }
+
+        // Add menu tracking variables
+        let isProcessingMenu = false;
+        let lastMenuOperation = null;
+
+        // Add unified click handler
+        function handleGridCellClick(event, cell) {
+            console.log('=== Grid Cell Click Handler ===', {
+                type: event.type,
+                button: event.button,
+                isRightClick: event.type === 'contextmenu',
+                isLeftClick: event.type === 'click',
+                timestamp: new Date().toISOString(),
+                isProcessingMenu: isProcessingMenu,
+                lastMenuOperation: lastMenuOperation
+            });
+
+            // Prevent menu processing if already in progress
+            if (isProcessingMenu) {
+                console.log('Menu operation already in progress, skipping');
+                event.preventDefault();
+                return;
+            }
+
+            try {
+                isProcessingMenu = true;
+                lastMenuOperation = event.type;
+
+                // Always hide all menus first
+                console.log('Hiding all menus before processing click');
+                hideAllMenus();
+
+                // Process the click based on type
+                if (event.type === 'contextmenu') {
+                    console.log('Processing right-click menu');
+                    showContextMenu(event, cell);
+                } else if (event.type === 'click') {
+                    console.log('Processing left-click menu');
+                    showCellMenu(event, cell);
+                }
+
+            } finally {
+                isProcessingMenu = false;
+            }
+        }
+
+        // Add menu elements caching
+        const menuElements = {
+            contextMenu: null,
+            shapeMenu: null,
+            cellMenu: null,
+            skillTierMenu: null
+        };
+
+        // Function to initialize menu references
+        function initializeMenuReferences() {
+            console.log('Initializing menu references');
+            
+            menuElements.contextMenu = document.getElementById('context-menu');
+            menuElements.shapeMenu = document.getElementById('shape-menu');
+            menuElements.cellMenu = document.getElementById('cell-menu');
+            menuElements.skillTierMenu = document.getElementById('skill-tier-menu');
+            
+            console.log('Menu elements cached:', {
+                contextMenuFound: !!menuElements.contextMenu,
+                shapeMenuFound: !!menuElements.shapeMenu,
+                cellMenuFound: !!menuElements.cellMenu,
+                skillTierMenuFound: !!menuElements.skillTierMenu
+            });
+        }
+
+        // Modify hideAllMenus to use cached references
+        function hideAllMenus() {
+            console.log('=== Hiding All Menus ===', {
+                calledBy: new Error().stack.split('\n')[2].trim(),
+                timestamp: new Date().toISOString()
+            });
+            
+            const menuStates = {};
+            const visibleMenus = [];
+            
+            // Check and log each menu's state
+            for (const [menuName, menuElement] of Object.entries(menuElements)) {
+                const wasVisible = menuElement?.classList.contains('visible');
+                menuStates[menuName] = {
+                    wasVisible,
+                    element: !!menuElement
+                };
+                
+                if (wasVisible) {
+                    visibleMenus.push(menuName);
+                    menuElement.classList.remove('visible');
+                }
+            }
+            
+            console.log('Menu visibility changes:', {
+                before: visibleMenus,
+                after: Object.entries(menuElements)
+                    .filter(([_, element]) => element?.classList.contains('visible'))
+                    .map(([name]) => name),
+                menuStates
+            });
+        }
+
+        // Document ready function
+        document.addEventListener('DOMContentLoaded', function() {
+            // Initialize menu references
+            initializeMenuReferences();
+            
+            // Rest of existing initialization...
+        });
+
+        // Function to apply cached key
+        function applyCachedKey() {
+            if (!activeCell || !doorTextReader?.cachedKey) {
+                console.log("=== Apply Cached Key Failed ===", {
+                    hasActiveCell: !!activeCell,
+                    hasCachedKey: !!doorTextReader?.cachedKey
+                });
+                return;
+            }
+
+            const { color, shape } = doorTextReader.cachedKey;
+            
+            console.log("=== Applying Cached Key ===", {
+                timestamp: new Date().toISOString(),
+                cell: {
+                    row: activeCell.dataset.row,
+                    col: activeCell.dataset.col
+                },
+                key: {
+                    color,
+                    shape,
+                    keyFile: `${color}_${shape}_key.png`
+                }
+            });
+
+            // Apply the key while maintaining the cache
+            applyKeyToCell(color, shape);
+            
+            // Hide the menu but don't clear the cache
+            hideCellMenu();
+
+            console.log("=== Cached Key Status ===", {
+                timestamp: new Date().toISOString(),
+                cachedKey: doorTextReader?.cachedKey,
+                isCacheMaintained: !!(doorTextReader?.cachedKey?.color === color && doorTextReader?.cachedKey?.shape === shape)
+            });
+        }
+
+        // Add Alt1 detection and installation code
+        document.addEventListener('DOMContentLoaded', function() {
+            // Check if we are running inside alt1
+            if (window.alt1) {
+                // Tell alt1 about the app
+                alt1.identifyAppUrl("./appconfig.json");
+            } else {
+                // Create the installation URL
+                const currentUrl = window.location.href;
+                const baseUrl = currentUrl.substring(0, currentUrl.lastIndexOf('/') + 1);
+                let addappurl = `alt1://addapp/${baseUrl}appconfig.json`;
+                
+                console.log('Alt1 installation URL:', addappurl);
+                
+                const output = document.getElementById('output');
+                if (output) {
+                    output.insertAdjacentHTML("beforeend", `
+                        Alt1 not detected. <a href='${addappurl}' class="alt1-install-link">Click here</a> to add this app to Alt1
+                    `);
+                }
+            }
+            
+            // Rest of your existing DOMContentLoaded code...
+        });
+
+        // Add tab switching functionality
+        document.addEventListener('DOMContentLoaded', function() {
+            const tabButtons = document.querySelectorAll('.tab-button');
+            
+            tabButtons.forEach(button => {
+                button.addEventListener('click', () => {
+                    // Remove active class from all buttons and panels
+                    tabButtons.forEach(btn => btn.classList.remove('active'));
+                    document.querySelectorAll('.settings-panel').forEach(panel => panel.classList.remove('active'));
+                    
+                    // Add active class to clicked button and corresponding panel
+                    button.classList.add('active');
+                    document.getElementById(`${button.dataset.tab}-panel`).classList.add('active');
+                });
+            });
+        });
+    </script>
+    <!-- Include the bundled JavaScript file -->
+    <script src="index.bundle.js"></script>
+</body>
+</html>

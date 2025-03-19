@@ -1,0 +1,16 @@
+{
+    "appName": "Dungeoneering Gate Engine",
+    "description": "Dungeoneering gate text reader and map tracker",
+    "appUrl": "./index.html",
+    "configUrl": "./appconfig.json",
+    "iconUrl": "./icon.png",
+    "defaultWidth": 500,
+    "defaultHeight": 800,
+    "minWidth": 140,
+    "minHeight": 140,
+    "maxWidth": 800,
+    "maxHeight": 1200,
+    "requestHandlers": [],
+    "activators": [],
+    "permissions": "pixel,overlay,gamestate"
+} 
