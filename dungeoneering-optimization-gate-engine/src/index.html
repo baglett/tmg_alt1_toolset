@@ -24,10 +24,12 @@
         
         /* Sidebar styles */
         .sidebar {
-            width: 30px;
+            width: 32px;
             background-color: #2f3136;
-            border-right: 1px solid #202225;
-            flex-shrink: 0;
+            height: 100%;
+            padding: 4px;
+            display: flex;
+            flex-direction: column;
         }
         
         /* Header section of sidebar */
@@ -53,15 +55,19 @@
         
         /* Individual nav items */
         .nav-item {
-            padding: 6px;
-            cursor: pointer;
+            width: 24px;
+            height: 24px;
             display: flex;
             align-items: center;
             justify-content: center;
+            border-radius: 3px;
+            cursor: pointer;
+            color: #dcddde;
+            transition: background-color 0.2s;
         }
         
         .nav-item:hover {
-            background-color: #40444b;
+            background-color: #5865f2;
         }
         
         .nav-item.active {
@@ -71,8 +77,10 @@
         /* Icon in nav items */
         .nav-icon {
             font-size: 12px;
-            min-width: 12px;
-            text-align: center;
+            line-height: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
         }
         
         /* Text in nav items */
@@ -238,6 +246,8 @@
             position: relative;
             z-index: 3; /* Make sure images are above the background */
             margin: 20%; /* Add margin to center the smaller image */
+            filter: drop-shadow(0px 0px 1px black);
+            image-rendering: pixelated;
         }
 
         /* Alt1 specific styles */
@@ -433,6 +443,7 @@
             width: 10px; /* Reduced from 12px */
             height: 10px; /* Reduced from 12px */
             margin-right: 2px; /* Minimal margin */
+            image-rendering: pixelated;
         }
 
         /* Shape menu specific styles to match color menu width */
@@ -580,8 +591,8 @@
         }
         
         #capturePreviewCanvas {
-            border: 2px solid #43b581;
-            background-color: #000;
+            border: 1px solid rgba(79, 84, 92, 0.5);
+            border-radius: 2px;
             max-width: 100%;
             height: auto;
         }
@@ -721,6 +732,7 @@
             display: block;
             margin: 0;
             padding: 0;
+            image-rendering: pixelated;
         }
 
         /* Room feedback styles */
@@ -784,6 +796,7 @@
             object-fit: contain;
             display: inline-flex; /* Add this to ensure proper alignment */
             vertical-align: middle; /* Add this to ensure vertical alignment */
+            image-rendering: pixelated;
         }
 
         .skill-option {
@@ -964,27 +977,309 @@
         .alt1-install-link:hover {
             background-color: #5b6eae;
         }
+
+        /* Add black outline to all game-related images */
+        .gatestone-preview,
+        .blocked-room-preview,
+        .shape-preview,
+        .cached-key-preview img,
+        .grid-cell img {
+            filter: drop-shadow(0 0 1px rgba(0, 0, 0, 1));
+            -webkit-filter: drop-shadow(0 0 1px rgba(0, 0, 0, 1));
+            image-rendering: pixelated;
+        }
+
+        /* Ensure specific image sizes are maintained */
+        .gatestone-preview {
+            width: 20px;
+            height: 20px;
+            display: block;
+            margin: 0;
+            padding: 0;
+        }
+
+        .blocked-room-preview {
+            width: 16px;
+            height: 16px;
+            margin-right: 8px;
+            object-fit: contain;
+            display: inline-flex;
+            vertical-align: middle;
+        }
+
+        .shape-preview {
+            width: 10px;
+            height: 10px;
+            margin-right: 2px;
+        }
+
+        /* Settings layout styles */
+        .settings-container {
+            display: flex;
+            height: 100%;
+        }
+
+        .settings-tabs {
+            width: 40px;
+            background-color: #2f3136;
+            display: flex;
+            flex-direction: column;
+            padding: 4px;
+            gap: 4px;
+        }
+
+        .tab-button {
+            width: 32px;
+            height: 32px;
+            border-radius: 4px;
+            border: none;
+            background-color: #40444b;
+            color: #dcddde;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: background-color 0.2s;
+        }
+
+        .tab-button:hover {
+            background-color: #5865f2;
+        }
+
+        .tab-button.active {
+            background-color: #5865f2;
+        }
+
+        .tab-button i {
+            font-size: 16px;
+        }
+
+        .settings-content {
+            flex: 1;
+            padding: 10px;
+        }
+
+        .settings-panel {
+            display: none;
+        }
+
+        .settings-panel.active {
+            display: block;
+        }
+
+        .settings-section {
+            background: rgba(0, 0, 0, 0.2);
+            border-radius: 4px;
+            padding: 8px;
+            margin-bottom: 8px;
+        }
+
+        .settings-section-title {
+            font-size: 14px;
+            color: #dcddde;
+            margin-bottom: 8px;
+            font-weight: bold;
+        }
+
+        /* Update existing form styles to be more compact */
+        .form-group {
+            margin-bottom: 8px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 4px;
+            font-size: 12px;
+        }
+
+        .nav-bar {
+            width: 40px;
+            background-color: #2f3136;
+            height: 100%;
+            padding: 8px 4px;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .nav-list {
+            list-style: none;
+            margin: 0;
+            padding: 0;
+            width: 100%;
+        }
+
+        .nav-item {
+            width: 32px;
+            height: 32px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 4px;
+            cursor: pointer;
+            color: #dcddde;
+            transition: background-color 0.2s;
+            margin-bottom: 4px;
+        }
+
+        .nav-item:hover {
+            background-color: #5865f2;
+        }
+
+        .nav-item.active {
+            background-color: #5865f2;
+        }
+
+        .nav-icon {
+            font-size: 14px;
+            line-height: 1;
+        }
+
+        /* Settings styles */
+        .settings-container {
+            height: 100%;
+            padding: 12px;
+        }
+
+        .settings-section {
+            background: rgba(0, 0, 0, 0.2);
+            border-radius: 4px;
+            padding: 8px;
+            margin-bottom: 8px;
+        }
+
+        .settings-section-title {
+            font-size: 14px;
+            color: #dcddde;
+            margin-bottom: 8px;
+            font-weight: bold;
+        }
+
+        /* Compact settings styles */
+        .settings-container {
+            padding: 8px;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            max-width: 280px;
+        }
+
+        .settings-header {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 4px 8px;
+            background: rgba(0, 0, 0, 0.2);
+            border-radius: 4px;
+        }
+
+        .control-stack {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+
+        .control-row {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            height: 24px;
+        }
+
+        .control-row select,
+        .control-row button {
+            flex: 1;
+        }
+
+        .status-text {
+            font-size: 12px;
+            padding: 2px 6px;
+            border-radius: 3px;
+            background: rgba(0, 0, 0, 0.2);
+            min-width: 45px;
+            text-align: center;
+        }
+
+        .capture-preview-container {
+            position: relative;
+            width: 268px;
+            height: 268px;
+            margin-top: 24px;
+        }
+
+        .capture-controls {
+            position: absolute;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 1;
+        }
+
+        .capture-controls.top {
+            top: 0;
+            left: 50%;
+            transform: translateX(-50%);
+        }
+
+        .capture-controls.bottom {
+            bottom: 0;
+            left: 50%;
+            transform: translateX(-50%);
+        }
+
+        .capture-controls.left {
+            left: 0;
+            top: 50%;
+            transform: translateY(-50%);
+        }
+
+        .capture-controls.right {
+            right: 0;
+            top: 50%;
+            transform: translateY(-50%);
+        }
+
+        .arrow-btn {
+            width: 20px;
+            height: 20px;
+            padding: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 12px;
+            background: rgba(79, 84, 92, 0.9);
+            border: none;
+            color: white;
+            cursor: pointer;
+            border-radius: 2px;
+            backdrop-filter: blur(2px);
+        }
+
+        .arrow-btn:hover {
+            background: rgba(88, 101, 242, 0.9);
+        }
     </style>
 </head>
 <body>
     <div class="container">
-        <!-- Sidebar -->
+        <!-- Navigation -->
         <div class="sidebar" id="sidebar">
-            <div class="sidebar-header">
-                <div class="nav-icon">🔍</div>
-            </div>
-            <ul class="nav-links">
+            <ul class="nav-list">
+                <li class="nav-item" data-view="map-view" onclick="showView('map-view', this)">
+                    <div class="nav-icon">🗺️</div>
+                </li>
                 <li class="nav-item active" data-view="settings-view" onclick="showView('settings-view', this)">
                     <div class="nav-icon">⚙️</div>
                 </li>
-                <li class="nav-item" data-view="map-view" onclick="showView('map-view', this)">
-                    <div class="nav-icon">🗺️</div>
+                <li class="nav-item" data-view="ocr-view" onclick="showView('ocr-view', this)">
+                    <div class="nav-icon">🔍</div>
                 </li>
             </ul>
         </div>
         
-        <!-- Content area -->
+        <!-- Content Views -->
         <div class="content">
+            <!-- Map View -->
             <div class="view" id="map-view">
                 <div class="map-wrapper">
                     <div id="map-container" class="map-container small">
@@ -994,95 +1289,64 @@
                 </div>
             </div>
             
-            <div class="view active" id="settings-view">
-                <h2 class="view-header">Settings</h2>
-                
-                <!-- Add Alt1 Installation Section -->
-                <div id="alt1-install-container">
-                    <div class="section-title">Alt1 Toolkit Integration</div>
-                    <div id="output"></div>
-                </div>
-                
-                <div class="settings-form">
-                    <div class="form-group">
-                        <label for="dungeon-size">Dungeon Size:</label>
-                        <select id="dungeon-size" onchange="updateDungeonSize(this.value)">
-                            <option value="small">Small (4x4)</option>
-                            <option value="medium">Medium (4x8)</option>
-                            <option value="large">Large (8x8)</option>
-                        </select>
+            <!-- Settings View -->
+            <div class="view" id="settings-view">
+                <div class="settings-container">
+                    <!-- Alt1 Status -->
+                    <div class="settings-header">
+                        <span class="status-text">Alt1:</span>
+                        <div id="output"></div>
                     </div>
-                    <div class="form-group">
-                        <label>Anchor Point:</label>
-                        <div class="anchor-point-controls">
-                            <button id="set-anchor-button" class="btn" onclick="startAnchorPointPlacement()">Set Anchor</button>
-                            <span id="anchor-status" class="status-text">Not set</span>
+
+                    <!-- Stacked Controls -->
+                    <div class="control-stack">
+                        <div class="control-row">
+                            <select id="dungeon-size" class="btn secondary" onchange="updateDungeonSize(this.value)">
+                                <option value="small">Small (4x4)</option>
+                                <option value="medium">Medium (4x8)</option>
+                                <option value="large">Large (8x8)</option>
+                            </select>
                         </div>
-                        <div id="anchor-coordinates" class="coordinates-display"></div>
-                        <div class="anchor-adjustment-controls">
-                            <div class="adjustment-row">
-                                <button class="btn adjustment-btn" onclick="adjustAnchorPoint(0, -1)">↑</button>
-                    </div>
-                            <div class="adjustment-row">
-                                <button class="btn adjustment-btn" onclick="adjustAnchorPoint(-1, 0)">←</button>
-                                <button class="btn adjustment-btn" onclick="adjustAnchorPoint(1, 0)">→</button>
-                            </div>
-                            <div class="adjustment-row">
-                                <button class="btn adjustment-btn" onclick="adjustAnchorPoint(0, 1)">↓</button>
-                            </div>
-                            <div class="shortcut-note">You can also use keyboard arrow keys</div>
+                        <div class="control-row">
+                            <button id="set-anchor-button" class="btn secondary" onclick="startAnchorPointPlacement()">Set Anchor</button>
+                            <span id="anchor-status" class="status-text">Not Set</span>
                         </div>
-                    </div>
-                    
-                    <!-- Screen Capture Preview Section -->
-                    <div class="form-group">
-                        <label>Screen Capture:</label>
-                        <div class="screen-capture-controls">
+                        <div class="control-row">
                             <button id="toggle-capture-button" class="btn" onclick="toggleCapturePreview()">Stop Capture</button>
                             <span id="capture-status" class="status-text capture-active">Active</span>
                         </div>
-                        <div class="screen-capture-preview">
-                            <canvas id="capturePreviewCanvas" width="268" height="268"></canvas>
-                        </div>
-                    </div>
-                    
-                    <div class="form-group" id="alt1-status-section">
-                        <label>Alt1 Status:</label>
-                        <div id="alt1-status-indicator">
-                            <!-- Alt1 status indicator will be inserted here by JavaScript -->
-                        </div>
                     </div>
 
-                    <!-- Add OCR Testing Section -->
-                    <div class="form-group">
-                        <label>OCR Testing:</label>
-                        <div class="ocr-test-controls">
-                            <button id="test-ocr-button" class="btn" onclick="testOCROnLockedRoom()">Test Locked Room OCR</button>
+                    <!-- Capture Preview with Controls -->
+                    <div class="capture-preview-container">
+                        <div class="capture-controls top">
+                            <button class="arrow-btn" onclick="adjustAnchorPoint(0, -1)">↑</button>
                         </div>
-                        <div id="ocr-test-result" class="ocr-test-result">
-                            <!-- OCR test results will be shown here -->
+                        <div class="capture-controls bottom">
+                            <button class="arrow-btn" onclick="adjustAnchorPoint(0, 1)">↓</button>
                         </div>
+                        <div class="capture-controls left">
+                            <button class="arrow-btn" onclick="adjustAnchorPoint(-1, 0)">←</button>
+                        </div>
+                        <div class="capture-controls right">
+                            <button class="arrow-btn" onclick="adjustAnchorPoint(1, 0)">→</button>
+                        </div>
+                        <canvas id="capturePreviewCanvas" width="268" height="268"></canvas>
                     </div>
+                </div>
+            </div>
 
-                    <!-- Add Mouse Text OCR Section -->
-                    <div class="form-group">
-                        <label>Mouse Text OCR:</label>
+            <!-- OCR View -->
+            <div class="view" id="ocr-view">
+                <div class="settings-container">
+                    <div class="settings-section">
+                        <div class="settings-section-title">Mouse Text OCR</div>
                         <div class="mouse-text-controls">
-                            <button id="toggle-mouse-ocr" class="btn">Start Mouse OCR</button>
+                            <button id="start-mouse-ocr" class="btn" onclick="toggleMouseOCR()">Start Mouse OCR</button>
                             <span id="mouse-ocr-status" class="status-text">Inactive</span>
                         </div>
-                        <div class="viewport-container">
-                            <div class="viewport-label">Capture Preview:</div>
-                            <div id="mouse-text-viewport">
-                                <canvas id="mouseTextCanvas" width="250" height="35"></canvas>
-                            </div>
-                        </div>
-                        <div id="mouse-text-result" class="ocr-test-result">
-                            <!-- Mouse text OCR results will be shown here -->
-                        </div>
+                        <div id="mouse-text-viewport"></div>
                     </div>
-
-                    <div id="save-feedback" class="save-feedback"></div>
                 </div>
             </div>
         </div>
@@ -1227,10 +1491,10 @@
                         });
                         // Update initialization status in UI
                         let feedback = document.getElementById('room-feedback');
-                        if (feedback) {
-                            feedback.textContent = `Initializing OCR: ${m.status}`;
-                            feedback.style.display = 'block';
-                        }
+                        // if (feedback) {
+                        //     feedback.textContent = `Initializing OCR: ${m.status}`;
+                        //     feedback.style.display = 'block';
+                        // }
                     },
                     errorHandler: err => {
                         console.error('=== Tesseract Worker Error ===', {
@@ -2010,9 +2274,9 @@
                 }
                 
                 const hasQuestionMark = text.includes('?');
-                feedback.textContent = hasQuestionMark ? 
-                    `Locked Room (${confidence.toFixed(1)}% confident)` : 
-                    'Not a locked room';
+                // feedback.textContent = hasQuestionMark ? 
+                //     `Locked Room (${confidence.toFixed(1)}% confident)` : 
+                //     'Not a locked room';
                 feedback.style.display = 'block';
                 
                 // Hide the feedback after 2 seconds
@@ -3566,7 +3830,7 @@ Processed Image (for debugging):`;
                     feedback.id = 'room-feedback';
                     document.body.appendChild(feedback);
                 }
-                feedback.textContent = 'No Room';
+                feedback.textContent = '';
                 feedback.style.display = 'block';
                 feedback.style.left = '50px';
                 feedback.style.top = '50px';
@@ -3756,6 +4020,23 @@ Processed Image (for debugging):`;
             }
             
             // Rest of your existing DOMContentLoaded code...
+        });
+
+        // Add tab switching functionality
+        document.addEventListener('DOMContentLoaded', function() {
+            const tabButtons = document.querySelectorAll('.tab-button');
+            
+            tabButtons.forEach(button => {
+                button.addEventListener('click', () => {
+                    // Remove active class from all buttons and panels
+                    tabButtons.forEach(btn => btn.classList.remove('active'));
+                    document.querySelectorAll('.settings-panel').forEach(panel => panel.classList.remove('active'));
+                    
+                    // Add active class to clicked button and corresponding panel
+                    button.classList.add('active');
+                    document.getElementById(`${button.dataset.tab}-panel`).classList.add('active');
+                });
+            });
         });
     </script>
     <!-- Include the bundled JavaScript file -->
