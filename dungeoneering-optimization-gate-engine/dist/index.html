@@ -1328,6 +1328,21 @@
                         </div>
                         <div id="mouse-text-viewport"></div>
                     </div>
+                    <div class="settings-section">
+                        <div class="settings-section-title">Locked Room OCR Test</div>
+                        <div class="viewport-container">
+                            <div class="file-upload-container" style="margin-bottom: 10px;">
+                                <input type="file" id="ocr-image-upload" accept="image/*" style="display: none;">
+                                <button class="btn" onclick="document.getElementById('ocr-image-upload').click()">Choose Image</button>
+                                <span id="selected-file-name" style="margin-left: 10px; color: #b9bbbe;"></span>
+                            </div>
+                            <div id="ocr-image-preview" style="margin: 10px 0; max-width: 100%; text-align: center;"></div>
+                            <div class="mouse-text-controls" style="margin-top: 10px;">
+                                <button id="test-locked-room-ocr" class="btn" onclick="testLockedRoomOCR()" disabled>Test OCR</button>
+                            </div>
+                            <div id="locked-room-ocr-result" style="margin-top: 10px; padding: 8px; background: rgba(0, 0, 0, 0.3); border-radius: 4px; min-height: 20px;"></div>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
@@ -1446,99 +1461,104 @@
 
         // Initialize Tesseract worker
         let tesseractWorker = null;
-        let isInitializingWorker = false;
-
-        // Function to initialize Tesseract worker
         async function initTesseractWorker() {
-            if (tesseractWorker !== null) return;
-            if (isInitializingWorker) return;
+            if (!tesseractWorker) {
+                tesseractWorker = await Tesseract.createWorker();
+                await tesseractWorker.loadLanguage('eng');
+                await tesseractWorker.initialize('eng');
+                console.log('Tesseract worker initialized');
+            }
+        }
 
-            console.log('=== Tesseract Initialization Debug ===', {
-                tesseractExists: typeof Tesseract !== 'undefined',
-                tesseractVersion: Tesseract?.version,
-                psmExists: typeof Tesseract?.PSM !== 'undefined',
-                psmValue: Tesseract?.PSM,
-                workerStatus: tesseractWorker ? 'initialized' : 'not initialized'
-            });
-
-            isInitializingWorker = true;
-
+        // Function to test OCR on locked room image
+        async function testLockedRoomOCR() {
             try {
-                // First ensure Tesseract.js is loaded
-                if (typeof Tesseract === 'undefined') {
-                    console.log('Loading Tesseract.js...');
-                    await loadTesseract();
+                const resultDiv = document.getElementById('locked-room-ocr-result');
+                resultDiv.textContent = 'Processing...';
+
+                // Initialize worker if needed
+                if (!tesseractWorker) {
+                    await initTesseractWorker();
                 }
 
-                console.log('Creating Tesseract worker...');
-                tesseractWorker = await Tesseract.createWorker({
-                    workerPath: 'https://cdn.jsdelivr.net/npm/tesseract.js@4.1.1/dist/worker.min.js',
-                    langPath: 'https://tessdata.projectnaptha.com/4.0.0',
-                    logger: m => {
-                        console.log('=== Tesseract Worker Event ===', {
-                            status: m.status,
-                            progress: m.progress,
-                            workerId: tesseractWorker?.id
-                        });
-                        // Update initialization status in UI
-                        let feedback = document.getElementById('room-feedback');
-                        // if (feedback) {
-                        //     feedback.textContent = `Initializing OCR: ${m.status}`;
-                        //     feedback.style.display = 'block';
-                        // }
-                    },
-                    errorHandler: err => {
-                        console.error('=== Tesseract Worker Error ===', {
-                            error: err.message,
-                            workerId: tesseractWorker?.id,
-                            workerState: tesseractWorker ? 'exists' : 'null'
-                        });
-                        let feedback = document.getElementById('room-feedback');
-                        if (feedback) {
-                            feedback.textContent = `OCR Error: ${err.message}`;
-                            feedback.style.display = 'block';
-                        }
-                    }
-                });
+                // Get the preview image
+                const img = document.querySelector('#ocr-image-preview img');
+                if (!img) {
+                    throw new Error('No image selected');
+                }
 
-                console.log('=== Tesseract Worker Created ===', {
-                    workerExists: !!tesseractWorker,
-                    workerId: tesseractWorker?.id,
-                    psmAfterInit: typeof Tesseract?.PSM !== 'undefined'
-                });
+                // Create canvas
+                const canvas = document.createElement('canvas');
+                const ctx = canvas.getContext('2d');
                 
-                console.log('Loading language...');
-                await tesseractWorker.loadLanguage('eng');
+                // Set canvas dimensions to match image
+                canvas.width = img.naturalWidth;
+                canvas.height = img.naturalHeight;
                 
-                console.log('Initializing...');
-                await tesseractWorker.initialize('eng');
+                // Draw image to canvas
+                ctx.drawImage(img, 0, 0);
+
+                // Get image data for preprocessing
+                const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+                const data = imageData.data;
+
+                // Enhance contrast and convert to black and white
+                for (let i = 0; i < data.length; i += 4) {
+                    // Convert to grayscale first
+                    const avg = (data[i] + data[i + 1] + data[i + 2]) / 3;
+                    
+                    // Apply threshold - if pixel is light enough, make it white, otherwise black
+                    const threshold = 128;
+                    const value = avg > threshold ? 255 : 0;
+                    
+                    // Set RGB values
+                    data[i] = value;     // R
+                    data[i + 1] = value; // G
+                    data[i + 2] = value; // B
+                    // Keep alpha (data[i + 3]) unchanged
+                }
+
+                // Put the processed image data back
+                ctx.putImageData(imageData, 0, 0);
                 
-                console.log('Setting parameters...');
+                // Set OCR parameters optimized for question mark detection
                 await tesseractWorker.setParameters({
                     tessedit_char_whitelist: '?',
+                    tessedit_pageseg_mode: '6', // Assume uniform block of text
+                    tessjs_create_box: '1',
+                    tessjs_create_unlv: '1',
+                    tessedit_write_images: true,
+                    tessedit_ocr_engine_mode: '2', // Use Legacy + LSTM mode
+                    tessedit_do_invert: '0'
                 });
-                
-                console.log('Tesseract worker initialized successfully');
-                
-                // Clear any initialization messages
-                let feedback = document.getElementById('room-feedback');
-                if (feedback) {
-                    feedback.style.display = 'none';
-                }
+
+                // Perform OCR using the canvas
+                const result = await tesseractWorker.recognize(canvas);
+                const recognizedText = result.data.text.trim();
+
+                // Log the details for debugging
+                console.log('OCR Result:', {
+                    text: recognizedText,
+                    confidence: result.data.confidence,
+                    words: result.data.words,
+                    symbols: result.data.symbols
+                });
+
+                // Display results with additional validation
+                const isQuestionMark = recognizedText.includes('?');
+                resultDiv.textContent = `Detected Text: "${recognizedText}" (Confidence: ${result.data.confidence.toFixed(2)}%) - ${isQuestionMark ? 'Locked Room Detected' : 'Not a Locked Room'}`;
+
+                // Display the processed image for debugging
+                const debugPreview = document.createElement('div');
+                debugPreview.innerHTML = '<div style="margin-top: 10px;">Processed Image:</div>';
+                debugPreview.appendChild(canvas);
+                const previewDiv = document.getElementById('ocr-image-preview');
+                previewDiv.appendChild(debugPreview);
+
             } catch (error) {
-                console.error('Failed to initialize Tesseract worker:', error);
-                // Show error in UI
-                let feedback = document.getElementById('room-feedback');
-                if (feedback) {
-                    feedback.textContent = `OCR Init Error: ${error.message}`;
-                    feedback.style.display = 'block';
-                    setTimeout(() => {
-                        feedback.style.display = 'none';
-                    }, 5000);
-                }
-                tesseractWorker = null;
-            } finally {
-                isInitializingWorker = false;
+                console.error('OCR Error:', error);
+                const resultDiv = document.getElementById('locked-room-ocr-result');
+                resultDiv.textContent = 'Error performing OCR. Check console for details.';
             }
         }
 
@@ -1656,8 +1676,11 @@
 
                     // Set OCR parameters optimized for door text
                     await tesseractWorker.setParameters({
-                        tessedit_char_whitelist: 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789 -',
-                        tessedit_pageseg_mode: '7', // Treat the image as a single text line
+                        tessedit_char_whitelist: '?', // Only allow question mark
+                        tessedit_pageseg_mode: '10', // Treat as single character
+                        tessjs_create_box: '1',
+                        tessjs_create_unlv: '1',
+                        tessedit_write_images: true
                     });
 
                     const startTime = performance.now();
@@ -4021,6 +4044,32 @@ Processed Image (for debugging):`;
             // Hide the menu
             hideAllMenus();
         }
+
+        // Function to handle image upload
+        document.getElementById('ocr-image-upload').addEventListener('change', function(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            // Update selected file name
+            document.getElementById('selected-file-name').textContent = file.name;
+
+            // Create preview
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const img = new Image();
+                img.src = e.target.result;
+                img.style.maxWidth = '100%';
+                img.style.height = 'auto';
+                
+                const previewDiv = document.getElementById('ocr-image-preview');
+                previewDiv.innerHTML = '';
+                previewDiv.appendChild(img);
+
+                // Enable the OCR test button
+                document.getElementById('test-locked-room-ocr').disabled = false;
+            };
+            reader.readAsDataURL(file);
+        });
     </script>
     <!-- Include the bundled JavaScript file -->
     <script src="index.bundle.js"></script>
