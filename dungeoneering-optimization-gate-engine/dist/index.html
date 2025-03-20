@@ -4070,6 +4070,173 @@ Processed Image (for debugging):`;
             };
             reader.readAsDataURL(file);
         });
+
+        // Function to check if a cell contains a question mark (locked room)
+        async function checkForLockedRoom(cell) {
+            try {
+                // Get the cell's position and dimensions
+                const rect = cell.getBoundingClientRect();
+                
+                // Capture the cell region using Alt1
+                const img = a1lib.captureHoldFullRs();
+                if (!img) {
+                    console.error('Failed to capture screen');
+                    return false;
+                }
+
+                // Create a canvas for the cell
+                const canvas = document.createElement('canvas');
+                const ctx = canvas.getContext('2d');
+                
+                // Set dimensions to match cell
+                canvas.width = rect.width;
+                canvas.height = rect.height;
+                
+                // Get image data for the cell region
+                const imgData = img.toData(
+                    Math.round(rect.left),
+                    Math.round(rect.top),
+                    Math.round(rect.width),
+                    Math.round(rect.height)
+                );
+                
+                // Draw to canvas
+                ctx.putImageData(imgData, 0, 0);
+
+                // Preprocess the image
+                const processedData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+                const data = processedData.data;
+
+                // Enhance contrast and convert to black and white
+                for (let i = 0; i < data.length; i += 4) {
+                    const avg = (data[i] + data[i + 1] + data[i + 2]) / 3;
+                    const value = avg > 128 ? 255 : 0;
+                    data[i] = value;
+                    data[i + 1] = value;
+                    data[i + 2] = value;
+                }
+                ctx.putImageData(processedData, 0, 0);
+
+                // Initialize worker if needed
+                if (!tesseractWorker) {
+                    await initTesseractWorker();
+                }
+
+                // Set OCR parameters for question mark detection
+                await tesseractWorker.setParameters({
+                    tessedit_char_whitelist: '?',
+                    tessedit_pageseg_mode: '6',
+                    tessjs_create_box: '1',
+                    tessjs_create_unlv: '1',
+                    tessedit_write_images: true,
+                    tessedit_ocr_engine_mode: '2',
+                    tessedit_do_invert: '0'
+                });
+
+                // Perform OCR
+                const result = await tesseractWorker.recognize(canvas);
+                const recognizedText = result.data.text.trim();
+                
+                console.log('Cell OCR Result:', {
+                    text: recognizedText,
+                    confidence: result.data.confidence,
+                    isQuestionMark: recognizedText.includes('?')
+                });
+
+                return recognizedText.includes('?');
+            } catch (error) {
+                console.error('Error checking for locked room:', error);
+                return false;
+            }
+        }
+
+        // Modify the cell click handler
+        async function handleCellClick(event) {
+            const cell = event.target.closest('.grid-cell');
+            if (!cell) return;
+
+            // Check if the room is locked before showing the menu
+            const isLocked = await checkForLockedRoom(cell);
+            
+            // Store the locked state on the cell
+            cell.dataset.locked = isLocked;
+
+            // Get cell position for menu placement
+            const rect = cell.getBoundingClientRect();
+            const menuX = rect.left + window.scrollX;
+            const menuY = rect.top + window.scrollY;
+
+            // Hide any visible menus
+            hideAllMenus();
+
+            // Show appropriate menu based on cell state and locked status
+            if (cell.dataset.color || cell.dataset.shape || cell.dataset.gatestone) {
+                showKeyMenu(menuX, menuY);
+            } else {
+                showNonKeyMenu(menuX, menuY, isLocked);
+            }
+
+            // Store the clicked cell for menu actions
+            lastClickedCell = cell;
+        }
+
+        // Modify the menu display function to handle locked rooms
+        function showNonKeyMenu(x, y, isLocked) {
+            const menu = document.getElementById('non-key-menu');
+            if (!menu) return;
+
+            // Get the gatestone options container
+            const gatestoneOptions = menu.querySelector('.gatestone-options');
+            if (gatestoneOptions) {
+                // Hide gatestone options if room is locked
+                gatestoneOptions.style.display = isLocked ? 'none' : 'block';
+            }
+
+            // Position and show menu
+            menu.style.left = x + 'px';
+            menu.style.top = y + 'px';
+            menu.style.display = 'block';
+        }
+
+        // Add click listeners to grid cells
+        document.querySelectorAll('.grid-cell').forEach(cell => {
+            cell.addEventListener('click', async (e) => {
+                if (e.button === 0) { // Left click
+                    await handleCellClick(e);
+                }
+            });
+
+            cell.addEventListener('contextmenu', async (e) => {
+                e.preventDefault();
+                await handleCellClick(e);
+            });
+        });
+
+        // Function to create the grid
+        function createGrid(rows, cols) {
+            const grid = document.getElementById('dungeon-grid');
+            grid.innerHTML = '';
+            grid.style.gridTemplateColumns = `repeat(${cols}, 1fr)`;
+            
+            for (let i = 0; i < rows * cols; i++) {
+                const cell = document.createElement('div');
+                cell.className = 'grid-cell';
+                
+                // Add click listeners
+                cell.addEventListener('click', async (e) => {
+                    if (e.button === 0) { // Left click
+                        await handleCellClick(e);
+                    }
+                });
+
+                cell.addEventListener('contextmenu', async (e) => {
+                    e.preventDefault();
+                    await handleCellClick(e);
+                });
+                
+                grid.appendChild(cell);
+            }
+        }
     </script>
     <!-- Include the bundled JavaScript file -->
     <script src="index.bundle.js"></script>
