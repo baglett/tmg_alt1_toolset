@@ -1418,6 +1418,16 @@
         <div class="crosshair-center"></div>
     </div>
 
+    <!-- Add the new menu after the other menus -->
+    <!-- Non-Room Menu (shown on right-click of non-room cell) -->
+    <div id="non-room-menu" class="context-menu">
+        <div class="close-button" onclick="hideAllMenus()">×</div>
+        <div class="context-menu-section">
+            <div class="context-menu-title">Options</div>
+            <div class="clear-option" onclick="clearAllCells()">Clear All</div>
+        </div>
+    </div>
+
     <!-- Include Tesseract.js for OCR -->
     <script src="https://cdn.jsdelivr.net/npm/tesseract.js@4.1.1/dist/tesseract.min.js"></script>
     <script>
@@ -2247,27 +2257,15 @@
                     contextMenuVisible: menuElements.contextMenu?.classList.contains('visible'),
                     shapeMenuVisible: menuElements.shapeMenu?.classList.contains('visible'),
                     cellMenuVisible: menuElements.cellMenu?.classList.contains('visible'),
-                    skillTierMenuVisible: menuElements.skillTierMenu?.classList.contains('visible')
+                    skillTierMenuVisible: menuElements.skillTierMenu?.classList.contains('visible'),
+                    nonRoomMenuVisible: menuElements.nonRoomMenu?.classList.contains('visible')
                 }
             });
 
-            // Validate cell has a room before proceeding
-            if (!await validateCellInteraction(event, cell)) {
-                return;
-            }
-
-            if (!menuElements.contextMenu) {
-                console.error("Context menu element not found");
-                return;
-            }
+            // Check if the cell has a room
+            const isValid = await analyzeCell(cell);
             
-            // Set the active cell
-            activeCell = cell;
-            
-            // Reset selected color
-            selectedColor = null;
-            
-            // Position based on the current dungeon size
+            // Get position based on dungeon size
             let posX, posY;
             const dungeonSize = settings.dungeonSize;
             
@@ -2285,6 +2283,34 @@
                 posX = 30;
                 posY = 20;
             }
+            
+            // If not a valid room, show the non-room menu
+            if (!isValid) {
+                if (!menuElements.nonRoomMenu) {
+                    console.error("Non-room menu element not found");
+                    return;
+                }
+                
+                // Position the menu using dungeon size-based coordinates
+                menuElements.nonRoomMenu.style.left = `${posX}px`;
+                menuElements.nonRoomMenu.style.top = `${posY}px`;
+                
+                // Show the non-room menu
+                menuElements.nonRoomMenu.classList.add('visible');
+                return;
+            }
+
+            // Rest of the existing showContextMenu code for valid rooms...
+            if (!menuElements.contextMenu) {
+                console.error("Context menu element not found");
+                return;
+            }
+            
+            // Set the active cell
+            activeCell = cell;
+            
+            // Reset selected color
+            selectedColor = null;
             
             // Position the context menu
             menuElements.contextMenu.style.left = `${posX}px`;
@@ -3846,7 +3872,8 @@ Processed Image (for debugging):`;
             contextMenu: null,
             shapeMenu: null,
             cellMenu: null,
-            skillTierMenu: null
+            skillTierMenu: null,
+            nonRoomMenu: null
         };
 
         // Function to initialize menu references
@@ -3857,46 +3884,31 @@ Processed Image (for debugging):`;
             menuElements.shapeMenu = document.getElementById('shape-menu');
             menuElements.cellMenu = document.getElementById('cell-menu');
             menuElements.skillTierMenu = document.getElementById('skill-tier-menu');
+            menuElements.nonRoomMenu = document.getElementById('non-room-menu');
             
             console.log('Menu elements cached:', {
                 contextMenuFound: !!menuElements.contextMenu,
                 shapeMenuFound: !!menuElements.shapeMenu,
                 cellMenuFound: !!menuElements.cellMenu,
-                skillTierMenuFound: !!menuElements.skillTierMenu
+                skillTierMenuFound: !!menuElements.skillTierMenu,
+                nonRoomMenuFound: !!menuElements.nonRoomMenu
             });
         }
 
         // Modify hideAllMenus to use cached references
         function hideAllMenus() {
-            console.log('=== Hiding All Menus ===', {
-                calledBy: new Error().stack.split('\n')[2].trim(),
-                timestamp: new Date().toISOString()
-            });
+            console.log("Hiding all menus");
             
-            const menuStates = {};
-            const visibleMenus = [];
+            // Hide all menus using cached references
+            if (menuElements.contextMenu) menuElements.contextMenu.classList.remove('visible');
+            if (menuElements.shapeMenu) menuElements.shapeMenu.classList.remove('visible');
+            if (menuElements.cellMenu) menuElements.cellMenu.classList.remove('visible');
+            if (menuElements.skillTierMenu) menuElements.skillTierMenu.classList.remove('visible');
+            if (menuElements.nonRoomMenu) menuElements.nonRoomMenu.classList.remove('visible');
             
-            // Check and log each menu's state
-            for (const [menuName, menuElement] of Object.entries(menuElements)) {
-                const wasVisible = menuElement?.classList.contains('visible');
-                menuStates[menuName] = {
-                    wasVisible,
-                    element: !!menuElement
-                };
-                
-                if (wasVisible) {
-                    visibleMenus.push(menuName);
-                    menuElement.classList.remove('visible');
-                }
-            }
-            
-            console.log('Menu visibility changes:', {
-                before: visibleMenus,
-                after: Object.entries(menuElements)
-                    .filter(([_, element]) => element?.classList.contains('visible'))
-                    .map(([name]) => name),
-                menuStates
-            });
+            // Reset menu state
+            isProcessingMenu = false;
+            lastMenuOperation = null;
         }
 
         // Document ready function
@@ -3991,6 +4003,23 @@ Processed Image (for debugging):`;
             // Save settings to localStorage
             localStorage.setItem('dungeonSettings', JSON.stringify(settings));
             console.log("Settings saved successfully");
+        }
+
+        // Add the clearAllCells function
+        function clearAllCells() {
+            console.log("Clearing all cells");
+            
+            // Get all grid cells
+            const cells = document.querySelectorAll('.grid-cell');
+            
+            // Clear each cell
+            cells.forEach(cell => {
+                clearCellContent(cell);
+                saveCellState(cell);
+            });
+            
+            // Hide the menu
+            hideAllMenus();
         }
     </script>
     <!-- Include the bundled JavaScript file -->
