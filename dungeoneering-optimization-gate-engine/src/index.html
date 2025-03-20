@@ -1200,48 +1200,37 @@
             text-align: center;
         }
 
+        .capture-preview-wrapper {
+            display: flex;
+            align-items: flex-start;
+            gap: 8px;
+            margin-top: 8px;
+        }
+
         .capture-preview-container {
             position: relative;
             width: 268px;
             height: 268px;
-            margin-top: 24px;
+            border: 1px solid rgba(79, 84, 92, 0.5);
+            border-radius: 2px;
         }
 
-        .capture-controls {
-            position: absolute;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            z-index: 1;
-        }
-
-        .capture-controls.top {
-            top: 0;
-            left: 50%;
-            transform: translateX(-50%);
-        }
-
-        .capture-controls.bottom {
-            bottom: 0;
-            left: 50%;
-            transform: translateX(-50%);
-        }
-
-        .capture-controls.left {
-            left: 0;
-            top: 50%;
-            transform: translateY(-50%);
-        }
-
-        .capture-controls.right {
-            right: 0;
-            top: 50%;
-            transform: translateY(-50%);
+        .arrow-controls {
+            display: grid;
+            grid-template-areas:
+                ".  up   ."
+                "left . right"
+                ".  down .";
+            gap: 2px;
+            padding: 4px;
+            background: rgba(0, 0, 0, 0.2);
+            border-radius: 4px;
+            margin-top: 0;
         }
 
         .arrow-btn {
-            width: 20px;
-            height: 20px;
+            width: 24px;
+            height: 24px;
             padding: 0;
             display: flex;
             align-items: center;
@@ -1252,12 +1241,16 @@
             color: white;
             cursor: pointer;
             border-radius: 2px;
-            backdrop-filter: blur(2px);
         }
 
         .arrow-btn:hover {
             background: rgba(88, 101, 242, 0.9);
         }
+
+        .arrow-btn.up { grid-area: up; }
+        .arrow-btn.down { grid-area: down; }
+        .arrow-btn.left { grid-area: left; }
+        .arrow-btn.right { grid-area: right; }
     </style>
 </head>
 <body>
@@ -1318,20 +1311,16 @@
                     </div>
 
                     <!-- Capture Preview with Controls -->
-                    <div class="capture-preview-container">
-                        <div class="capture-controls top">
-                            <button class="arrow-btn" onclick="adjustAnchorPoint(0, -1)">↑</button>
+                    <div class="capture-preview-wrapper">
+                        <div class="capture-preview-container">
+                            <canvas id="capturePreviewCanvas" width="268" height="268"></canvas>
                         </div>
-                        <div class="capture-controls bottom">
-                            <button class="arrow-btn" onclick="adjustAnchorPoint(0, 1)">↓</button>
+                        <div class="arrow-controls">
+                            <button class="arrow-btn up" onclick="adjustAnchorPoint(0, -1)">↑</button>
+                            <button class="arrow-btn left" onclick="adjustAnchorPoint(-1, 0)">←</button>
+                            <button class="arrow-btn right" onclick="adjustAnchorPoint(1, 0)">→</button>
+                            <button class="arrow-btn down" onclick="adjustAnchorPoint(0, 1)">↓</button>
                         </div>
-                        <div class="capture-controls left">
-                            <button class="arrow-btn" onclick="adjustAnchorPoint(-1, 0)">←</button>
-                        </div>
-                        <div class="capture-controls right">
-                            <button class="arrow-btn" onclick="adjustAnchorPoint(1, 0)">→</button>
-                        </div>
-                        <canvas id="capturePreviewCanvas" width="268" height="268"></canvas>
                     </div>
                 </div>
             </div>
@@ -2918,6 +2907,25 @@
             if (window.alt1) {
                 console.log("Running in Alt1 browser");
                 document.body.classList.add('alt1-mode');
+            }
+
+            // Ensure settings view is active and visible on load
+            const settingsView = document.getElementById('settings-view');
+            const settingsNavItem = document.querySelector('.nav-item[data-view="settings-view"]');
+            
+            if (settingsView && settingsNavItem) {
+                // Remove active class from all views and nav items
+                document.querySelectorAll('.view').forEach(view => view.classList.remove('active'));
+                document.querySelectorAll('.nav-item').forEach(item => item.classList.remove('active'));
+                
+                // Add active class to settings view and nav item
+                settingsView.classList.add('active');
+                settingsNavItem.classList.add('active');
+                
+                // Force display settings
+                settingsView.style.display = 'flex';
+                settingsView.style.flexDirection = 'column';
+                settingsView.style.height = '100%';
             }
 
             console.log("Re-initializing context menu event listeners");

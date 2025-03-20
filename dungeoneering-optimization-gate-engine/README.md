@@ -6,7 +6,7 @@ A tool for RuneScape 3 Dungeoneering that helps optimize gate and key placement.
 
 ### Quick Install (Online)
 Click this link to install directly in Alt1:
-[Install in Alt1](alt1://addapp/https://baglett.github.io/tmg_alt1_toolset/dungeoneering-optimization-gate-engine/dist/index.html)
+[Install in Alt1](alt1://addapp/https://raw.githubusercontent.com/baglett/tmg_alt1_toolset/main/dungeoneering-optimization-gate-engine/dist/index.html)
 
 ### Development
 1. Install dependencies:
@@ -27,7 +27,8 @@ npm run build
 
 2. Install in Alt1:
 - **Online (Recommended)**: 
-  - Open [https://baglett.github.io/tmg_alt1_toolset/dungeoneering-optimization-gate-engine/dist/](https://baglett.github.io/tmg_alt1_toolset/dungeoneering-optimization-gate-engine/dist/) in Alt1 Browser
+  - Click the Quick Install link above, or
+  - Open [Raw GitHub Link](https://raw.githubusercontent.com/baglett/tmg_alt1_toolset/main/dungeoneering-optimization-gate-engine/dist/index.html) in Alt1 Browser
   - Click "Add App" in Alt1
 
 - **Local Install**:
