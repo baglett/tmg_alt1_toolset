@@ -738,14 +738,6 @@
         /* Room feedback styles */
         #room-feedback {
             display: none;
-            position: absolute;
-            background-color: rgba(0, 0, 0, 0.8);
-            color: #ffffff;
-            padding: 5px 10px;
-            border-radius: 3px;
-            font-size: 12px;
-            z-index: 1000;
-            pointer-events: none;
         }
 
         /* Add styles for OCR testing section */
@@ -1888,13 +1880,6 @@
         document.addEventListener('DOMContentLoaded', async function() {
             console.log("Document loaded");
             
-            // Create feedback element early
-            let feedback = document.createElement('div');
-            feedback.id = 'room-feedback';
-            document.body.appendChild(feedback);
-            feedback.textContent = 'Initializing OCR...';
-            feedback.style.display = 'block';
-            
             try {
                 // Initialize Tesseract worker
                 await initTesseractWorker();
@@ -1902,9 +1887,8 @@
             // Setup Alt1 status
             setupAlt1();
             
-                // Rest of initialization...
-            // Periodically check Alt1 status
-            setInterval(setupAlt1, 5000);
+                // Periodically check Alt1 status
+                setInterval(setupAlt1, 5000);
                 
                 // Set up automatic room checking every 2 seconds
                 setInterval(checkRoomsWithKeys, 2000);
@@ -1922,11 +1906,6 @@
                 document.addEventListener('keydown', handleKeyboardShortcuts);
             } catch (error) {
                 console.error('Error during initialization:', error);
-                feedback.textContent = `Init Error: ${error.message}`;
-                feedback.style.display = 'block';
-                setTimeout(() => {
-                    feedback.style.display = 'none';
-                }, 5000);
             }
         });
 
@@ -2254,26 +2233,7 @@
                     }
                 });
                 
-                // Show feedback with confidence level
-                let feedback = document.getElementById('room-feedback');
-                if (!feedback) {
-                    feedback = document.createElement('div');
-                    feedback.id = 'room-feedback';
-                    document.body.appendChild(feedback);
-                }
-                
-                const hasQuestionMark = text.includes('?');
-                // feedback.textContent = hasQuestionMark ? 
-                //     `Locked Room (${confidence.toFixed(1)}% confident)` : 
-                //     'Not a locked room';
-                feedback.style.display = 'block';
-                
-                // Hide the feedback after 2 seconds
-                setTimeout(() => {
-                    feedback.style.display = 'none';
-                }, 2000);
-                
-                return hasQuestionMark;
+                return text.includes('?');
             } catch (error) {
                 console.error('Error during OCR:', error);
                 return false;
@@ -2762,9 +2722,6 @@
             
             // End placement mode
             endAnchorPointPlacement();
-            
-            // Show feedback
-            showSaveFeedback();
         }
         
         // Function to adjust the anchor point by a specified amount
@@ -3412,7 +3369,7 @@
 
             // Show/hide other options
             if (menuSections.clearOption) {
-                menuSections.clearOption.style.display = cell.querySelector('img') ? 'block' : 'none';
+                menuSections.clearOption.style.display = (cell.querySelector('img') || cell.querySelector('.skill-tier')) ? 'block' : 'none';
             }
 
             if (menuSections.gatestoneSection) {
@@ -3831,23 +3788,6 @@ Processed Image (for debugging):`;
             
             if (!isValid) {
                 console.log("Preventing interaction - no room detected");
-                // Show feedback to user
-                let feedback = document.getElementById('room-feedback');
-                if (!feedback) {
-                    feedback = document.createElement('div');
-                    feedback.id = 'room-feedback';
-                    document.body.appendChild(feedback);
-                }
-                feedback.textContent = '';
-                feedback.style.display = 'block';
-                feedback.style.left = '50px';
-                feedback.style.top = '50px';
-                
-                // Hide feedback after 2 seconds
-                setTimeout(() => {
-                    feedback.style.display = 'none';
-                }, 1000);
-                
                 event.preventDefault();
                 event.stopPropagation();
                 return false;
@@ -4046,6 +3986,12 @@ Processed Image (for debugging):`;
                 });
             });
         });
+
+        function saveSettings() {
+            // Save settings to localStorage
+            localStorage.setItem('dungeonSettings', JSON.stringify(settings));
+            console.log("Settings saved successfully");
+        }
     </script>
     <!-- Include the bundled JavaScript file -->
     <script src="index.bundle.js"></script>
