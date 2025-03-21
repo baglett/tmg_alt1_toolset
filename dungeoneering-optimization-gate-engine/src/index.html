@@ -4329,43 +4329,29 @@ Processed Image (for debugging):`;
             }
         }
 
-        // Track locked rooms with PNGs and monitoring functionality
+        // Track locked rooms with PNGs
         let lockedRoomsWithPNGs = new Set();
         let monitorInterval = null;
 
-        // Function to get room details
-        function getRoomDetails(cell) {
-            const img = cell.querySelector('img');
-            return {
-                position: {
-                    x: cell.dataset.x,
-                    y: cell.dataset.y
-                },
-                pngInfo: img ? {
-                    src: img.src,
-                    filename: img.src.split('/').pop()
-                } : null,
-                cellId: cell.id || 'unknown'
-            };
-        }
-
-        // Function to remove PNG from cell
+        // Function to remove PNG from cell and clean up tracking
         function removePNGFromCell(cell) {
+            const coords = getCellCoordinates(cell);
             const img = cell.querySelector('img');
             if (img) {
-                const details = getRoomDetails(cell);
+                console.log(`Removing PNG from cell (${coords.row}, ${coords.col})`);
                 cell.removeChild(img);
-                console.log('Removed PNG from unlocked room:', details);
             }
+            
             // Remove from tracking
             lockedRoomsWithPNGs.delete(cell);
-            // Clear any associated data
+            
+            // Clear cell data
             delete cell.dataset.locked;
             delete cell.dataset.color;
             delete cell.dataset.shape;
             saveCellState(cell);
-            
-            // Stop monitoring if no more locked rooms
+
+            // If no more locked rooms to track, stop monitoring
             if (lockedRoomsWithPNGs.size === 0) {
                 stopMonitoring();
             }
@@ -4378,43 +4364,35 @@ Processed Image (for debugging):`;
                 return;
             }
 
-            console.log('=== Checking locked rooms ===');
-            logTrackedRooms();
+            console.log(`=== Checking ${lockedRoomsWithPNGs.size} locked room(s) ===`);
             
             for (const cell of lockedRoomsWithPNGs) {
-                const roomDetails = getRoomDetails(cell);
+                const coords = getCellCoordinates(cell);
+                
                 // Skip if cell no longer has PNG
                 if (!cell.querySelector('img')) {
-                    console.log('Cell no longer has PNG, removing from tracking:', roomDetails);
+                    console.log(`Cell (${coords.row}, ${coords.col}) no longer has PNG, removing from tracking`);
                     lockedRoomsWithPNGs.delete(cell);
                     continue;
                 }
 
                 // Check if still locked
                 const isStillLocked = await checkForLockedRoom(cell);
-                console.log('Room check result:', {
-                    ...roomDetails,
-                    isStillLocked
-                });
+                console.log(`Cell (${coords.row}, ${coords.col}) locked status: ${isStillLocked}`);
 
                 // If no longer locked, remove PNG
                 if (!isStillLocked) {
-                    console.log('Room unlocked - removing PNG:', roomDetails);
                     removePNGFromCell(cell);
                 }
             }
-            console.log('=== Check complete ===');
         }
 
         // Start monitoring when first locked room is added
         function startMonitoring() {
             if (!monitorInterval) {
                 console.log('Starting locked rooms monitor');
-                monitorInterval = setInterval(() => {
-                    console.log('Monitor interval tick');
-                    monitorLockedRooms();
-                }, 2000);
-                // Immediate first check
+                monitorInterval = setInterval(monitorLockedRooms, 2000);
+                // Run immediate first check
                 monitorLockedRooms();
             }
         }
@@ -4435,33 +4413,26 @@ Processed Image (for debugging):`;
             }
         });
 
-        // Save the original click handler and enhance it with monitoring
-        const handleCellClickWithMonitoring = handleCellClick;
+        // Add monitoring to the click handler
+        const existingHandleCellClick = handleCellClick;
         handleCellClick = async function(event) {
             const cell = event.target.closest('.grid-cell');
             if (!cell) return;
 
             // Call original handler first
-            const result = await handleCellClickWithMonitoring.call(this, event);
+            const result = await existingHandleCellClick.call(this, event);
 
-            try {
-                // After original handler completes, check if room is locked
-                const isLocked = await checkForLockedRoom(cell);
-                const position = { x: cell.dataset.x, y: cell.dataset.y };
-                
-                // Clear locked/not locked status message
-                console.log(`Clicked Cell (${position.x}, ${position.y}) is ${isLocked ? 'LOCKED' : 'NOT LOCKED'}`);
+            // After original handler completes, check if room is locked
+            const isLocked = await checkForLockedRoom(cell);
+            const coords = getCellCoordinates(cell);
 
-                // If cell has PNG and is locked, add to tracking
-                if (cell.querySelector('img') && isLocked) {
-                    cell.dataset.locked = 'true';
-                    lockedRoomsWithPNGs.add(cell);
-                    console.log(`Added cell (${position.x}, ${position.y}) to locked rooms tracking`);
-                    logTrackedRooms();
-                    startMonitoring();
-                }
-            } catch (error) {
-                console.error('Error in monitoring code:', error);
+            // If cell has PNG and is locked, add to tracking
+            if (cell.querySelector('img') && isLocked) {
+                cell.dataset.locked = 'true';
+                lockedRoomsWithPNGs.add(cell);
+                console.log(`Added cell (${coords.row}, ${coords.col}) to locked rooms tracking`);
+                console.log(`Currently tracking ${lockedRoomsWithPNGs.size} locked room(s)`);
+                startMonitoring();
             }
 
             return result;
