@@ -3876,6 +3876,10 @@ Processed Image (for debugging):`;
                 console.log('Hiding all menus before processing click');
                 hideAllMenus();
 
+                // Get cell coordinates
+                const cellCoords = getCellCoordinates(cell);
+                console.log('Cell coordinates:', cellCoords);
+
                 // Process the click based on type
                 if (event.type === 'contextmenu') {
                     console.log('Processing right-click menu');
@@ -3885,9 +3889,78 @@ Processed Image (for debugging):`;
                     showCellMenu(event, cell);
                 }
 
+                // Check if room is locked after menu processing
+                checkForLockedRoom(cell).then(isLocked => {
+                    console.log(`Clicked Cell (${cellCoords.row}, ${cellCoords.col}) is ${isLocked ? 'LOCKED' : 'NOT LOCKED'}`);
+
+                    // If cell has PNG and is locked, add to tracking
+                    if (cell.querySelector('img') && isLocked) {
+                        cell.dataset.locked = 'true';
+                        lockedRoomsWithPNGs.add(cell);
+                        console.log(`Added cell (${cellCoords.row}, ${cellCoords.col}) to locked rooms tracking`);
+                        logTrackedRooms();
+                        startMonitoring();
+                    }
+                }).catch(error => {
+                    console.error('Error checking if room is locked:', error);
+                });
+
             } finally {
                 isProcessingMenu = false;
             }
+        }
+
+        // Function to get cell coordinates
+        function getCellCoordinates(cell) {
+            // Try to get coordinates from the cell's ID first
+            const cellIdMatch = cell.id ? cell.id.match(/cell-(\d+)-(\d+)/) : null;
+            if (cellIdMatch) {
+                return {
+                    row: cellIdMatch[1],
+                    col: cellIdMatch[2]
+                };
+            }
+
+            // If no ID, try to get from dataset
+            if (cell.dataset.row !== undefined && cell.dataset.col !== undefined) {
+                return {
+                    row: cell.dataset.row,
+                    col: cell.dataset.col
+                };
+            }
+
+            // If still no coordinates, calculate from grid position
+            const gridCells = Array.from(document.querySelectorAll('.grid-cell'));
+            const cellIndex = gridCells.indexOf(cell);
+            if (cellIndex !== -1) {
+                const gridSize = Math.sqrt(gridCells.length); // Assuming square grid
+                return {
+                    row: Math.floor(cellIndex / gridSize),
+                    col: cellIndex % gridSize
+                };
+            }
+
+            // If all else fails, return null
+            return { row: '?', col: '?' };
+        }
+
+        // Function to log current tracked rooms
+        function logTrackedRooms() {
+            const trackedRooms = Array.from(lockedRoomsWithPNGs).map(cell => {
+                const coords = getCellCoordinates(cell);
+                const img = cell.querySelector('img');
+                return {
+                    position: coords,
+                    pngInfo: img ? {
+                        src: img.src,
+                        filename: img.src.split('/').pop()
+                    } : null
+                };
+            });
+            console.log('Currently tracked locked rooms with PNGs:', {
+                totalRooms: lockedRoomsWithPNGs.size,
+                rooms: trackedRooms
+            });
         }
 
         // Add menu elements caching
@@ -4073,77 +4146,95 @@ Processed Image (for debugging):`;
 
         // Function to check if a cell contains a question mark (locked room)
         async function checkForLockedRoom(cell) {
-            try {
-                // Get the cell's position and dimensions
-                const rect = cell.getBoundingClientRect();
-                
-                // Capture the cell region using Alt1
-                const img = a1lib.captureHoldFullRs();
-                if (!img) {
-                    console.error('Failed to capture screen');
+            if (!tesseractWorker) {
+                console.log('Tesseract worker not initialized');
+                // Try to initialize again
+                await initTesseractWorker();
+                if (!tesseractWorker) {
                     return false;
                 }
+            }
 
-                // Create a canvas for the cell
-                const canvas = document.createElement('canvas');
-                const ctx = canvas.getContext('2d');
-                
-                // Set dimensions to match cell
-                canvas.width = rect.width;
-                canvas.height = rect.height;
-                
-                // Get image data for the cell region
-                const imgData = img.toData(
-                    Math.round(rect.left),
-                    Math.round(rect.top),
-                    Math.round(rect.width),
-                    Math.round(rect.height)
-                );
-                
-                // Draw to canvas
-                ctx.putImageData(imgData, 0, 0);
+            // Get the map background canvas
+            const mapCanvas = document.getElementById('mapBackgroundCanvas');
+            if (!mapCanvas) return false;
+
+            const ctx = mapCanvas.getContext('2d');
+            
+            // Get cell position and dimensions
+            const rect = cell.getBoundingClientRect();
+            const mapRect = mapCanvas.getBoundingClientRect();
+            
+            // Calculate relative position in the canvas
+            const x = rect.left - mapRect.left;
+            const y = rect.top - mapRect.top;
+            const width = rect.width;
+            const height = rect.height;
+            
+            // Create a temporary canvas for preprocessing
+            const tempCanvas = document.createElement('canvas');
+            tempCanvas.width = width;
+            tempCanvas.height = height;
+            const tempCtx = tempCanvas.getContext('2d');
+
+            try {
+                // Extract and draw the cell image
+                const imageData = ctx.getImageData(x, y, width, height);
+                tempCtx.putImageData(imageData, 0, 0);
 
                 // Preprocess the image
-                const processedData = ctx.getImageData(0, 0, canvas.width, canvas.height);
-                const data = processedData.data;
+                const processedImageData = tempCtx.getImageData(0, 0, width, height);
+                const data = processedImageData.data;
 
-                // Enhance contrast and convert to black and white
+                // Convert to grayscale and increase contrast
                 for (let i = 0; i < data.length; i += 4) {
-                    const avg = (data[i] + data[i + 1] + data[i + 2]) / 3;
-                    const value = avg > 128 ? 255 : 0;
-                    data[i] = value;
-                    data[i + 1] = value;
-                    data[i + 2] = value;
+                    const r = data[i];
+                    const g = data[i + 1];
+                    const b = data[i + 2];
+                    
+                    // Convert to grayscale
+                    const gray = (r + g + b) / 3;
+                    
+                    // Apply threshold for black and white conversion
+                    const threshold = 128;
+                    const val = gray > threshold ? 255 : 0;
+                    
+                    data[i] = val;     // R
+                    data[i + 1] = val; // G
+                    data[i + 2] = val; // B
                 }
-                ctx.putImageData(processedData, 0, 0);
 
-                // Initialize worker if needed
-                if (!tesseractWorker) {
-                    await initTesseractWorker();
-                }
-
-                // Set OCR parameters for question mark detection
+                // Put the processed image back
+                tempCtx.putImageData(processedImageData, 0, 0);
+                
+                // Set optimal parameters for symbol detection
                 await tesseractWorker.setParameters({
                     tessedit_char_whitelist: '?',
-                    tessedit_pageseg_mode: '6',
-                    tessjs_create_box: '1',
-                    tessjs_create_unlv: '1',
-                    tessedit_write_images: true,
+                    tessedit_pageseg_mode: '10',
                     tessedit_ocr_engine_mode: '2',
-                    tessedit_do_invert: '0'
+                    tessjs_create_pdf: '0',
+                    tessjs_create_hocr: '0',
+                    tessjs_create_tsv: '0',
+                    tessjs_create_box: '0',
+                    tessjs_create_unlv: '0',
+                    tessjs_create_osd: '0'
                 });
 
                 // Perform OCR
-                const result = await tesseractWorker.recognize(canvas);
-                const recognizedText = result.data.text.trim();
-                
-                console.log('Cell OCR Result:', {
-                    text: recognizedText,
-                    confidence: result.data.confidence,
-                    isQuestionMark: recognizedText.includes('?')
-                });
+                const result = await tesseractWorker.recognize(tempCanvas);
+                const text = result.data.text.trim();
+                const confidence = result.data.confidence;
 
-                return recognizedText.includes('?');
+                console.log("=== Question Mark Detection ===", {
+                    cell: getCellCoordinates(cell),
+                    ocrResult: {
+                        text: text,
+                        confidence: confidence,
+                        hasQuestionMark: text.includes('?')
+                    }
+                });
+                
+                return text.includes('?');
             } catch (error) {
                 console.error('Error checking for locked room:', error);
                 return false;
@@ -4237,6 +4328,218 @@ Processed Image (for debugging):`;
                 grid.appendChild(cell);
             }
         }
+
+        // Track locked rooms with PNGs and monitoring functionality
+        let lockedRoomsWithPNGs = new Set();
+        let monitorInterval = null;
+
+        // Function to get room details
+        function getRoomDetails(cell) {
+            const img = cell.querySelector('img');
+            return {
+                position: {
+                    x: cell.dataset.x,
+                    y: cell.dataset.y
+                },
+                pngInfo: img ? {
+                    src: img.src,
+                    filename: img.src.split('/').pop()
+                } : null,
+                cellId: cell.id || 'unknown'
+            };
+        }
+
+        // Function to remove PNG from cell
+        function removePNGFromCell(cell) {
+            const img = cell.querySelector('img');
+            if (img) {
+                const details = getRoomDetails(cell);
+                cell.removeChild(img);
+                console.log('Removed PNG from unlocked room:', details);
+            }
+            // Remove from tracking
+            lockedRoomsWithPNGs.delete(cell);
+            // Clear any associated data
+            delete cell.dataset.locked;
+            delete cell.dataset.color;
+            delete cell.dataset.shape;
+            saveCellState(cell);
+            
+            // Stop monitoring if no more locked rooms
+            if (lockedRoomsWithPNGs.size === 0) {
+                stopMonitoring();
+            }
+        }
+
+        // Function to monitor locked rooms
+        async function monitorLockedRooms() {
+            if (lockedRoomsWithPNGs.size === 0) {
+                stopMonitoring();
+                return;
+            }
+
+            console.log('=== Checking locked rooms ===');
+            logTrackedRooms();
+            
+            for (const cell of lockedRoomsWithPNGs) {
+                const roomDetails = getRoomDetails(cell);
+                // Skip if cell no longer has PNG
+                if (!cell.querySelector('img')) {
+                    console.log('Cell no longer has PNG, removing from tracking:', roomDetails);
+                    lockedRoomsWithPNGs.delete(cell);
+                    continue;
+                }
+
+                // Check if still locked
+                const isStillLocked = await checkForLockedRoom(cell);
+                console.log('Room check result:', {
+                    ...roomDetails,
+                    isStillLocked
+                });
+
+                // If no longer locked, remove PNG
+                if (!isStillLocked) {
+                    console.log('Room unlocked - removing PNG:', roomDetails);
+                    removePNGFromCell(cell);
+                }
+            }
+            console.log('=== Check complete ===');
+        }
+
+        // Start monitoring when first locked room is added
+        function startMonitoring() {
+            if (!monitorInterval) {
+                console.log('Starting locked rooms monitor');
+                monitorInterval = setInterval(() => {
+                    console.log('Monitor interval tick');
+                    monitorLockedRooms();
+                }, 2000);
+                // Immediate first check
+                monitorLockedRooms();
+            }
+        }
+
+        // Stop monitoring when no locked rooms left
+        function stopMonitoring() {
+            if (monitorInterval) {
+                console.log('Stopping locked rooms monitor - no more locked rooms to track');
+                clearInterval(monitorInterval);
+                monitorInterval = null;
+            }
+        }
+
+        // Clean up monitoring when page unloads
+        window.addEventListener('unload', () => {
+            if (monitorInterval) {
+                clearInterval(monitorInterval);
+            }
+        });
+
+        // Save the original click handler and enhance it with monitoring
+        const handleCellClickWithMonitoring = handleCellClick;
+        handleCellClick = async function(event) {
+            const cell = event.target.closest('.grid-cell');
+            if (!cell) return;
+
+            // Call original handler first
+            const result = await handleCellClickWithMonitoring.call(this, event);
+
+            try {
+                // After original handler completes, check if room is locked
+                const isLocked = await checkForLockedRoom(cell);
+                const position = { x: cell.dataset.x, y: cell.dataset.y };
+                
+                // Clear locked/not locked status message
+                console.log(`Clicked Cell (${position.x}, ${position.y}) is ${isLocked ? 'LOCKED' : 'NOT LOCKED'}`);
+
+                // If cell has PNG and is locked, add to tracking
+                if (cell.querySelector('img') && isLocked) {
+                    cell.dataset.locked = 'true';
+                    lockedRoomsWithPNGs.add(cell);
+                    console.log(`Added cell (${position.x}, ${position.y}) to locked rooms tracking`);
+                    logTrackedRooms();
+                    startMonitoring();
+                }
+            } catch (error) {
+                console.error('Error in monitoring code:', error);
+            }
+
+            return result;
+        };
+
+        // Test function to validate color detection
+        async function validateRoomDetection(cell) {
+            try {
+                const rect = cell.getBoundingClientRect();
+                const img = a1lib.captureHoldFullRs();
+                if (!img) return null;
+
+                const imgData = img.toData(
+                    Math.round(rect.left),
+                    Math.round(rect.top),
+                    Math.round(rect.width),
+                    Math.round(rect.height)
+                );
+
+                // Analyze colors
+                const colorAnalysis = analyzeRoomColors(imgData);
+                
+                // Perform OCR check
+                const isLocked = await checkForLockedRoom(cell);
+
+                // Log results
+                console.log('Room Detection Validation:', {
+                    cellId: cell.id || 'unknown',
+                    hasPNG: !!cell.querySelector('img'),
+                    colorAnalysis: colorAnalysis,
+                    isLocked,
+                    timestamp: new Date().toISOString()
+                });
+
+                return {
+                    colorAnalysis,
+                    isLocked
+                };
+            } catch (error) {
+                console.error('Validation error:', error);
+                return null;
+            }
+        }
+
+        // Add to cell click handler to track locked rooms with PNGs
+        const originalHandleCellClick = handleCellClick;
+        handleCellClick = async function(event) {
+            const cell = event.target.closest('.grid-cell');
+            if (!cell) return;
+
+            const result = await originalHandleCellClick.call(this, event);
+
+            // If cell has PNG and is locked, add to tracking
+            if (cell.querySelector('img') && cell.dataset.locked === 'true') {
+                lockedRoomsWithPNGs.add(cell);
+                console.log('Added to locked rooms tracking:', {
+                    cellId: cell.id || 'unknown',
+                    totalTracked: lockedRoomsWithPNGs.size
+                });
+                startMonitoring();
+            }
+
+            return result;
+        };
+
+        // Test the detection on a few cells
+        async function runDetectionValidation() {
+            const cells = Array.from(document.querySelectorAll('.grid-cell')).slice(0, 3);
+            for (const cell of cells) {
+                await validateRoomDetection(cell);
+            }
+        }
+
+        // Run validation after grid is created
+        document.addEventListener('DOMContentLoaded', async () => {
+            // Wait a bit for grid to be ready
+            setTimeout(runDetectionValidation, 1000);
+        });
     </script>
     <!-- Include the bundled JavaScript file -->
     <script src="index.bundle.js"></script>
