@@ -1335,11 +1335,27 @@
                 <div class="settings-container">
                     <div class="settings-section">
                         <div class="settings-section-title">Mouse Text OCR</div>
-                        <div class="mouse-text-controls">
+                        <div class="settings-section-content">
                             <button id="start-mouse-ocr" class="btn" onclick="toggleMouseOCR()">Start Mouse OCR</button>
-                            <span id="mouse-ocr-status" class="status-text">Inactive</span>
+                            <span id="mouse-ocr-status" class="status-text mouse-ocr-inactive">Inactive</span>
+                            
+                            <!-- Add canvas displays for mouse OCR -->
+                            <div class="ocr-display-container" style="margin-top: 15px; display: flex; flex-direction: column; align-items: center;">
+                                <div style="margin-bottom: 10px; font-size: 14px; font-weight: bold;">OCR Capture Area</div>
+                                <canvas id="previewCanvas" width="250" height="35" style="border: 1px solid #40444b; background-color: #202225;"></canvas>
+                                <div style="margin: 10px 0; font-size: 14px; font-weight: bold;">OCR Result</div>
+                                <div id="mouse-text-result" style="min-height: 30px; padding: 8px; width: 90%; background-color: #202225; border: 1px solid #40444b; border-radius: 3px;">No text detected</div>
+                                <div style="margin-top: 15px; font-size: 12px; color: #999;">
+                                    Position your mouse over text in the game and activate OCR to capture.
+                                </div>
+                            </div>
+                            
+                            <!-- Hidden canvas elements -->
+                            <div style="display: none;">
+                                <canvas id="mouseTextCanvas" width="250" height="35"></canvas>
+                                <canvas id="croppedCanvas" width="250" height="35"></canvas>
+                            </div>
                         </div>
-                        <div id="mouse-text-viewport"></div>
                     </div>
                     <div class="settings-section">
                         <div class="settings-section-title">Locked Room OCR Test</div>
@@ -1602,6 +1618,9 @@
                 this.canvas = document.getElementById('mouseTextCanvas');
                 this.ctx = this.canvas.getContext('2d');
                 this.ctx.imageSmoothingEnabled = false;
+                this.previewCanvas = document.getElementById('previewCanvas');
+                this.previewCtx = this.previewCanvas.getContext('2d');
+                this.previewCtx.imageSmoothingEnabled = false;
                 this.cachedKey = null;  // Add cached key storage
                 this.startMouseTracking();
             }
@@ -1638,12 +1657,6 @@
             async readText() {
                 if (!this.isReading || !tesseractWorker || !window.alt1) return;
 
-                console.log('=== Key Detection Debug ===', {
-                    timestamp: new Date().toISOString(),
-                    previousCachedKey: this.cachedKey,
-                    lastRecognizedText: this.lastRecognizedText
-                });
-
                 try {
                     if (!window.alt1.permissionPixel) {
                         console.error('Pixel permission not enabled');
@@ -1658,13 +1671,7 @@
                     this.lastCaptureTime = now;
 
                     const region = this.getCaptureRegion();
-                    console.log('=== Mouse Text OCR Capture ===', {
-                        timestamp: new Date().toISOString(),
-                        region: region,
-                        mousePosition: this.lastMousePosition,
-                        captureInterval: now - this.lastCaptureTime
-                    });
-
+                    
                     let imgData = null;
 
                     try {
@@ -1686,6 +1693,11 @@
                     this.canvas.width = region.width;
                     this.canvas.height = region.height;
                     this.ctx.putImageData(imgData, 0, 0);
+                    
+                    // Update preview canvas
+                    this.previewCanvas.width = region.width;
+                    this.previewCanvas.height = region.height;
+                    this.previewCtx.putImageData(imgData, 0, 0);
 
                     // Set OCR parameters optimized for door text
                     await tesseractWorker.setParameters({
@@ -1702,12 +1714,17 @@
                     const recognizedText = result.data.text.trim();
                     this.lastRecognizedText = recognizedText;
 
-                    console.log('=== OCR Result ===', {
-                        timestamp: new Date().toISOString(),
-                        text: recognizedText,
-                        confidence: result.data.confidence,
-                        processingTime: endTime - startTime
-                    });
+                    // Update result display
+                    const resultDisplay = document.getElementById('mouse-text-result');
+                    if (resultDisplay) {
+                        resultDisplay.textContent = recognizedText || 'No text detected';
+                        if (recognizedText) {
+                            resultDisplay.innerHTML = `<span style="font-weight: bold;">Text:</span> ${recognizedText}<br><span style="font-size: 12px; color: #aaa;">Confidence: ${result.data.confidence.toFixed(2)}% | Time: ${(endTime - startTime).toFixed(0)}ms</span>`;
+                        } else {
+                            resultDisplay.textContent = 'No text detected';
+                        }
+                        this.updateCachedKeyDisplay();
+                    }
 
                     // Check for door unlock text pattern
                     const keyMatch = recognizedText.match(/Unlock\s+(\w+)\s+(\w+)\s+door/i);
@@ -1747,13 +1764,6 @@
                                 this.updateCachedKeyDisplay();
                             }
                         }
-                    }
-
-                    // Update result display
-                    const resultDisplay = document.getElementById('mouse-text-result');
-                    if (resultDisplay) {
-                        resultDisplay.textContent = recognizedText || 'No text detected';
-                        this.updateCachedKeyDisplay();
                     }
 
                 } catch (error) {
@@ -2734,16 +2744,16 @@
             
             try {
                 const pos = alt1.mousePosition;
-                console.log("Raw Alt1 mouse position:", pos);
+                // console.log("Raw Alt1 mouse position:", pos);
                 
                 if (pos === -1) {
-                    console.log("Invalid mouse position (-1)");
+                    // console.log("Invalid mouse position (-1)");
                     return null;
                 }
                 
                 const x = pos >>> 16;
                 const y = pos & 0xFFFF;
-                console.log("Decoded mouse position:", { x, y });
+                // console.log("Decoded mouse position:", { x, y });
                 
                 return {
                     x: x,
@@ -4781,6 +4791,84 @@ Processed Image (for debugging):`;
                     }
                 } catch (error) {
                     console.error(`Error checking cell (${coords.row}, ${coords.col}):`, error);
+                }
+            }
+        }
+
+        // Add function to toggle mouse OCR
+        async function toggleMouseOCR() {
+            console.log('=== Toggle Mouse OCR ===');
+            
+            // Get the status element and button
+            const statusElement = document.getElementById('mouse-ocr-status');
+            const button = document.getElementById('start-mouse-ocr');
+            
+            // Set status to loading
+            statusElement.textContent = 'Loading...';
+            
+            // Ensure Tesseract worker is initialized
+            if (!tesseractWorker) {
+                try {
+                    await initTesseractWorker();
+                    console.log('Tesseract worker initialized');
+                } catch (e) {
+                    console.error('Failed to initialize Tesseract worker:', e);
+                    statusElement.textContent = 'Error: ' + e.message;
+                    button.textContent = 'Retry Mouse OCR';
+                    return;
+                }
+            }
+            
+            // Ensure the canvas elements exist
+            let mouseTextCanvas = document.getElementById('mouseTextCanvas');
+            if (!mouseTextCanvas) {
+                // Create the canvas if it doesn't exist
+                mouseTextCanvas = document.createElement('canvas');
+                mouseTextCanvas.id = 'mouseTextCanvas';
+                mouseTextCanvas.width = 250;
+                mouseTextCanvas.height = 35;
+                mouseTextCanvas.style.display = 'none';
+                document.body.appendChild(mouseTextCanvas);
+                console.log('Created mouseTextCanvas element');
+            }
+            
+            // Make sure the OCR display container is visible
+            const ocrDisplayContainer = document.querySelector('.ocr-display-container');
+            if (ocrDisplayContainer) {
+                ocrDisplayContainer.style.display = 'flex';
+            }
+
+            // If we already have a reader instance
+            if (window.reader) {
+                if (window.reader.isReading) {
+                    // Stop reading if active
+                    console.log('Stopping mouse OCR');
+                    window.reader.stopReading();
+                    statusElement.textContent = 'Inactive';
+                    statusElement.className = 'status-text mouse-ocr-inactive';
+                    button.textContent = 'Start Mouse OCR';
+                } else {
+                    // Start reading if inactive
+                    console.log('Starting mouse OCR');
+                    window.reader.startReading();
+                    statusElement.textContent = 'Active';
+                    statusElement.className = 'status-text mouse-ocr-active';
+                    button.textContent = 'Stop Mouse OCR';
+                }
+            } else {
+                // Initialize a new reader using our built-in DoorTextReader class
+                console.log('Initializing new DoorTextReader');
+                try {
+                    window.reader = new DoorTextReader();
+                    window.reader.startReading();
+                    statusElement.textContent = 'Active';
+                    statusElement.className = 'status-text mouse-ocr-active';
+                    button.textContent = 'Stop Mouse OCR';
+                    console.log('Mouse OCR initialized successfully');
+                } catch (e) {
+                    console.error('Failed to initialize Mouse OCR:', e);
+                    statusElement.textContent = 'Error: ' + e.message;
+                    button.textContent = 'Retry Mouse OCR';
                 }
             }
         }
