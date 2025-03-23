@@ -2483,27 +2483,48 @@
         }
         
         // Function to apply a key image to the active cell
-        function applyKeyToCell(color, shape) {
+        async function applyKeyToCell(color, shape) {
             if (!activeCell || !color || !shape || color === 'none' || shape === 'none') return;
             
-            // Remove any existing image
-            const existingImg = activeCell.querySelector('img');
-            if (existingImg) {
-                activeCell.removeChild(existingImg);
+            try {
+                // Check if the cell is locked before applying PNG
+                const isLocked = await checkForLockedRoom(activeCell);
+                
+                if (isLocked) {
+                    // Remove any existing image
+                    const existingImg = activeCell.querySelector('img');
+                    if (existingImg) {
+                        activeCell.removeChild(existingImg);
+                    }
+                    
+                    // Store the color and shape as data attributes
+                    activeCell.dataset.color = color;
+                    activeCell.dataset.shape = shape;
+                    
+                    // Add the key image
+                    const img = document.createElement('img');
+                    img.src = `../assets/keys/${color}_${shape}_key.png`;
+                    img.alt = `${color} ${shape} key`;
+                    activeCell.appendChild(img);
+                    
+                    // Mark cell as locked
+                    activeCell.dataset.locked = 'true';
+                    
+                    // Add to tracking and start monitoring
+                    lockedRoomsWithPNGs.add(activeCell);
+                    const coords = getCellCoordinates(activeCell);
+                    console.log(`Added cell (${coords.row}, ${coords.col}) to locked rooms tracking`);
+                    console.log(`Currently tracking ${lockedRoomsWithPNGs.size} locked room(s)`);
+                    startMonitoring();
+                    
+                    // Save the cell state
+                    saveCellState(activeCell);
+                } else {
+                    console.log('Cannot apply key PNG - room is not locked');
+                }
+            } catch (error) {
+                console.error('Error applying key to cell:', error);
             }
-            
-            // Store the color and shape as data attributes
-            activeCell.dataset.color = color;
-            activeCell.dataset.shape = shape;
-            
-            // Add the key image
-            const img = document.createElement('img');
-            img.src = `../assets/keys/${color}_${shape}_key.png`;
-            img.alt = `${color} ${shape} key`;
-            activeCell.appendChild(img);
-            
-            // Save the cell state
-            saveCellState(activeCell);
         }
         
         // Function to save the state of a cell
@@ -4329,43 +4350,29 @@ Processed Image (for debugging):`;
             }
         }
 
-        // Track locked rooms with PNGs and monitoring functionality
+        // Track locked rooms with PNGs
         let lockedRoomsWithPNGs = new Set();
         let monitorInterval = null;
 
-        // Function to get room details
-        function getRoomDetails(cell) {
-            const img = cell.querySelector('img');
-            return {
-                position: {
-                    x: cell.dataset.x,
-                    y: cell.dataset.y
-                },
-                pngInfo: img ? {
-                    src: img.src,
-                    filename: img.src.split('/').pop()
-                } : null,
-                cellId: cell.id || 'unknown'
-            };
-        }
-
-        // Function to remove PNG from cell
+        // Function to remove PNG from cell and clean up tracking
         function removePNGFromCell(cell) {
+            const coords = getCellCoordinates(cell);
             const img = cell.querySelector('img');
             if (img) {
-                const details = getRoomDetails(cell);
+                console.log(`Removing PNG from cell (${coords.row}, ${coords.col})`);
                 cell.removeChild(img);
-                console.log('Removed PNG from unlocked room:', details);
             }
+            
             // Remove from tracking
             lockedRoomsWithPNGs.delete(cell);
-            // Clear any associated data
+            
+            // Clear cell data
             delete cell.dataset.locked;
             delete cell.dataset.color;
             delete cell.dataset.shape;
             saveCellState(cell);
-            
-            // Stop monitoring if no more locked rooms
+
+            // If no more locked rooms to track, stop monitoring
             if (lockedRoomsWithPNGs.size === 0) {
                 stopMonitoring();
             }
@@ -4378,43 +4385,51 @@ Processed Image (for debugging):`;
                 return;
             }
 
-            console.log('=== Checking locked rooms ===');
-            logTrackedRooms();
-            
+            // Log the current list of tracked rooms
+            console.log('=== Monitoring Locked Rooms ===');
+            console.log('Currently tracking these rooms:');
             for (const cell of lockedRoomsWithPNGs) {
-                const roomDetails = getRoomDetails(cell);
+                const coords = getCellCoordinates(cell);
+                console.log(`- Room at (${coords.row}, ${coords.col})`);
+            }
+            console.log('=============================');
+
+            // Initialize Tesseract if needed
+            if (!tesseractWorker) {
+                await initTesseractWorker();
+            }
+
+            for (const cell of lockedRoomsWithPNGs) {
+                const coords = getCellCoordinates(cell);
+                
                 // Skip if cell no longer has PNG
                 if (!cell.querySelector('img')) {
-                    console.log('Cell no longer has PNG, removing from tracking:', roomDetails);
+                    console.log(`Cell (${coords.row}, ${coords.col}) no longer has PNG, removing from tracking`);
                     lockedRoomsWithPNGs.delete(cell);
                     continue;
                 }
 
-                // Check if still locked
-                const isStillLocked = await checkForLockedRoom(cell);
-                console.log('Room check result:', {
-                    ...roomDetails,
-                    isStillLocked
-                });
-
-                // If no longer locked, remove PNG
-                if (!isStillLocked) {
-                    console.log('Room unlocked - removing PNG:', roomDetails);
-                    removePNGFromCell(cell);
+                try {
+                    // Use the exact same OCR check as the click handlers
+                    const isStillLocked = await checkForLockedRoom(cell);
+                    
+                    // Only remove PNG if room is confirmed not locked
+                    if (!isStillLocked) {
+                        console.log(`Room at (${coords.row}, ${coords.col}) is no longer locked - removing PNG`);
+                        removePNGFromCell(cell);
+                    }
+                } catch (error) {
+                    console.error(`Error checking cell (${coords.row}, ${coords.col}):`, error);
                 }
             }
-            console.log('=== Check complete ===');
         }
 
         // Start monitoring when first locked room is added
         function startMonitoring() {
             if (!monitorInterval) {
                 console.log('Starting locked rooms monitor');
-                monitorInterval = setInterval(() => {
-                    console.log('Monitor interval tick');
-                    monitorLockedRooms();
-                }, 2000);
-                // Immediate first check
+                monitorInterval = setInterval(monitorLockedRooms, 2000);
+                // Run immediate first check
                 monitorLockedRooms();
             }
         }
@@ -4435,33 +4450,26 @@ Processed Image (for debugging):`;
             }
         });
 
-        // Save the original click handler and enhance it with monitoring
-        const handleCellClickWithMonitoring = handleCellClick;
+        // Add monitoring to the click handler
+        const existingHandleCellClick = handleCellClick;
         handleCellClick = async function(event) {
             const cell = event.target.closest('.grid-cell');
             if (!cell) return;
 
             // Call original handler first
-            const result = await handleCellClickWithMonitoring.call(this, event);
+            const result = await existingHandleCellClick.call(this, event);
 
-            try {
-                // After original handler completes, check if room is locked
-                const isLocked = await checkForLockedRoom(cell);
-                const position = { x: cell.dataset.x, y: cell.dataset.y };
-                
-                // Clear locked/not locked status message
-                console.log(`Clicked Cell (${position.x}, ${position.y}) is ${isLocked ? 'LOCKED' : 'NOT LOCKED'}`);
+            // After original handler completes, check if room is locked
+            const isLocked = await checkForLockedRoom(cell);
+            const coords = getCellCoordinates(cell);
 
-                // If cell has PNG and is locked, add to tracking
-                if (cell.querySelector('img') && isLocked) {
-                    cell.dataset.locked = 'true';
-                    lockedRoomsWithPNGs.add(cell);
-                    console.log(`Added cell (${position.x}, ${position.y}) to locked rooms tracking`);
-                    logTrackedRooms();
-                    startMonitoring();
-                }
-            } catch (error) {
-                console.error('Error in monitoring code:', error);
+            // If cell has PNG and is locked, add to tracking
+            if (cell.querySelector('img') && isLocked) {
+                cell.dataset.locked = 'true';
+                lockedRoomsWithPNGs.add(cell);
+                console.log(`Added cell (${coords.row}, ${coords.col}) to locked rooms tracking`);
+                console.log(`Currently tracking ${lockedRoomsWithPNGs.size} locked room(s)`);
+                startMonitoring();
             }
 
             return result;
@@ -4540,6 +4548,110 @@ Processed Image (for debugging):`;
             // Wait a bit for grid to be ready
             setTimeout(runDetectionValidation, 1000);
         });
+
+        // Handle shape menu click
+        async function handleShapeMenuClick(event) {
+            const shape = event.target.dataset.shape;
+            if (!shape) return;
+
+            const cell = document.querySelector('.active-cell');
+            if (!cell) return;
+
+            try {
+                // Check if the cell is locked before applying PNG
+                const isLocked = await checkForLockedRoom(cell);
+                
+                if (isLocked) {
+                    // Get the selected color from the cell's dataset
+                    const color = cell.dataset.color;
+                    if (!color) {
+                        console.error('No color selected');
+                        return;
+                    }
+
+                    // Create and apply the PNG
+                    const img = document.createElement('img');
+                    img.src = `images/keys/${color}-${shape}-key.png`;
+                    
+                    // Remove any existing PNG
+                    const existingImg = cell.querySelector('img');
+                    if (existingImg) {
+                        cell.removeChild(existingImg);
+                    }
+                    
+                    // Add the new PNG
+                    cell.appendChild(img);
+                    
+                    // Save shape to cell data
+                    cell.dataset.shape = shape;
+                    
+                    // Mark cell as locked
+                    cell.dataset.locked = 'true';
+                    
+                    // Add to tracking and start monitoring
+                    lockedRoomsWithPNGs.add(cell);
+                    console.log(`Added cell (${getCellCoordinates(cell).row}, ${getCellCoordinates(cell).col}) to locked rooms tracking`);
+                    console.log(`Currently tracking ${lockedRoomsWithPNGs.size} locked room(s)`);
+                    startMonitoring();
+                    
+                    // Save the cell state
+                    saveCellState(cell);
+                } else {
+                    console.log('Cannot apply key PNG - room is not locked');
+                }
+            } catch (error) {
+                console.error('Error in shape menu handler:', error);
+            }
+
+            // Hide the shape menu
+            hideAllMenus();
+        }
+
+        // Function to monitor locked rooms
+        async function monitorLockedRooms() {
+            if (lockedRoomsWithPNGs.size === 0) {
+                stopMonitoring();
+                return;
+            }
+
+            // Log the current list of tracked rooms
+            console.log('=== Monitoring Locked Rooms ===');
+            console.log('Currently tracking these rooms:');
+            for (const cell of lockedRoomsWithPNGs) {
+                const coords = getCellCoordinates(cell);
+                console.log(`- Room at (${coords.row}, ${coords.col})`);
+            }
+            console.log('=============================');
+
+            // Initialize Tesseract if needed
+            if (!tesseractWorker) {
+                await initTesseractWorker();
+            }
+
+            for (const cell of lockedRoomsWithPNGs) {
+                const coords = getCellCoordinates(cell);
+                
+                // Skip if cell no longer has PNG
+                if (!cell.querySelector('img')) {
+                    console.log(`Cell (${coords.row}, ${coords.col}) no longer has PNG, removing from tracking`);
+                    lockedRoomsWithPNGs.delete(cell);
+                    continue;
+                }
+
+                try {
+                    // Use the exact same OCR check as the click handlers
+                    const isStillLocked = await checkForLockedRoom(cell);
+                    
+                    // Only remove PNG if room is confirmed not locked
+                    if (!isStillLocked) {
+                        console.log(`Room at (${coords.row}, ${coords.col}) is no longer locked - removing PNG`);
+                        removePNGFromCell(cell);
+                    }
+                } catch (error) {
+                    console.error(`Error checking cell (${coords.row}, ${coords.col}):`, error);
+                }
+            }
+        }
     </script>
     <!-- Include the bundled JavaScript file -->
     <script src="index.bundle.js"></script>
