@@ -3642,31 +3642,96 @@ Processed Image (for debugging):`;
         }
 
         // Add new functions for blocked room and skill tiers
-        function addBlockedRoom() {
+        async function addBlockedRoom() {
             if (!activeCell) {
-                console.log("No active cell to add blocked room to");
+                console.log("No active cell to block");
                 return;
             }
             
             console.log("Adding blocked room to cell:", activeCell);
             
-            // Remove any existing image and text
-            clearCellContent(activeCell);
-            
-            // Add the blocked room image
-            const img = document.createElement('img');
-            img.src = '../assets/rooms/blocked_room.png';
-            img.alt = 'Blocked Room';
-            activeCell.appendChild(img);
-            
-            // Set blocked room data attribute
-            activeCell.dataset.blocked = 'true';
-            
-            // Save the cell state
-            saveCellState(activeCell);
+            try {
+                // Check if the cell is locked before applying blocked room
+                const isLocked = await checkForLockedRoom(activeCell);
+                
+                if (isLocked) {
+                    // Remove any existing image and text
+                    clearCellContent(activeCell);
+                    
+                    // Add the blocked room image
+                    const img = document.createElement('img');
+                    img.src = '../assets/rooms/blocked_room.png';
+                    img.alt = 'Blocked Room';
+                    activeCell.appendChild(img);
+                    
+                    // Set blocked room data attribute
+                    activeCell.dataset.blocked = 'true';
+                    activeCell.dataset.locked = 'true';
+                    
+                    // Add to tracking and start monitoring
+                    lockedRoomsWithPNGs.add(activeCell);
+                    const coords = getCellCoordinates(activeCell);
+                    console.log(`Added blocked room (${coords.row}, ${coords.col}) to locked rooms tracking`);
+                    console.log(`Currently tracking ${lockedRoomsWithPNGs.size} locked room(s)`);
+                    startMonitoring();
+                    
+                    // Save the cell state
+                    saveCellState(activeCell);
+                } else {
+                    console.log('Cannot add blocked room - room is not locked');
+                }
+            } catch (error) {
+                console.error('Error adding blocked room:', error);
+            }
             
             // Hide the cell menu
             hideCellMenu();
+        }
+
+        async function addSkillTier(tier) {
+            if (!activeCell) {
+                console.log("No active cell to add skill tier to");
+                return;
+            }
+
+            console.log(`Adding skill tier T${tier} to cell:`, activeCell);
+
+            try {
+                // Check if the cell is locked before applying skill tier
+                const isLocked = await checkForLockedRoom(activeCell);
+                
+                if (isLocked) {
+                    // Remove any existing content
+                    clearCellContent(activeCell);
+
+                    // Create and add the skill tier text
+                    const tierText = document.createElement('div');
+                    tierText.className = 'skill-tier';
+                    tierText.textContent = `T${tier}`;
+                    activeCell.appendChild(tierText);
+
+                    // Set skill tier data attribute
+                    activeCell.dataset.skillTier = tier;
+                    activeCell.dataset.locked = 'true';
+                    
+                    // Add to tracking and start monitoring
+                    lockedRoomsWithPNGs.add(activeCell);
+                    const coords = getCellCoordinates(activeCell);
+                    console.log(`Added skill tier room (${coords.row}, ${coords.col}) to locked rooms tracking`);
+                    console.log(`Currently tracking ${lockedRoomsWithPNGs.size} locked room(s)`);
+                    startMonitoring();
+
+                    // Save the cell state
+                    saveCellState(activeCell);
+                } else {
+                    console.log('Cannot add skill tier - room is not locked');
+                }
+            } catch (error) {
+                console.error('Error adding skill tier:', error);
+            }
+
+            // Hide the skill tier menu
+            hideSkillTierMenu();
         }
 
         function showSkillTierMenu() {
@@ -3725,33 +3790,6 @@ Processed Image (for debugging):`;
                 skillTierMenu.classList.remove('visible');
             }
             document.removeEventListener('click', hideSkillTierMenu);
-        }
-
-        function addSkillTier(tier) {
-            if (!activeCell) {
-                console.log("No active cell to add skill tier to");
-                return;
-            }
-
-            console.log(`Adding skill tier T${tier} to cell:`, activeCell);
-
-            // Remove any existing content
-            clearCellContent(activeCell);
-
-            // Create and add the skill tier text
-            const tierText = document.createElement('div');
-            tierText.className = 'skill-tier';
-            tierText.textContent = `T${tier}`;
-            activeCell.appendChild(tierText);
-
-            // Set skill tier data attribute
-            activeCell.dataset.skillTier = tier;
-
-            // Save the cell state
-            saveCellState(activeCell);
-
-            // Hide the skill tier menu
-            hideSkillTierMenu();
         }
 
         function clearCellContent(cell) {
@@ -4646,6 +4684,87 @@ Processed Image (for debugging):`;
                     if (!isStillLocked) {
                         console.log(`Room at (${coords.row}, ${coords.col}) is no longer locked - removing PNG`);
                         removePNGFromCell(cell);
+                    }
+                } catch (error) {
+                    console.error(`Error checking cell (${coords.row}, ${coords.col}):`, error);
+                }
+            }
+        }
+
+        // Function to remove overlay (PNG or text) from cell and clean up tracking
+        function removeOverlayFromCell(cell) {
+            const coords = getCellCoordinates(cell);
+            
+            // Remove PNG if exists
+            const img = cell.querySelector('img');
+            if (img) {
+                console.log(`Removing PNG from cell (${coords.row}, ${coords.col})`);
+                cell.removeChild(img);
+            }
+            
+            // Remove skill tier text if exists
+            const skillTier = cell.querySelector('.skill-tier');
+            if (skillTier) {
+                console.log(`Removing skill tier from cell (${coords.row}, ${coords.col})`);
+                cell.removeChild(skillTier);
+            }
+            
+            // Remove from tracking
+            lockedRoomsWithPNGs.delete(cell);
+            
+            // Clear cell data
+            delete cell.dataset.locked;
+            delete cell.dataset.color;
+            delete cell.dataset.shape;
+            delete cell.dataset.skillTier;
+            saveCellState(cell);
+
+            // If no more locked rooms to track, stop monitoring
+            if (lockedRoomsWithPNGs.size === 0) {
+                stopMonitoring();
+            }
+        }
+
+        // Function to monitor locked rooms
+        async function monitorLockedRooms() {
+            if (lockedRoomsWithPNGs.size === 0) {
+                stopMonitoring();
+                return;
+            }
+
+            // Log the current list of tracked rooms
+            console.log('=== Monitoring Locked Rooms ===');
+            console.log('Currently tracking these rooms:');
+            for (const cell of lockedRoomsWithPNGs) {
+                const coords = getCellCoordinates(cell);
+                console.log(`- Room at (${coords.row}, ${coords.col})`);
+            }
+            console.log('=============================');
+
+            // Initialize Tesseract if needed
+            if (!tesseractWorker) {
+                await initTesseractWorker();
+            }
+
+            for (const cell of lockedRoomsWithPNGs) {
+                const coords = getCellCoordinates(cell);
+                
+                // Check if cell still has either a PNG or skill tier text
+                const hasOverlay = cell.querySelector('img') || cell.querySelector('.skill-tier');
+                if (!hasOverlay) {
+                    console.log(`Cell (${coords.row}, ${coords.col}) no longer has overlay, removing from tracking`);
+                    lockedRoomsWithPNGs.delete(cell);
+                    continue;
+                }
+
+                try {
+                    // Use the exact same OCR check as the click handlers
+                    const isStillLocked = await checkForLockedRoom(cell);
+                    
+                    // Only remove overlay if room is confirmed not locked
+                    if (!isStillLocked) {
+                        console.log(`Room at (${coords.row}, ${coords.col}) is no longer locked - removing overlay`);
+                        removeOverlayFromCell(cell);
                     }
                 } catch (error) {
                     console.error(`Error checking cell (${coords.row}, ${coords.col}):`, error);
