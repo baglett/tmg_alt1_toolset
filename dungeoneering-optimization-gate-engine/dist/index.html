@@ -228,24 +228,37 @@
         }
 
         .grid-cell {
-            border: 1px solid rgba(64, 68, 75, 0.8);
-            background-color: rgba(47, 49, 54, 0.4); /* More transparent background */
+            position: relative; /* For proper z-index stacking */
             width: 30px;
             height: 30px;
             box-sizing: border-box;
             margin: 0;
             padding: 0;
-            position: relative; /* For proper z-index stacking */
+            background: transparent; /* Make center fully transparent */
+            border: none; /* Remove default border */
+        }
+
+        /* Create border effect using pseudo-elements */
+        .grid-cell::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            border: 1px solid rgba(64, 68, 75, 0.8);
+            pointer-events: none; /* Allow clicks to pass through */
+            z-index: 2; /* Above background, below images */
         }
 
         /* Grid cell with key image */
         .grid-cell img {
-            width: 60%; /* Reduced from 100% */
-            height: 60%; /* Reduced from 100% */
+            width: 60%;
+            height: 60%;
             object-fit: contain;
             position: relative;
-            z-index: 3; /* Make sure images are above the background */
-            margin: 20%; /* Add margin to center the smaller image */
+            z-index: 3; /* Make sure images are above the border */
+            margin: 20%;
             filter: drop-shadow(0px 0px 1px black);
             image-rendering: pixelated;
         }
