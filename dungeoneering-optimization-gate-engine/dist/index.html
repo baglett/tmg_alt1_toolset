@@ -1701,8 +1701,8 @@
 
                     // Set OCR parameters optimized for door text
                     await tesseractWorker.setParameters({
-                        tessedit_char_whitelist: '?', // Only allow question mark
-                        tessedit_pageseg_mode: '10', // Treat as single character
+                        tessedit_char_whitelist: 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789 ?.-', // Allow all alphanumeric characters and spaces
+                        tessedit_pageseg_mode: '6', // Assume a single uniform block of text
                         tessjs_create_box: '1',
                         tessjs_create_unlv: '1',
                         tessedit_write_images: true
@@ -1713,16 +1713,22 @@
                     const endTime = performance.now();
                     const recognizedText = result.data.text.trim();
                     this.lastRecognizedText = recognizedText;
+                    
+                    console.log('OCR Result:', {
+                        text: recognizedText,
+                        confidence: result.data.confidence,
+                        time: endTime - startTime
+                    });
 
-                    // Update result display
+                    // Always update the result display first, regardless of whether it's a key or not
                     const resultDisplay = document.getElementById('mouse-text-result');
                     if (resultDisplay) {
-                        resultDisplay.textContent = recognizedText || 'No text detected';
                         if (recognizedText) {
                             resultDisplay.innerHTML = `<span style="font-weight: bold;">Text:</span> ${recognizedText}<br><span style="font-size: 12px; color: #aaa;">Confidence: ${result.data.confidence.toFixed(2)}% | Time: ${(endTime - startTime).toFixed(0)}ms</span>`;
                         } else {
-                            resultDisplay.textContent = 'No text detected';
+                            resultDisplay.innerHTML = 'No text detected';
                         }
+                        // Always call this to update or remove key info
                         this.updateCachedKeyDisplay();
                     }
 
@@ -1732,15 +1738,6 @@
                         const [_, color, shape] = keyMatch;
                         const normalizedColor = color.charAt(0).toUpperCase() + color.slice(1).toLowerCase();
                         const normalizedShape = shape.charAt(0).toUpperCase() + shape.slice(1).toLowerCase();
-
-                        console.log('=== Key Match Found ===', {
-                            timestamp: new Date().toISOString(),
-                            fullMatch: keyMatch[0],
-                            color: normalizedColor,
-                            shape: normalizedShape,
-                            isValidColor: this.isValidKeyColor(normalizedColor),
-                            isValidShape: this.isValidKeyShape(normalizedShape)
-                        });
 
                         if (this.isValidKeyColor(normalizedColor) && this.isValidKeyShape(normalizedShape)) {
                             const newKey = {
@@ -1754,12 +1751,6 @@
                                 this.cachedKey.color !== newKey.color || 
                                 this.cachedKey.shape !== newKey.shape) {
                                 
-                                console.log('=== Key Cache Updated ===', {
-                                    timestamp: new Date().toISOString(),
-                                    previousKey: this.cachedKey,
-                                    newKey: newKey
-                                });
-
                                 this.cachedKey = newKey;
                                 this.updateCachedKeyDisplay();
                             }
@@ -3623,15 +3614,16 @@
                 
                 // Set Tesseract parameters for better symbol detection
                 await tesseractWorker.setParameters({
-                    tessedit_char_whitelist: '?',
-                    tessedit_pageseg_mode: '10', // Treat image as single character
-                    tessedit_ocr_engine_mode: '2', // Use Legacy + LSTM mode
-                    tessjs_create_pdf: '0',
+                    tessedit_char_whitelist: 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789 ?.,-_\'\"', // Allow all game text characters
+                    tessedit_pageseg_mode: '7', // Treat as a single line of text
+                    tessjs_create_box: '1',
+                    tessjs_create_unlv: '1',
+                    tessedit_ocr_engine_mode: '3', // Use LSTM engine only
                     tessjs_create_hocr: '0',
                     tessjs_create_tsv: '0',
-                    tessjs_create_box: '0',
-                    tessjs_create_unlv: '0',
-                    tessjs_create_osd: '0'
+                    tessjs_create_box_hocr: '0',
+                    tessjs_create_alto: '0',
+                    tessjs_create_wordstrbox: '0'
                 });
                 
                 // Perform OCR
@@ -4291,15 +4283,16 @@ Processed Image (for debugging):`;
                 
                 // Set optimal parameters for symbol detection
                 await tesseractWorker.setParameters({
-                    tessedit_char_whitelist: '?',
-                    tessedit_pageseg_mode: '10',
-                    tessedit_ocr_engine_mode: '2',
-                    tessjs_create_pdf: '0',
+                    tessedit_char_whitelist: 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789 ?.,-_\'\"', // Allow all game text characters
+                    tessedit_pageseg_mode: '7', // Treat as a single line of text
+                    tessjs_create_box: '1',
+                    tessjs_create_unlv: '1',
+                    tessedit_ocr_engine_mode: '3', // Use LSTM engine only
                     tessjs_create_hocr: '0',
                     tessjs_create_tsv: '0',
-                    tessjs_create_box: '0',
-                    tessjs_create_unlv: '0',
-                    tessjs_create_osd: '0'
+                    tessjs_create_box_hocr: '0',
+                    tessjs_create_alto: '0',
+                    tessjs_create_wordstrbox: '0'
                 });
 
                 // Perform OCR
