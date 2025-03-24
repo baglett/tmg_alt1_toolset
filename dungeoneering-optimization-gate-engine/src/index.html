@@ -932,15 +932,31 @@
         .cached-key-option {
             padding: 8px;
             cursor: pointer;
-            background-color: #40444b;
-            border-radius: 2px;
-            font-size: 11px;
-            margin: 4px;
+            background-color: #2f3136;
+            border: 1px solid #5865f2;
+            border-radius: 4px;
+            font-size: 12px;
+            margin: 4px 0 8px 0;
             display: none;
+            transition: all 0.2s ease;
+        }
+
+        .cached-key-highlight {
+            animation: keyPulse 2s infinite;
+            border-color: #4CAF50;
+            background-color: rgba(76, 175, 80, 0.1);
+        }
+
+        @keyframes keyPulse {
+            0% { box-shadow: 0 0 0 0 rgba(76, 175, 80, 0.4); }
+            70% { box-shadow: 0 0 0 6px rgba(76, 175, 80, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(76, 175, 80, 0); }
         }
 
         .cached-key-option:hover {
             background-color: #5865f2;
+            transform: translateY(-1px);
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
         }
 
         .cached-key-preview {
@@ -950,14 +966,14 @@
         }
 
         .cached-key-preview img {
-            width: 20px;
-            height: 20px;
+            width: 24px;
+            height: 24px;
             object-fit: contain;
         }
 
         .cached-key-preview span {
-            color: #4CAF50;
             font-weight: bold;
+            color: #ffffff;
         }
 
         /* Add Alt1 installation section styles */
@@ -3382,11 +3398,25 @@
                     hasBlockedRoom: !!cell.querySelector('img[src*="blocked_room.png"]'),
                     hasSkillTier: !!cell.querySelector('.skill-tier')
                 },
-                cachedKey: doorTextReader?.cachedKey ? {
-                    color: doorTextReader.cachedKey.color,
-                    shape: doorTextReader.cachedKey.shape,
-                    timestamp: doorTextReader.cachedKey.timestamp
-                } : null
+                doorTextReaderState: doorTextReader ? {
+                    isDefined: true,
+                    hasCachedKey: !!doorTextReader.cachedKey,
+                    cachedKey: doorTextReader.cachedKey ? {
+                        color: doorTextReader.cachedKey.color,
+                        shape: doorTextReader.cachedKey.shape,
+                        timestamp: doorTextReader.cachedKey.timestamp
+                    } : null
+                } : { isDefined: false },
+                windowReaderState: window.reader ? {
+                    isDefined: true,
+                    hasCachedKey: !!window.reader.cachedKey,
+                    cachedKey: window.reader.cachedKey ? {
+                        color: window.reader.cachedKey.color,
+                        shape: window.reader.cachedKey.shape,
+                        timestamp: window.reader.cachedKey.timestamp
+                    } : null
+                } : { isDefined: false },
+                readersAreSame: doorTextReader === window.reader
             });
 
             // Validate cell has a room before proceeding
@@ -3436,19 +3466,42 @@
             };
 
             // Update cached key option if available
-            if (isLocked && doorTextReader?.cachedKey && menuSections.cachedKeyOption) {
-                const keyFile = `${doorTextReader.cachedKey.color}_${doorTextReader.cachedKey.shape}_key.png`;
+            const cachedKey = doorTextReader?.cachedKey || window.reader?.cachedKey;
+            
+            if (isLocked && cachedKey && menuSections.cachedKeyOption) {
+                // Sync the readers if needed
+                if (doorTextReader?.cachedKey && !window.reader?.cachedKey) {
+                    if (!window.reader) window.reader = doorTextReader;
+                    else window.reader.cachedKey = doorTextReader.cachedKey;
+                    console.log('Synced window.reader with doorTextReader cached key');
+                } else if (!doorTextReader?.cachedKey && window.reader?.cachedKey) {
+                    if (!doorTextReader) doorTextReader = window.reader;
+                    else doorTextReader.cachedKey = window.reader.cachedKey;
+                    console.log('Synced doorTextReader with window.reader cached key');
+                }
+                
+                const keyFile = `${cachedKey.color}_${cachedKey.shape}_key.png`;
                 const keyPreview = menuSections.cachedKeyOption.querySelector('.cached-key-preview');
                 
                 if (keyPreview) {
                     keyPreview.innerHTML = `
-                        <img src="../assets/keys/${keyFile}" alt="${doorTextReader.cachedKey.color} ${doorTextReader.cachedKey.shape} key">
-                        <span>Apply ${doorTextReader.cachedKey.color} ${doorTextReader.cackedKey.shape} Key</span>
+                        <img src="../assets/keys/${keyFile}" alt="${cachedKey.color} ${cachedKey.shape} key">
+                        <span>Apply ${cachedKey.color} ${cachedKey.shape} Key</span>
                     `;
                 }
                 menuSections.cachedKeyOption.style.display = 'block';
+                
+                // Add special highlight for cached key
+                menuSections.cachedKeyOption.classList.add('cached-key-highlight');
+                
+                // Move the cached key option to the top
+                const parentNode = menuSections.cachedKeyOption.parentNode;
+                if (parentNode && parentNode.firstChild !== menuSections.cachedKeyOption) {
+                    parentNode.insertBefore(menuSections.cachedKeyOption, parentNode.firstChild);
+                }
             } else if (menuSections.cachedKeyOption) {
                 menuSections.cachedKeyOption.style.display = 'none';
+                menuSections.cachedKeyOption.classList.remove('cached-key-highlight');
             }
 
             // Show/hide other options
@@ -4091,15 +4144,18 @@ Processed Image (for debugging):`;
 
         // Function to apply cached key
         function applyCachedKey() {
-            if (!activeCell || !doorTextReader?.cachedKey) {
+            const cachedKey = doorTextReader?.cachedKey || window.reader?.cachedKey;
+            
+            if (!activeCell || !cachedKey) {
                 console.log("=== Apply Cached Key Failed ===", {
                     hasActiveCell: !!activeCell,
-                    hasCachedKey: !!doorTextReader?.cachedKey
+                    hasDoorTextReaderKey: !!doorTextReader?.cachedKey,
+                    hasWindowReaderKey: !!window.reader?.cachedKey
                 });
                 return;
             }
 
-            const { color, shape } = doorTextReader.cachedKey;
+            const { color, shape } = cachedKey;
             
             console.log("=== Applying Cached Key ===", {
                 timestamp: new Date().toISOString(),
@@ -4111,7 +4167,8 @@ Processed Image (for debugging):`;
                     color,
                     shape,
                     keyFile: `${color}_${shape}_key.png`
-                }
+                },
+                source: doorTextReader?.cachedKey ? "doorTextReader" : "window.reader"
             });
 
             // Apply the key while maintaining the cache
@@ -4120,10 +4177,23 @@ Processed Image (for debugging):`;
             // Hide the menu but don't clear the cache
             hideCellMenu();
 
+            // Ensure both reader instances are synced
+            if (doorTextReader && window.reader && doorTextReader !== window.reader) {
+                if (doorTextReader.cachedKey && !window.reader.cachedKey) {
+                    window.reader.cachedKey = doorTextReader.cachedKey;
+                } else if (!doorTextReader.cachedKey && window.reader.cachedKey) {
+                    doorTextReader.cachedKey = window.reader.cachedKey;
+                }
+            }
+
             console.log("=== Cached Key Status ===", {
                 timestamp: new Date().toISOString(),
-                cachedKey: doorTextReader?.cachedKey,
-                isCacheMaintained: !!(doorTextReader?.cachedKey?.color === color && doorTextReader?.cachedKey?.shape === shape)
+                doorTextReaderKey: doorTextReader?.cachedKey,
+                windowReaderKey: window.reader?.cachedKey,
+                isCacheMaintained: !!(
+                    (doorTextReader?.cachedKey?.color === color && doorTextReader?.cachedKey?.shape === shape) || 
+                    (window.reader?.cachedKey?.color === color && window.reader?.cachedKey?.shape === shape)
+                )
             });
         }
 
@@ -4833,6 +4903,12 @@ Processed Image (for debugging):`;
 
             // If we already have a reader instance
             if (window.reader) {
+                // Ensure doorTextReader and window.reader are the same
+                if (!doorTextReader) {
+                    doorTextReader = window.reader;
+                    console.log('Synced doorTextReader with window.reader');
+                }
+                
                 if (window.reader.isReading) {
                     // Stop reading if active
                     console.log('Stopping mouse OCR');
@@ -4853,6 +4929,10 @@ Processed Image (for debugging):`;
                 console.log('Initializing new DoorTextReader');
                 try {
                     window.reader = new DoorTextReader();
+                    // Ensure doorTextReader and window.reader are the same
+                    doorTextReader = window.reader;
+                    console.log('Set doorTextReader to new instance');
+                    
                     window.reader.startReading();
                     statusElement.textContent = 'Active';
                     statusElement.className = 'status-text mouse-ocr-active';
