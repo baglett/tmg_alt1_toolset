@@ -1,6 +1,7 @@
 {
     "appName": "Dungeoneering Gate Engine",
     "description": "Dungeoneering gate text reader and map tracker",
+    "version": "1.0.0",
     "appUrl": "./index.html",
     "configUrl": "./appconfig.json",
     "iconUrl": "./icon.png",

@@ -1310,6 +1310,8 @@
                     <div class="settings-header">
                         <span class="status-text">Alt1:</span>
                         <div id="output"></div>
+                        <div id="alt1-status-indicator"></div>
+                        <button id="update-app-button" class="btn secondary" onclick="updateApp()" style="margin-top: 5px;">Update App</button>
                     </div>
 
                     <!-- Stacked Controls -->
@@ -1994,6 +1996,31 @@
                 statusIndicatorDiv.innerHTML = `
                     <div class="status-item"><span class="status-label">Alt1:</span> <span class="status-value status-error">Not Detected</span></div>
                 `;
+            }
+        }
+
+        // Function to update the app
+        function updateApp() {
+            if (window.alt1) {
+                // Re-identify the app with Alt1 to check for updates
+                alt1.identifyAppUrl("./appconfig.json");
+
+                // Show feedback to user
+                const updateButton = document.getElementById('update-app-button');
+                const originalText = updateButton.textContent;
+                updateButton.textContent = 'Checking...';
+                updateButton.disabled = true;
+
+                // Reset button after a short delay
+                setTimeout(() => {
+                    updateButton.textContent = originalText;
+                    updateButton.disabled = false;
+
+                    // Re-run the status update
+                    setupAlt1();
+                }, 2000);
+            } else {
+                alert('Alt1 not detected. Please install Alt1 first.');
             }
         }
 
