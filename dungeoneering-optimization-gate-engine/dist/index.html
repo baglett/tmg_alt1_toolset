@@ -1524,36 +1524,22 @@
 </head>
 <body>
     <div class="container">
-        <!-- Navigation -->
-        <div class="sidebar" id="sidebar">
-            <ul class="nav-list">
-                <li class="nav-item" data-view="map-view" onclick="showView('map-view', this)" title="Dungeon Map">
-                    <div class="nav-icon">MAP</div>
-                    <div class="nav-label">Map</div>
-                </li>
-                <li class="nav-item active" data-view="settings-view" onclick="showView('settings-view', this)" title="Settings & Status">
-                    <div class="nav-icon">SET</div>
-                    <div class="nav-label">Setup</div>
-                </li>
-                <li class="nav-item" data-view="ocr-view" onclick="showView('ocr-view', this)" title="Text Recognition">
-                    <div class="nav-icon">OCR</div>
-                    <div class="nav-label">Text</div>
-                </li>
-            </ul>
-        </div>
-        
-        <!-- Content Views -->
-        <div class="content">
-            <!-- Map View -->
-            <div class="view" id="map-view">
-                <div class="map-container-wrapper">
-                    <!-- Map Container -->
-                    <div class="map-wrapper">
-                        <div id="map-container" class="map-container small">
-                            <canvas id="mapBackgroundCanvas" class="map-background"></canvas>
-                            <div id="map-grid" class="map-grid small"></div>
-                        </div>
-                    </div>
+        <!-- Primary Map Interface -->
+        <div class="main-content">
+            <!-- Map Header with Controls -->
+            <div class="map-header">
+                <h3>Dungeon Map</h3>
+                <div class="header-controls">
+                    <button class="btn icon-btn" onclick="openSettingsModal()" title="Settings">⚙️</button>
+                    <button class="btn icon-btn" onclick="openOCRModal()" title="OCR Tools">🔍</button>
+                </div>
+            </div>
+
+            <!-- Map Container -->
+            <div class="map-wrapper">
+                <div id="map-container" class="map-container small">
+                    <canvas id="mapBackgroundCanvas" class="map-background"></canvas>
+                    <div id="map-grid" class="map-grid small"></div>
                 </div>
             </div>
             
