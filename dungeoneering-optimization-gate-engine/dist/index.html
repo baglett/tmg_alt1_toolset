@@ -175,20 +175,20 @@
 
         .map-container.medium {
             width: 128px;
-            height: 268px;
+            height: 250px;
             min-width: 128px;
-            min-height: 268px;
+            min-height: 250px;
             max-width: 128px;
-            max-height: 268px;
+            max-height: 250px;
         }
 
         .map-container.large {
-            width: 268px;
-            height: 268px;
-            min-width: 268px;
-            min-height: 268px;
-            max-width: 268px;
-            max-height: 268px;
+            width: 250px;
+            height: 250px;
+            min-width: 250px;
+            min-height: 250px;
+            max-width: 250px;
+            max-height: 250px;
         }
         
         /* Map background canvas */
@@ -223,19 +223,19 @@
         }
 
         .map-grid.large {
-            grid-template-columns: repeat(8, 33.5px);
-            grid-template-rows: repeat(8, 33.5px);
+            grid-template-columns: repeat(8, 31px);
+            grid-template-rows: repeat(8, 31px);
         }
 
         .grid-cell {
-            position: relative; /* For proper z-index stacking */
-            width: 30px;
-            height: 30px;
+            position: relative;
+            width: 100%;
+            height: 100%;
             box-sizing: border-box;
             margin: 0;
             padding: 0;
-            background: transparent; /* Make center fully transparent */
-            border: none; /* Remove default border */
+            background: transparent;
+            border: none;
         }
 
         /* Create border effect using pseudo-elements */
@@ -246,9 +246,9 @@
             left: 0;
             right: 0;
             bottom: 0;
-            border: 1px solid rgba(64, 68, 75, 0.8);
-            pointer-events: none; /* Allow clicks to pass through */
-            z-index: 2; /* Above background, below images */
+            outline: 1px solid rgba(64, 68, 75, 0.8); /* Use outline instead of border */
+            pointer-events: none;
+            z-index: 2;
         }
 
         /* Grid cell with key image */
@@ -932,15 +932,31 @@
         .cached-key-option {
             padding: 8px;
             cursor: pointer;
-            background-color: #40444b;
-            border-radius: 2px;
-            font-size: 11px;
-            margin: 4px;
+            background-color: #2f3136;
+            border: 1px solid #5865f2;
+            border-radius: 4px;
+            font-size: 12px;
+            margin: 4px 0 8px 0;
             display: none;
+            transition: all 0.2s ease;
+        }
+
+        .cached-key-highlight {
+            animation: keyPulse 2s infinite;
+            border-color: #4CAF50;
+            background-color: rgba(76, 175, 80, 0.1);
+        }
+
+        @keyframes keyPulse {
+            0% { box-shadow: 0 0 0 0 rgba(76, 175, 80, 0.4); }
+            70% { box-shadow: 0 0 0 6px rgba(76, 175, 80, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(76, 175, 80, 0); }
         }
 
         .cached-key-option:hover {
             background-color: #5865f2;
+            transform: translateY(-1px);
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
         }
 
         .cached-key-preview {
@@ -950,14 +966,14 @@
         }
 
         .cached-key-preview img {
-            width: 20px;
-            height: 20px;
+            width: 24px;
+            height: 24px;
             object-fit: contain;
         }
 
         .cached-key-preview span {
-            color: #4CAF50;
             font-weight: bold;
+            color: #ffffff;
         }
 
         /* Add Alt1 installation section styles */
@@ -1214,8 +1230,8 @@
 
         .capture-preview-container {
             position: relative;
-            width: 268px;
-            height: 268px;
+            width: 250px;
+            height: 250px;
             border: 1px solid rgba(79, 84, 92, 0.5);
             border-radius: 2px;
         }
@@ -1318,7 +1334,7 @@
                     <!-- Capture Preview with Controls -->
                     <div class="capture-preview-wrapper">
                         <div class="capture-preview-container">
-                            <canvas id="capturePreviewCanvas" width="268" height="268"></canvas>
+                            <canvas id="capturePreviewCanvas" width="250" height="250"></canvas>
                         </div>
                         <div class="arrow-controls">
                             <button class="arrow-btn up" onclick="adjustAnchorPoint(0, -1)">↑</button>
@@ -1335,11 +1351,27 @@
                 <div class="settings-container">
                     <div class="settings-section">
                         <div class="settings-section-title">Mouse Text OCR</div>
-                        <div class="mouse-text-controls">
+                        <div class="settings-section-content">
                             <button id="start-mouse-ocr" class="btn" onclick="toggleMouseOCR()">Start Mouse OCR</button>
-                            <span id="mouse-ocr-status" class="status-text">Inactive</span>
+                            <span id="mouse-ocr-status" class="status-text mouse-ocr-inactive">Inactive</span>
+                            
+                            <!-- Add canvas displays for mouse OCR -->
+                            <div class="ocr-display-container" style="margin-top: 15px; display: flex; flex-direction: column; align-items: center;">
+                                <div style="margin-bottom: 10px; font-size: 14px; font-weight: bold;">OCR Capture Area</div>
+                                <canvas id="previewCanvas" width="250" height="35" style="border: 1px solid #40444b; background-color: #202225;"></canvas>
+                                <div style="margin: 10px 0; font-size: 14px; font-weight: bold;">OCR Result</div>
+                                <div id="mouse-text-result" style="min-height: 30px; padding: 8px; width: 90%; background-color: #202225; border: 1px solid #40444b; border-radius: 3px;">No text detected</div>
+                                <div style="margin-top: 15px; font-size: 12px; color: #999;">
+                                    Position your mouse over text in the game and activate OCR to capture.
+                                </div>
+                            </div>
+                            
+                            <!-- Hidden canvas elements -->
+                            <div style="display: none;">
+                                <canvas id="mouseTextCanvas" width="250" height="35"></canvas>
+                                <canvas id="croppedCanvas" width="250" height="35"></canvas>
+                            </div>
                         </div>
-                        <div id="mouse-text-viewport"></div>
                     </div>
                     <div class="settings-section">
                         <div class="settings-section-title">Locked Room OCR Test</div>
@@ -1602,6 +1634,9 @@
                 this.canvas = document.getElementById('mouseTextCanvas');
                 this.ctx = this.canvas.getContext('2d');
                 this.ctx.imageSmoothingEnabled = false;
+                this.previewCanvas = document.getElementById('previewCanvas');
+                this.previewCtx = this.previewCanvas.getContext('2d');
+                this.previewCtx.imageSmoothingEnabled = false;
                 this.cachedKey = null;  // Add cached key storage
                 this.startMouseTracking();
             }
@@ -1638,12 +1673,6 @@
             async readText() {
                 if (!this.isReading || !tesseractWorker || !window.alt1) return;
 
-                console.log('=== Key Detection Debug ===', {
-                    timestamp: new Date().toISOString(),
-                    previousCachedKey: this.cachedKey,
-                    lastRecognizedText: this.lastRecognizedText
-                });
-
                 try {
                     if (!window.alt1.permissionPixel) {
                         console.error('Pixel permission not enabled');
@@ -1658,13 +1687,7 @@
                     this.lastCaptureTime = now;
 
                     const region = this.getCaptureRegion();
-                    console.log('=== Mouse Text OCR Capture ===', {
-                        timestamp: new Date().toISOString(),
-                        region: region,
-                        mousePosition: this.lastMousePosition,
-                        captureInterval: now - this.lastCaptureTime
-                    });
-
+                    
                     let imgData = null;
 
                     try {
@@ -1686,11 +1709,16 @@
                     this.canvas.width = region.width;
                     this.canvas.height = region.height;
                     this.ctx.putImageData(imgData, 0, 0);
+                    
+                    // Update preview canvas
+                    this.previewCanvas.width = region.width;
+                    this.previewCanvas.height = region.height;
+                    this.previewCtx.putImageData(imgData, 0, 0);
 
                     // Set OCR parameters optimized for door text
                     await tesseractWorker.setParameters({
-                        tessedit_char_whitelist: '?', // Only allow question mark
-                        tessedit_pageseg_mode: '10', // Treat as single character
+                        tessedit_char_whitelist: 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789 ?.-', // Allow all alphanumeric characters and spaces
+                        tessedit_pageseg_mode: '6', // Assume a single uniform block of text
                         tessjs_create_box: '1',
                         tessjs_create_unlv: '1',
                         tessedit_write_images: true
@@ -1701,13 +1729,24 @@
                     const endTime = performance.now();
                     const recognizedText = result.data.text.trim();
                     this.lastRecognizedText = recognizedText;
-
-                    console.log('=== OCR Result ===', {
-                        timestamp: new Date().toISOString(),
+                    
+                    console.log('OCR Result:', {
                         text: recognizedText,
                         confidence: result.data.confidence,
-                        processingTime: endTime - startTime
+                        time: endTime - startTime
                     });
+
+                    // Always update the result display first, regardless of whether it's a key or not
+                    const resultDisplay = document.getElementById('mouse-text-result');
+                    if (resultDisplay) {
+                        if (recognizedText) {
+                            resultDisplay.innerHTML = `<span style="font-weight: bold;">Text:</span> ${recognizedText}<br><span style="font-size: 12px; color: #aaa;">Confidence: ${result.data.confidence.toFixed(2)}% | Time: ${(endTime - startTime).toFixed(0)}ms</span>`;
+                        } else {
+                            resultDisplay.innerHTML = 'No text detected';
+                        }
+                        // Always call this to update or remove key info
+                        this.updateCachedKeyDisplay();
+                    }
 
                     // Check for door unlock text pattern
                     const keyMatch = recognizedText.match(/Unlock\s+(\w+)\s+(\w+)\s+door/i);
@@ -1715,15 +1754,6 @@
                         const [_, color, shape] = keyMatch;
                         const normalizedColor = color.charAt(0).toUpperCase() + color.slice(1).toLowerCase();
                         const normalizedShape = shape.charAt(0).toUpperCase() + shape.slice(1).toLowerCase();
-
-                        console.log('=== Key Match Found ===', {
-                            timestamp: new Date().toISOString(),
-                            fullMatch: keyMatch[0],
-                            color: normalizedColor,
-                            shape: normalizedShape,
-                            isValidColor: this.isValidKeyColor(normalizedColor),
-                            isValidShape: this.isValidKeyShape(normalizedShape)
-                        });
 
                         if (this.isValidKeyColor(normalizedColor) && this.isValidKeyShape(normalizedShape)) {
                             const newKey = {
@@ -1737,23 +1767,10 @@
                                 this.cachedKey.color !== newKey.color || 
                                 this.cachedKey.shape !== newKey.shape) {
                                 
-                                console.log('=== Key Cache Updated ===', {
-                                    timestamp: new Date().toISOString(),
-                                    previousKey: this.cachedKey,
-                                    newKey: newKey
-                                });
-
                                 this.cachedKey = newKey;
                                 this.updateCachedKeyDisplay();
                             }
                         }
-                    }
-
-                    // Update result display
-                    const resultDisplay = document.getElementById('mouse-text-result');
-                    if (resultDisplay) {
-                        resultDisplay.textContent = recognizedText || 'No text detected';
-                        this.updateCachedKeyDisplay();
                     }
 
                 } catch (error) {
@@ -2734,16 +2751,16 @@
             
             try {
                 const pos = alt1.mousePosition;
-                console.log("Raw Alt1 mouse position:", pos);
+                // console.log("Raw Alt1 mouse position:", pos);
                 
                 if (pos === -1) {
-                    console.log("Invalid mouse position (-1)");
+                    // console.log("Invalid mouse position (-1)");
                     return null;
                 }
                 
                 const x = pos >>> 16;
                 const y = pos & 0xFFFF;
-                console.log("Decoded mouse position:", { x, y });
+                // console.log("Decoded mouse position:", { x, y });
                 
                 return {
                     x: x,
@@ -3182,11 +3199,11 @@
                     break;
                 case 'medium':
                     canvas.width = 128;
-                    canvas.height = 268;
+                    canvas.height = 250;
                     break;
                 case 'large':
-                    canvas.width = 268;
-                    canvas.height = 268;
+                    canvas.width = 250;
+                    canvas.height = 250;
                     break;
             }
             
@@ -3381,11 +3398,25 @@
                     hasBlockedRoom: !!cell.querySelector('img[src*="blocked_room.png"]'),
                     hasSkillTier: !!cell.querySelector('.skill-tier')
                 },
-                cachedKey: doorTextReader?.cachedKey ? {
-                    color: doorTextReader.cachedKey.color,
-                    shape: doorTextReader.cachedKey.shape,
-                    timestamp: doorTextReader.cachedKey.timestamp
-                } : null
+                doorTextReaderState: doorTextReader ? {
+                    isDefined: true,
+                    hasCachedKey: !!doorTextReader.cachedKey,
+                    cachedKey: doorTextReader.cachedKey ? {
+                        color: doorTextReader.cachedKey.color,
+                        shape: doorTextReader.cachedKey.shape,
+                        timestamp: doorTextReader.cachedKey.timestamp
+                    } : null
+                } : { isDefined: false },
+                windowReaderState: window.reader ? {
+                    isDefined: true,
+                    hasCachedKey: !!window.reader.cachedKey,
+                    cachedKey: window.reader.cachedKey ? {
+                        color: window.reader.cachedKey.color,
+                        shape: window.reader.cachedKey.shape,
+                        timestamp: window.reader.cachedKey.timestamp
+                    } : null
+                } : { isDefined: false },
+                readersAreSame: doorTextReader === window.reader
             });
 
             // Validate cell has a room before proceeding
@@ -3435,19 +3466,42 @@
             };
 
             // Update cached key option if available
-            if (isLocked && doorTextReader?.cachedKey && menuSections.cachedKeyOption) {
-                const keyFile = `${doorTextReader.cachedKey.color}_${doorTextReader.cachedKey.shape}_key.png`;
+            const cachedKey = doorTextReader?.cachedKey || window.reader?.cachedKey;
+            
+            if (isLocked && cachedKey && menuSections.cachedKeyOption) {
+                // Sync the readers if needed
+                if (doorTextReader?.cachedKey && !window.reader?.cachedKey) {
+                    if (!window.reader) window.reader = doorTextReader;
+                    else window.reader.cachedKey = doorTextReader.cachedKey;
+                    console.log('Synced window.reader with doorTextReader cached key');
+                } else if (!doorTextReader?.cachedKey && window.reader?.cachedKey) {
+                    if (!doorTextReader) doorTextReader = window.reader;
+                    else doorTextReader.cachedKey = window.reader.cachedKey;
+                    console.log('Synced doorTextReader with window.reader cached key');
+                }
+                
+                const keyFile = `${cachedKey.color}_${cachedKey.shape}_key.png`;
                 const keyPreview = menuSections.cachedKeyOption.querySelector('.cached-key-preview');
                 
                 if (keyPreview) {
                     keyPreview.innerHTML = `
-                        <img src="../assets/keys/${keyFile}" alt="${doorTextReader.cachedKey.color} ${doorTextReader.cachedKey.shape} key">
-                        <span>Apply ${doorTextReader.cachedKey.color} ${doorTextReader.cackedKey.shape} Key</span>
+                        <img src="../assets/keys/${keyFile}" alt="${cachedKey.color} ${cachedKey.shape} key">
+                        <span>Apply ${cachedKey.color} ${cachedKey.shape} Key</span>
                     `;
                 }
                 menuSections.cachedKeyOption.style.display = 'block';
+                
+                // Add special highlight for cached key
+                menuSections.cachedKeyOption.classList.add('cached-key-highlight');
+                
+                // Move the cached key option to the top
+                const parentNode = menuSections.cachedKeyOption.parentNode;
+                if (parentNode && parentNode.firstChild !== menuSections.cachedKeyOption) {
+                    parentNode.insertBefore(menuSections.cachedKeyOption, parentNode.firstChild);
+                }
             } else if (menuSections.cachedKeyOption) {
                 menuSections.cachedKeyOption.style.display = 'none';
+                menuSections.cachedKeyOption.classList.remove('cached-key-highlight');
             }
 
             // Show/hide other options
@@ -3613,15 +3667,16 @@
                 
                 // Set Tesseract parameters for better symbol detection
                 await tesseractWorker.setParameters({
-                    tessedit_char_whitelist: '?',
-                    tessedit_pageseg_mode: '10', // Treat image as single character
-                    tessedit_ocr_engine_mode: '2', // Use Legacy + LSTM mode
-                    tessjs_create_pdf: '0',
+                    tessedit_char_whitelist: 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789 ?.,-_\'\"', // Allow all game text characters
+                    tessedit_pageseg_mode: '7', // Treat as a single line of text
+                    tessjs_create_box: '1',
+                    tessjs_create_unlv: '1',
+                    tessedit_ocr_engine_mode: '3', // Use LSTM engine only
                     tessjs_create_hocr: '0',
                     tessjs_create_tsv: '0',
-                    tessjs_create_box: '0',
-                    tessjs_create_unlv: '0',
-                    tessjs_create_osd: '0'
+                    tessjs_create_box_hocr: '0',
+                    tessjs_create_alto: '0',
+                    tessjs_create_wordstrbox: '0'
                 });
                 
                 // Perform OCR
@@ -4089,15 +4144,18 @@ Processed Image (for debugging):`;
 
         // Function to apply cached key
         function applyCachedKey() {
-            if (!activeCell || !doorTextReader?.cachedKey) {
+            const cachedKey = doorTextReader?.cachedKey || window.reader?.cachedKey;
+            
+            if (!activeCell || !cachedKey) {
                 console.log("=== Apply Cached Key Failed ===", {
                     hasActiveCell: !!activeCell,
-                    hasCachedKey: !!doorTextReader?.cachedKey
+                    hasDoorTextReaderKey: !!doorTextReader?.cachedKey,
+                    hasWindowReaderKey: !!window.reader?.cachedKey
                 });
                 return;
             }
 
-            const { color, shape } = doorTextReader.cachedKey;
+            const { color, shape } = cachedKey;
             
             console.log("=== Applying Cached Key ===", {
                 timestamp: new Date().toISOString(),
@@ -4109,7 +4167,8 @@ Processed Image (for debugging):`;
                     color,
                     shape,
                     keyFile: `${color}_${shape}_key.png`
-                }
+                },
+                source: doorTextReader?.cachedKey ? "doorTextReader" : "window.reader"
             });
 
             // Apply the key while maintaining the cache
@@ -4118,10 +4177,23 @@ Processed Image (for debugging):`;
             // Hide the menu but don't clear the cache
             hideCellMenu();
 
+            // Ensure both reader instances are synced
+            if (doorTextReader && window.reader && doorTextReader !== window.reader) {
+                if (doorTextReader.cachedKey && !window.reader.cachedKey) {
+                    window.reader.cachedKey = doorTextReader.cachedKey;
+                } else if (!doorTextReader.cachedKey && window.reader.cachedKey) {
+                    doorTextReader.cachedKey = window.reader.cachedKey;
+                }
+            }
+
             console.log("=== Cached Key Status ===", {
                 timestamp: new Date().toISOString(),
-                cachedKey: doorTextReader?.cachedKey,
-                isCacheMaintained: !!(doorTextReader?.cachedKey?.color === color && doorTextReader?.cachedKey?.shape === shape)
+                doorTextReaderKey: doorTextReader?.cachedKey,
+                windowReaderKey: window.reader?.cachedKey,
+                isCacheMaintained: !!(
+                    (doorTextReader?.cachedKey?.color === color && doorTextReader?.cachedKey?.shape === shape) || 
+                    (window.reader?.cachedKey?.color === color && window.reader?.cachedKey?.shape === shape)
+                )
             });
         }
 
@@ -4281,15 +4353,16 @@ Processed Image (for debugging):`;
                 
                 // Set optimal parameters for symbol detection
                 await tesseractWorker.setParameters({
-                    tessedit_char_whitelist: '?',
-                    tessedit_pageseg_mode: '10',
-                    tessedit_ocr_engine_mode: '2',
-                    tessjs_create_pdf: '0',
+                    tessedit_char_whitelist: 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789 ?.,-_\'\"', // Allow all game text characters
+                    tessedit_pageseg_mode: '7', // Treat as a single line of text
+                    tessjs_create_box: '1',
+                    tessjs_create_unlv: '1',
+                    tessedit_ocr_engine_mode: '3', // Use LSTM engine only
                     tessjs_create_hocr: '0',
                     tessjs_create_tsv: '0',
-                    tessjs_create_box: '0',
-                    tessjs_create_unlv: '0',
-                    tessjs_create_osd: '0'
+                    tessjs_create_box_hocr: '0',
+                    tessjs_create_alto: '0',
+                    tessjs_create_wordstrbox: '0'
                 });
 
                 // Perform OCR
@@ -4781,6 +4854,94 @@ Processed Image (for debugging):`;
                     }
                 } catch (error) {
                     console.error(`Error checking cell (${coords.row}, ${coords.col}):`, error);
+                }
+            }
+        }
+
+        // Add function to toggle mouse OCR
+        async function toggleMouseOCR() {
+            console.log('=== Toggle Mouse OCR ===');
+            
+            // Get the status element and button
+            const statusElement = document.getElementById('mouse-ocr-status');
+            const button = document.getElementById('start-mouse-ocr');
+            
+            // Set status to loading
+            statusElement.textContent = 'Loading...';
+            
+            // Ensure Tesseract worker is initialized
+            if (!tesseractWorker) {
+                try {
+                    await initTesseractWorker();
+                    console.log('Tesseract worker initialized');
+                } catch (e) {
+                    console.error('Failed to initialize Tesseract worker:', e);
+                    statusElement.textContent = 'Error: ' + e.message;
+                    button.textContent = 'Retry Mouse OCR';
+                    return;
+                }
+            }
+            
+            // Ensure the canvas elements exist
+            let mouseTextCanvas = document.getElementById('mouseTextCanvas');
+            if (!mouseTextCanvas) {
+                // Create the canvas if it doesn't exist
+                mouseTextCanvas = document.createElement('canvas');
+                mouseTextCanvas.id = 'mouseTextCanvas';
+                mouseTextCanvas.width = 250;
+                mouseTextCanvas.height = 35;
+                mouseTextCanvas.style.display = 'none';
+                document.body.appendChild(mouseTextCanvas);
+                console.log('Created mouseTextCanvas element');
+            }
+            
+            // Make sure the OCR display container is visible
+            const ocrDisplayContainer = document.querySelector('.ocr-display-container');
+            if (ocrDisplayContainer) {
+                ocrDisplayContainer.style.display = 'flex';
+            }
+
+            // If we already have a reader instance
+            if (window.reader) {
+                // Ensure doorTextReader and window.reader are the same
+                if (!doorTextReader) {
+                    doorTextReader = window.reader;
+                    console.log('Synced doorTextReader with window.reader');
+                }
+                
+                if (window.reader.isReading) {
+                    // Stop reading if active
+                    console.log('Stopping mouse OCR');
+                    window.reader.stopReading();
+                    statusElement.textContent = 'Inactive';
+                    statusElement.className = 'status-text mouse-ocr-inactive';
+                    button.textContent = 'Start Mouse OCR';
+                } else {
+                    // Start reading if inactive
+                    console.log('Starting mouse OCR');
+                    window.reader.startReading();
+                    statusElement.textContent = 'Active';
+                    statusElement.className = 'status-text mouse-ocr-active';
+                    button.textContent = 'Stop Mouse OCR';
+                }
+            } else {
+                // Initialize a new reader using our built-in DoorTextReader class
+                console.log('Initializing new DoorTextReader');
+                try {
+                    window.reader = new DoorTextReader();
+                    // Ensure doorTextReader and window.reader are the same
+                    doorTextReader = window.reader;
+                    console.log('Set doorTextReader to new instance');
+                    
+                    window.reader.startReading();
+                    statusElement.textContent = 'Active';
+                    statusElement.className = 'status-text mouse-ocr-active';
+                    button.textContent = 'Stop Mouse OCR';
+                    console.log('Mouse OCR initialized successfully');
+                } catch (e) {
+                    console.error('Failed to initialize Mouse OCR:', e);
+                    statusElement.textContent = 'Error: ' + e.message;
+                    button.textContent = 'Retry Mouse OCR';
                 }
             }
         }
