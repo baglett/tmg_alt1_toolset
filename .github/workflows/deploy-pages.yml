@@ -2,7 +2,7 @@ name: Deploy to GitHub Pages
 
 on:
   push:
-    branches: [ main ]
+    branches: [ main, feature/claude_setup ]
   pull_request:
     branches: [ main ]
 
@@ -42,10 +42,20 @@ jobs:
       - name: Setup Pages
         uses: actions/configure-pages@v4
 
+      - name: Prepare deployment directory
+        run: |
+          mkdir -p deploy-dir
+          if [ "${{ github.ref }}" = "refs/heads/main" ]; then
+            cp -r dungeoneering-optimization-gate-engine/dist/* deploy-dir/
+          else
+            mkdir -p deploy-dir/development
+            cp -r dungeoneering-optimization-gate-engine/dist/* deploy-dir/development/
+          fi
+
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
         with:
-          path: 'dungeoneering-optimization-gate-engine/dist'
+          path: 'deploy-dir'
 
   deploy:
     environment:

@@ -18,11 +18,19 @@ A tool for RuneScape 3 Dungeoneering that helps optimize gate and key placement 
 This is the easiest method for end users:
 
 1. **Quick Install Link**
+
+   **Production (main branch):**
    ```
    alt1://addapp/https://baglett.github.io/tmg_alt1_toolset/appconfig.json
    ```
-   - Click this link to install directly in Alt1
-   - Automatically downloads and installs the latest version from GitHub Pages
+
+   **Development (feature branches):**
+   ```
+   alt1://addapp/https://baglett.github.io/tmg_alt1_toolset/development/appconfig.json
+   ```
+
+   - Click links to install directly in Alt1
+   - Automatically downloads and installs from GitHub Pages
    - Uses proper MIME types for reliable loading
 
 2. **Manual Online Installation**
