@@ -1531,7 +1531,6 @@
                 <h3>Dungeon Map</h3>
                 <div class="header-controls">
                     <button class="btn icon-btn" onclick="openSettingsModal()" title="Settings">⚙️</button>
-                    <button class="btn icon-btn" onclick="openOCRModal()" title="OCR Tools">🔍</button>
                 </div>
             </div>
 
@@ -5373,7 +5372,113 @@ Processed Image (for debugging):`;
                 }
             }
         }
+
+        // Modal System Functions
+        function openSettingsModal() {
+            document.getElementById('settings-modal').style.display = 'flex';
+        }
+
+        function closeSettingsModal() {
+            document.getElementById('settings-modal').style.display = 'none';
+        }
+
+        // Close modal when clicking outside
+        document.addEventListener('click', function(e) {
+            if (e.target.classList.contains('modal-overlay')) {
+                closeSettingsModal();
+            }
+        });
+
+        // Close modal on Escape key
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'Escape') {
+                closeSettingsModal();
+            }
+        });
     </script>
+
+    <!-- Settings Modal -->
+    <div class="modal-overlay" id="settings-modal" style="display: none;">
+        <div class="modal-content settings-modal">
+            <div class="modal-header">
+                <h2 class="modal-title">Settings</h2>
+                <button class="modal-close" onclick="closeSettingsModal()">&times;</button>
+            </div>
+
+            <!-- Alt1 Status Section -->
+            <div class="settings-section">
+                <div class="section-header">
+                    <h3>Alt1 Status</h3>
+                    <p class="section-description">Check Alt1 connection and update the app when needed.</p>
+                </div>
+                <div class="status-content">
+                    <div id="modal-output"></div>
+                    <div id="modal-alt1-status-indicator"></div>
+                    <button id="modal-update-app-button" class="btn secondary" onclick="updateApp()">Update App</button>
+                </div>
+            </div>
+
+            <!-- Configuration Section -->
+            <div class="settings-section">
+                <div class="section-header">
+                    <h3>Configuration</h3>
+                    <p class="section-description">Configure your dungeon settings before starting.</p>
+                </div>
+                <div class="control-group">
+                    <label for="modal-dungeon-size">Dungeon Size:</label>
+                    <select id="modal-dungeon-size" class="form-control" onchange="updateDungeonSize(this.value)">
+                        <option value="small">Small (4x4)</option>
+                        <option value="medium">Medium (4x8)</option>
+                        <option value="large">Large (8x8)</option>
+                    </select>
+                </div>
+            </div>
+
+            <!-- Screen Capture Section -->
+            <div class="settings-section">
+                <div class="section-header">
+                    <h3>Screen Capture</h3>
+                    <p class="section-description">Set your screen anchor point to align with the game minimap.</p>
+                </div>
+                <div class="capture-controls">
+                    <div class="control-group">
+                        <button id="modal-set-anchor-button" class="btn secondary" onclick="startAnchorPointPlacement()">Set Anchor Point</button>
+                        <span id="modal-anchor-status" class="status-badge">Not Set</span>
+                    </div>
+                    <div class="control-group">
+                        <button id="modal-toggle-capture-button" class="btn primary" onclick="toggleCapturePreview()">Stop Capture</button>
+                        <span id="modal-capture-status" class="status-badge active">Active</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- OCR Tools Section -->
+            <div class="settings-section">
+                <div class="section-header">
+                    <h3>OCR Tools</h3>
+                    <p class="section-description">Text recognition tools for reading game content.</p>
+                </div>
+
+                <!-- Mouse OCR -->
+                <div class="control-group">
+                    <label>Mouse Text OCR:</label>
+                    <button id="modal-start-mouse-ocr" class="btn primary" onclick="toggleMouseOCR()">Start Mouse OCR</button>
+                    <span id="modal-mouse-ocr-status" class="status-badge">Inactive</span>
+                </div>
+
+                <!-- OCR Test with File Upload -->
+                <div class="control-group">
+                    <label>Test OCR:</label>
+                    <input type="file" id="modal-ocr-image-upload" accept="image/*" style="display: none;" onchange="handleImageUpload(this)">
+                    <button class="btn secondary" onclick="document.getElementById('modal-ocr-image-upload').click()">Choose Image</button>
+                    <button id="modal-test-ocr" class="btn primary" onclick="testLockedRoomOCR()" disabled>Test OCR</button>
+                </div>
+
+                <div id="modal-ocr-result" class="result-display" style="margin-top: 8px; min-height: 40px;">No OCR result</div>
+            </div>
+        </div>
+    </div>
+
     <!-- Include Alt1 library -->
     <script src="https://runeapps.org/alt1lib-v2.5.1.js"></script>
     <!-- Include the bundled JavaScript file -->
