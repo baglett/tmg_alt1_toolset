@@ -19,7 +19,7 @@ This is the easiest method for end users:
 
 1. **Quick Install Link**
    ```
-   alt1://addapp/https://raw.githubusercontent.com/baglett/tmg_alt1_toolset/feature/claude_setup/dungeoneering-optimization-gate-engine/dist/index.html
+   alt1://addapp/https://raw.githubusercontent.com/baglett/tmg_alt1_toolset/feature/claude_setup/dungeoneering-optimization-gate-engine/dist/appconfig.json
    ```
    - Click this link to install directly in Alt1
    - Automatically downloads and installs the latest version
@@ -28,7 +28,7 @@ This is the easiest method for end users:
 2. **Manual Online Installation**
    - Open Alt1 Toolkit
    - Click "Add App" � "Browse"
-   - Navigate to: `https://raw.githubusercontent.com/baglett/tmg_alt1_toolset/feature/claude_setup/dungeoneering-optimization-gate-engine/dist/index.html`
+   - Navigate to: `https://raw.githubusercontent.com/baglett/tmg_alt1_toolset/feature/claude_setup/dungeoneering-optimization-gate-engine/dist/appconfig.json`
    - Click "Add App"
 
 ### Method 2: Local Installation
@@ -90,7 +90,7 @@ The repository is configured to serve built tools directly from GitHub:
 
 2. **Files become available at**
    ```
-   https://raw.githubusercontent.com/baglett/tmg_alt1_toolset/feature/claude_setup/dungeoneering-optimization-gate-engine/dist/index.html
+   https://raw.githubusercontent.com/baglett/tmg_alt1_toolset/feature/claude_setup/dungeoneering-optimization-gate-engine/dist/appconfig.json
    ```
 
 ### Alt1 App Configuration

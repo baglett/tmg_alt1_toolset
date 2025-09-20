@@ -15,7 +15,10 @@
       "mcp__github__get_file_contents",
       "Bash(npm install)",
       "Bash(npm run build:*)",
-      "Bash(git add:*)"
+      "Bash(git add:*)",
+      "Bash(git commit:*)",
+      "Bash(git push:*)",
+      "Read(//c/Users/jmbag/OneDrive/Pictures/Screenshots/**)"
     ],
     "deny": [],
     "ask": []
