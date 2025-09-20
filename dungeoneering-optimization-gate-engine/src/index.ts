@@ -1,5 +1,5 @@
 // Import Alt1 dependencies
-import * as a1lib from "@alt1/base";
+import * as a1lib from "alt1";
 
 // Expose a1lib to the window object
 (window as any).a1lib = a1lib;

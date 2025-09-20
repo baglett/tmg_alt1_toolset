@@ -10,7 +10,12 @@
       "Bash(gh auth:*)",
       "Bash(gh:*)",
       "Bash(claude mcp:clear github)",
-      "Bash(npm update:*)"
+      "Bash(npm update:*)",
+      "mcp__github__search_repositories",
+      "mcp__github__get_file_contents",
+      "Bash(npm install)",
+      "Bash(npm run build:*)",
+      "Bash(git add:*)"
     ],
     "deny": [],
     "ask": []
