@@ -33,7 +33,8 @@
       "mcp__github__get_job_logs",
       "Bash(cat:*)",
       "WebFetch(domain:github.com)",
-      "Bash(rm:*)"
+      "Bash(rm:*)",
+      "Bash(git config:*)"
     ],
     "deny": [],
     "ask": []
