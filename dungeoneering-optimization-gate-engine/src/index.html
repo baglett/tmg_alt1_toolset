@@ -1260,88 +1260,16 @@
             min-height: 0;
         }
 
-        .map-header {
-            margin-bottom: 4px;
-            flex-shrink: 0;
-        }
-
-        .map-header h3 {
-            margin: 0 0 2px 0;
-            font-size: 14px;
-            color: #ffffff;
-            font-weight: 600;
-        }
-
-        .map-description {
-            margin: 0 0 4px 0;
-            font-size: 10px;
-            color: #b3b3b3;
-            line-height: 1.2;
-        }
-
-        .map-info {
-            display: flex;
-            gap: 8px;
-            flex-wrap: wrap;
-        }
-
-        .info-badge {
-            background: #40444b;
-            color: #dcddde;
-            padding: 4px 8px;
-            border-radius: 3px;
-            font-size: 11px;
-            border: 1px solid #555;
-        }
 
         .map-wrapper {
             flex: 1;
             display: flex;
             justify-content: center;
             align-items: center;
-            margin-bottom: 4px;
             min-height: 0;
             overflow: hidden;
         }
 
-        .map-legend {
-            display: flex;
-            gap: 12px;
-            justify-content: center;
-            flex-wrap: wrap;
-            padding: 6px;
-            background: rgba(0, 0, 0, 0.15);
-            border-radius: 4px;
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            flex-shrink: 0;
-        }
-
-        .legend-item {
-            display: flex;
-            align-items: center;
-            gap: 6px;
-            font-size: 11px;
-            color: #dcddde;
-        }
-
-        .legend-color {
-            width: 12px;
-            height: 12px;
-            border-radius: 2px;
-            border: 1px solid #555;
-        }
-
-        .legend-color.current-room {
-            background: #5865f2;
-        }
-
-        .legend-color.explored-room {
-            background: #4CAF50;
-        }
-
-        .legend-color.locked-room {
-            background: #f44336;
-        }
 
         /* Scrollable section content when absolutely necessary */
         .section-content {
@@ -1619,37 +1547,11 @@
             <!-- Map View -->
             <div class="view" id="map-view">
                 <div class="map-container-wrapper">
-                    <!-- Map Header -->
-                    <div class="map-header">
-                        <h3>Dungeon Map</h3>
-                        <p class="map-description">Track your progress through the dungeon. Rooms will be highlighted as you explore.</p>
-                        <div class="map-info">
-                            <span id="current-dungeon-size" class="info-badge">Small (4x4)</span>
-                            <span id="rooms-discovered" class="info-badge">0 rooms discovered</span>
-                        </div>
-                    </div>
-
                     <!-- Map Container -->
                     <div class="map-wrapper">
                         <div id="map-container" class="map-container small">
                             <canvas id="mapBackgroundCanvas" class="map-background"></canvas>
                             <div id="map-grid" class="map-grid small"></div>
-                        </div>
-                    </div>
-
-                    <!-- Map Legend -->
-                    <div class="map-legend">
-                        <div class="legend-item">
-                            <div class="legend-color current-room"></div>
-                            <span>Current Room</span>
-                        </div>
-                        <div class="legend-item">
-                            <div class="legend-color explored-room"></div>
-                            <span>Explored</span>
-                        </div>
-                        <div class="legend-item">
-                            <div class="legend-color locked-room"></div>
-                            <span>Locked</span>
                         </div>
                     </div>
                 </div>
