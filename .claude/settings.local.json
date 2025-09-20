@@ -35,7 +35,8 @@
       "WebFetch(domain:github.com)",
       "Bash(rm:*)",
       "Bash(git config:*)",
-      "mcp__github__list_workflows"
+      "mcp__github__list_workflows",
+      "Bash(dir:*)"
     ],
     "deny": [],
     "ask": []
