@@ -879,10 +879,12 @@
         }
 
         .viewport-container {
-            margin: 6px 0;
+            margin: 3px 0;
             background: rgba(0, 0, 0, 0.3);
             border-radius: 4px;
-            padding: 6px;
+            padding: 4px;
+            flex-shrink: 1;
+            min-height: 0;
         }
 
         .viewport-label {
@@ -1056,44 +1058,49 @@
             display: flex;
             flex-direction: column;
             height: 100%;
-            padding: 8px;
-            gap: 8px;
+            padding: 4px;
+            gap: 4px;
             overflow: hidden;
+            min-height: 0;
         }
 
         .settings-section {
             background: rgba(0, 0, 0, 0.15);
             border-radius: 4px;
-            padding: 8px;
+            padding: 4px;
             border: 1px solid rgba(255, 255, 255, 0.1);
-            flex-shrink: 0;
+            flex-shrink: 1;
+            min-height: 0;
+            overflow: hidden;
         }
 
         .section-header {
-            margin-bottom: 6px;
+            margin-bottom: 4px;
             border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-            padding-bottom: 4px;
+            padding-bottom: 2px;
+            flex-shrink: 0;
         }
 
         .section-header h3 {
             margin: 0;
-            font-size: 12px;
+            font-size: 11px;
             font-weight: 600;
             color: #ffffff;
         }
 
         .section-description {
-            margin: 2px 0 0 0;
-            font-size: 10px;
+            margin: 1px 0 0 0;
+            font-size: 9px;
             color: #b3b3b3;
-            line-height: 1.2;
+            line-height: 1.1;
         }
 
         .control-group {
             display: flex;
             align-items: center;
-            gap: 6px;
-            margin-bottom: 4px;
+            gap: 4px;
+            margin-bottom: 2px;
+            flex-shrink: 0;
         }
 
         .control-group:last-child {
@@ -1101,9 +1108,10 @@
         }
 
         .control-group label {
-            font-size: 11px;
+            font-size: 10px;
             color: #dcddde;
-            min-width: 70px;
+            min-width: 60px;
+            flex-shrink: 0;
         }
 
         .form-control {
@@ -1111,9 +1119,11 @@
             background: #40444b;
             border: 1px solid #555;
             color: #dcddde;
-            padding: 4px 8px;
+            padding: 2px 4px;
             border-radius: 3px;
-            font-size: 12px;
+            font-size: 10px;
+            height: 18px;
+            min-width: 0;
         }
 
         .status-badge {
@@ -1226,30 +1236,32 @@
         }
 
         .image-preview {
-            margin: 6px 0;
+            margin: 3px 0;
             text-align: center;
-            max-height: 120px;
+            max-height: 80px;
             overflow: hidden;
+            flex-shrink: 1;
         }
 
         .image-preview img {
             max-width: 100%;
-            max-height: 120px;
+            max-height: 80px;
             border: 1px solid #555;
             border-radius: 3px;
         }
 
         /* Map view styles */
         .map-container-wrapper {
-            padding: 8px;
+            padding: 4px;
             height: 100%;
             overflow: hidden;
             display: flex;
             flex-direction: column;
+            min-height: 0;
         }
 
         .map-header {
-            margin-bottom: 8px;
+            margin-bottom: 4px;
             flex-shrink: 0;
         }
 
@@ -1287,8 +1299,9 @@
             display: flex;
             justify-content: center;
             align-items: center;
-            margin-bottom: 8px;
+            margin-bottom: 4px;
             min-height: 0;
+            overflow: hidden;
         }
 
         .map-legend {
@@ -1328,6 +1341,43 @@
 
         .legend-color.locked-room {
             background: #f44336;
+        }
+
+        /* Scrollable section content when absolutely necessary */
+        .section-content {
+            flex: 1;
+            min-height: 0;
+            overflow-y: auto;
+            overflow-x: hidden;
+        }
+
+        .section-content::-webkit-scrollbar {
+            width: 4px;
+        }
+
+        .section-content::-webkit-scrollbar-track {
+            background: rgba(0, 0, 0, 0.1);
+        }
+
+        .section-content::-webkit-scrollbar-thumb {
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 2px;
+        }
+
+        .section-content::-webkit-scrollbar-thumb:hover {
+            background: rgba(255, 255, 255, 0.3);
+        }
+
+        /* Ensure grid and other large content areas scale down */
+        #map-grid {
+            max-width: 100%;
+            max-height: 100%;
+            overflow: hidden;
+        }
+
+        .grid-cell {
+            min-width: 12px;
+            min-height: 12px;
         }
 
         .settings-tabs {
