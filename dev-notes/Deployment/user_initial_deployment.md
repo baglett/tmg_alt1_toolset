@@ -19,16 +19,16 @@ This is the easiest method for end users:
 
 1. **Quick Install Link**
    ```
-   alt1://addapp/https://raw.githubusercontent.com/baglett/tmg_alt1_toolset/feature/claude_setup/dungeoneering-optimization-gate-engine/dist/appconfig.json
+   alt1://addapp/https://baglett.github.io/tmg_alt1_toolset/appconfig.json
    ```
    - Click this link to install directly in Alt1
-   - Automatically downloads and installs the latest version
-   - **Note**: Update branch name from `feature/claude_setup` to `main` when merged
+   - Automatically downloads and installs the latest version from GitHub Pages
+   - Uses proper MIME types for reliable loading
 
 2. **Manual Online Installation**
    - Open Alt1 Toolkit
    - Click "Add App" � "Browse"
-   - Navigate to: `https://raw.githubusercontent.com/baglett/tmg_alt1_toolset/feature/claude_setup/dungeoneering-optimization-gate-engine/dist/appconfig.json`
+   - Navigate to: `https://baglett.github.io/tmg_alt1_toolset/appconfig.json`
    - Click "Add App"
 
 ### Method 2: Local Installation
@@ -79,18 +79,23 @@ For users who want to run local builds or development versions:
 
 ### GitHub Pages Deployment
 
-The repository is configured to serve built tools directly from GitHub:
+The repository uses GitHub Actions to automatically build and deploy to GitHub Pages:
 
-1. **Commit built files**
-   ```bash
-   git add dist/
-   git commit -m "Build production version"
-   git push origin main
-   ```
+1. **Automatic deployment**
+   - Push changes to `main` branch
+   - GitHub Actions automatically builds the tool
+   - Deploys to GitHub Pages with proper MIME types
 
 2. **Files become available at**
    ```
-   https://raw.githubusercontent.com/baglett/tmg_alt1_toolset/feature/claude_setup/dungeoneering-optimization-gate-engine/dist/appconfig.json
+   https://baglett.github.io/tmg_alt1_toolset/appconfig.json
+   ```
+
+3. **Manual deployment (if needed)**
+   ```bash
+   git add .
+   git commit -m "Update tool"
+   git push origin main
    ```
 
 ### Alt1 App Configuration

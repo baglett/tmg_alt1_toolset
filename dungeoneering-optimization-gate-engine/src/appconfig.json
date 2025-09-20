@@ -1,9 +1,9 @@
 {
     "appName": "Dungeoneering Gate Engine",
     "description": "Dungeoneering gate text reader and map tracker",
-    "appUrl": "https://raw.githubusercontent.com/baglett/tmg_alt1_toolset/feature/claude_setup/dungeoneering-optimization-gate-engine/dist/index.html",
-    "configUrl": "https://raw.githubusercontent.com/baglett/tmg_alt1_toolset/feature/claude_setup/dungeoneering-optimization-gate-engine/dist/appconfig.json",
-    "iconUrl": "https://raw.githubusercontent.com/baglett/tmg_alt1_toolset/feature/claude_setup/dungeoneering-optimization-gate-engine/dist/icon.png",
+    "appUrl": "https://baglett.github.io/tmg_alt1_toolset/index.html",
+    "configUrl": "https://baglett.github.io/tmg_alt1_toolset/appconfig.json",
+    "iconUrl": "https://baglett.github.io/tmg_alt1_toolset/icon.png",
     "defaultWidth": 500,
     "defaultHeight": 800,
     "minWidth": 140,
