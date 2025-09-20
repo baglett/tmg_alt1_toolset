@@ -1,0 +1,18 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(claude config get mcp)",
+      "Bash(claude config list)",
+      "Bash(claude mcp:*)",
+      "WebSearch",
+      "Bash(claude mcp:list)",
+      "Bash(claude --version)",
+      "Bash(gh auth:*)",
+      "Bash(gh:*)",
+      "Bash(claude mcp:clear github)",
+      "Bash(npm update:*)"
+    ],
+    "deny": [],
+    "ask": []
+  }
+}
