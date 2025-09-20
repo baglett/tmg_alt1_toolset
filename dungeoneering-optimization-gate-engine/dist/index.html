@@ -24,10 +24,10 @@
         
         /* Sidebar styles */
         .sidebar {
-            width: 32px;
+            width: 60px;
             background-color: #2f3136;
             height: 100%;
-            padding: 4px;
+            padding: 6px 4px;
             display: flex;
             flex-direction: column;
         }
@@ -55,32 +55,46 @@
         
         /* Individual nav items */
         .nav-item {
-            width: 24px;
-            height: 24px;
+            width: 50px;
+            height: 44px;
             display: flex;
+            flex-direction: column;
             align-items: center;
             justify-content: center;
-            border-radius: 3px;
+            border-radius: 4px;
             cursor: pointer;
             color: #dcddde;
             transition: background-color 0.2s;
+            margin-bottom: 4px;
+            padding: 4px 2px;
         }
-        
+
         .nav-item:hover {
             background-color: #5865f2;
         }
-        
+
         .nav-item.active {
             background-color: #5865f2;
         }
-        
+
         /* Icon in nav items */
         .nav-icon {
-            font-size: 12px;
+            font-size: 10px;
+            font-weight: bold;
             line-height: 1;
             display: flex;
             align-items: center;
             justify-content: center;
+            margin-bottom: 2px;
+        }
+
+        /* Label in nav items */
+        .nav-label {
+            font-size: 8px;
+            font-weight: 500;
+            line-height: 1;
+            text-align: center;
+            opacity: 0.9;
         }
         
         /* Text in nav items */
@@ -1037,7 +1051,276 @@
         /* Settings layout styles */
         .settings-container {
             display: flex;
+            flex-direction: column;
             height: 100%;
+            padding: 12px;
+            gap: 16px;
+            overflow-y: auto;
+        }
+
+        .settings-section {
+            background: rgba(0, 0, 0, 0.15);
+            border-radius: 6px;
+            padding: 12px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .section-header {
+            margin-bottom: 10px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            padding-bottom: 6px;
+        }
+
+        .section-header h3 {
+            margin: 0;
+            font-size: 14px;
+            font-weight: 600;
+            color: #ffffff;
+        }
+
+        .section-description {
+            margin: 4px 0 0 0;
+            font-size: 11px;
+            color: #b3b3b3;
+            line-height: 1.3;
+        }
+
+        .control-group {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 8px;
+        }
+
+        .control-group:last-child {
+            margin-bottom: 0;
+        }
+
+        .control-group label {
+            font-size: 12px;
+            color: #dcddde;
+            min-width: 80px;
+        }
+
+        .form-control {
+            flex: 1;
+            background: #40444b;
+            border: 1px solid #555;
+            color: #dcddde;
+            padding: 4px 8px;
+            border-radius: 3px;
+            font-size: 12px;
+        }
+
+        .status-badge {
+            background: #40444b;
+            color: #dcddde;
+            padding: 2px 6px;
+            border-radius: 3px;
+            font-size: 10px;
+            border: 1px solid #555;
+        }
+
+        .status-badge.active {
+            background: #4CAF50;
+            color: white;
+            border-color: #45a049;
+        }
+
+        .capture-controls {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            margin-bottom: 12px;
+        }
+
+        .capture-preview-wrapper {
+            display: flex;
+            gap: 12px;
+            align-items: flex-start;
+        }
+
+        .capture-preview-container {
+            border: 2px solid #555;
+            border-radius: 4px;
+            background: #000;
+            overflow: hidden;
+        }
+
+        .arrow-controls {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 2px;
+        }
+
+        .arrow-row {
+            display: flex;
+            gap: 2px;
+        }
+
+        .arrow-btn {
+            width: 24px;
+            height: 24px;
+            background: #40444b;
+            border: 1px solid #555;
+            color: #dcddde;
+            border-radius: 3px;
+            cursor: pointer;
+            font-size: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: background-color 0.2s;
+        }
+
+        .arrow-btn:hover {
+            background: #5865f2;
+        }
+
+        .arrow-btn:active {
+            background: #4752c4;
+        }
+
+        /* OCR specific styles */
+        .ocr-display-container {
+            margin-top: 12px;
+        }
+
+        .ocr-preview, .ocr-result {
+            margin-bottom: 12px;
+        }
+
+        .ocr-preview h4, .ocr-result h4 {
+            margin: 0 0 6px 0;
+            font-size: 12px;
+            color: #dcddde;
+            font-weight: 500;
+        }
+
+        .ocr-preview canvas {
+            border: 1px solid #555;
+            background: #000;
+            border-radius: 3px;
+        }
+
+        .result-display {
+            background: #40444b;
+            border: 1px solid #555;
+            border-radius: 3px;
+            padding: 8px;
+            min-height: 30px;
+            color: #dcddde;
+            font-size: 12px;
+            font-family: monospace;
+        }
+
+        .file-info {
+            font-size: 11px;
+            color: #b3b3b3;
+            margin-left: 8px;
+        }
+
+        .image-preview {
+            margin: 12px 0;
+            text-align: center;
+            max-height: 200px;
+            overflow: hidden;
+        }
+
+        .image-preview img {
+            max-width: 100%;
+            max-height: 200px;
+            border: 1px solid #555;
+            border-radius: 3px;
+        }
+
+        /* Map view styles */
+        .map-container-wrapper {
+            padding: 16px;
+            height: 100%;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .map-header {
+            margin-bottom: 16px;
+        }
+
+        .map-header h3 {
+            margin: 0 0 4px 0;
+            font-size: 16px;
+            color: #ffffff;
+            font-weight: 600;
+        }
+
+        .map-description {
+            margin: 0 0 8px 0;
+            font-size: 12px;
+            color: #b3b3b3;
+            line-height: 1.3;
+        }
+
+        .map-info {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+
+        .info-badge {
+            background: #40444b;
+            color: #dcddde;
+            padding: 4px 8px;
+            border-radius: 3px;
+            font-size: 11px;
+            border: 1px solid #555;
+        }
+
+        .map-wrapper {
+            flex: 1;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            margin-bottom: 16px;
+        }
+
+        .map-legend {
+            display: flex;
+            gap: 16px;
+            justify-content: center;
+            flex-wrap: wrap;
+            padding: 12px;
+            background: rgba(0, 0, 0, 0.15);
+            border-radius: 6px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 11px;
+            color: #dcddde;
+        }
+
+        .legend-color {
+            width: 12px;
+            height: 12px;
+            border-radius: 2px;
+            border: 1px solid #555;
+        }
+
+        .legend-color.current-room {
+            background: #5865f2;
+        }
+
+        .legend-color.explored-room {
+            background: #4CAF50;
+        }
+
+        .legend-color.locked-room {
+            background: #f44336;
         }
 
         .settings-tabs {
@@ -1279,14 +1562,17 @@
         <!-- Navigation -->
         <div class="sidebar" id="sidebar">
             <ul class="nav-list">
-                <li class="nav-item" data-view="map-view" onclick="showView('map-view', this)">
-                    <div class="nav-icon">🗺️</div>
+                <li class="nav-item" data-view="map-view" onclick="showView('map-view', this)" title="Dungeon Map">
+                    <div class="nav-icon">MAP</div>
+                    <div class="nav-label">Map</div>
                 </li>
-                <li class="nav-item active" data-view="settings-view" onclick="showView('settings-view', this)">
-                    <div class="nav-icon">⚙️</div>
+                <li class="nav-item active" data-view="settings-view" onclick="showView('settings-view', this)" title="Settings & Status">
+                    <div class="nav-icon">SET</div>
+                    <div class="nav-label">Setup</div>
                 </li>
-                <li class="nav-item" data-view="ocr-view" onclick="showView('ocr-view', this)">
-                    <div class="nav-icon">🔍</div>
+                <li class="nav-item" data-view="ocr-view" onclick="showView('ocr-view', this)" title="Text Recognition">
+                    <div class="nav-icon">OCR</div>
+                    <div class="nav-label">Text</div>
                 </li>
             </ul>
         </div>
@@ -1295,10 +1581,39 @@
         <div class="content">
             <!-- Map View -->
             <div class="view" id="map-view">
-                <div class="map-wrapper">
-                    <div id="map-container" class="map-container small">
-                        <canvas id="mapBackgroundCanvas" class="map-background"></canvas>
-                        <div id="map-grid" class="map-grid small"></div>
+                <div class="map-container-wrapper">
+                    <!-- Map Header -->
+                    <div class="map-header">
+                        <h3>Dungeon Map</h3>
+                        <p class="map-description">Track your progress through the dungeon. Rooms will be highlighted as you explore.</p>
+                        <div class="map-info">
+                            <span id="current-dungeon-size" class="info-badge">Small (4x4)</span>
+                            <span id="rooms-discovered" class="info-badge">0 rooms discovered</span>
+                        </div>
+                    </div>
+
+                    <!-- Map Container -->
+                    <div class="map-wrapper">
+                        <div id="map-container" class="map-container small">
+                            <canvas id="mapBackgroundCanvas" class="map-background"></canvas>
+                            <div id="map-grid" class="map-grid small"></div>
+                        </div>
+                    </div>
+
+                    <!-- Map Legend -->
+                    <div class="map-legend">
+                        <div class="legend-item">
+                            <div class="legend-color current-room"></div>
+                            <span>Current Room</span>
+                        </div>
+                        <div class="legend-item">
+                            <div class="legend-color explored-room"></div>
+                            <span>Explored</span>
+                        </div>
+                        <div class="legend-item">
+                            <div class="legend-color locked-room"></div>
+                            <span>Locked</span>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -1306,41 +1621,65 @@
             <!-- Settings View -->
             <div class="view" id="settings-view">
                 <div class="settings-container">
-                    <!-- Alt1 Status -->
-                    <div class="settings-header">
-                        <span class="status-text">Alt1:</span>
-                        <div id="output"></div>
+                    <!-- Alt1 Status Section -->
+                    <div class="settings-section">
+                        <div class="section-header">
+                            <h3>Alt1 Status</h3>
+                            <p class="section-description">Check Alt1 connection and update the app when needed.</p>
+                        </div>
+                        <div class="status-content">
+                            <div id="output"></div>
+                            <div id="alt1-status-indicator"></div>
+                            <button id="update-app-button" class="btn secondary" onclick="updateApp()">Update App</button>
+                        </div>
                     </div>
 
-                    <!-- Stacked Controls -->
-                    <div class="control-stack">
-                        <div class="control-row">
-                            <select id="dungeon-size" class="btn secondary" onchange="updateDungeonSize(this.value)">
+                    <!-- Configuration Section -->
+                    <div class="settings-section">
+                        <div class="section-header">
+                            <h3>Configuration</h3>
+                            <p class="section-description">Configure your dungeon settings before starting.</p>
+                        </div>
+                        <div class="control-group">
+                            <label for="dungeon-size">Dungeon Size:</label>
+                            <select id="dungeon-size" class="form-control" onchange="updateDungeonSize(this.value)">
                                 <option value="small">Small (4x4)</option>
                                 <option value="medium">Medium (4x8)</option>
                                 <option value="large">Large (8x8)</option>
                             </select>
                         </div>
-                        <div class="control-row">
-                            <button id="set-anchor-button" class="btn secondary" onclick="startAnchorPointPlacement()">Set Anchor</button>
-                            <span id="anchor-status" class="status-text">Not Set</span>
-                        </div>
-                        <div class="control-row">
-                            <button id="toggle-capture-button" class="btn" onclick="toggleCapturePreview()">Stop Capture</button>
-                            <span id="capture-status" class="status-text capture-active">Active</span>
-                        </div>
                     </div>
 
-                    <!-- Capture Preview with Controls -->
-                    <div class="capture-preview-wrapper">
-                        <div class="capture-preview-container">
-                            <canvas id="capturePreviewCanvas" width="250" height="250"></canvas>
+                    <!-- Screen Capture Section -->
+                    <div class="settings-section">
+                        <div class="section-header">
+                            <h3>Screen Capture</h3>
+                            <p class="section-description">Set your screen anchor point to align with the game minimap. Use the arrow buttons to fine-tune positioning.</p>
                         </div>
-                        <div class="arrow-controls">
-                            <button class="arrow-btn up" onclick="adjustAnchorPoint(0, -1)">↑</button>
-                            <button class="arrow-btn left" onclick="adjustAnchorPoint(-1, 0)">←</button>
-                            <button class="arrow-btn right" onclick="adjustAnchorPoint(1, 0)">→</button>
-                            <button class="arrow-btn down" onclick="adjustAnchorPoint(0, 1)">↓</button>
+                        <div class="capture-controls">
+                            <div class="control-group">
+                                <button id="set-anchor-button" class="btn secondary" onclick="startAnchorPointPlacement()">Set Anchor Point</button>
+                                <span id="anchor-status" class="status-badge">Not Set</span>
+                            </div>
+                            <div class="control-group">
+                                <button id="toggle-capture-button" class="btn primary" onclick="toggleCapturePreview()">Stop Capture</button>
+                                <span id="capture-status" class="status-badge active">Active</span>
+                            </div>
+                        </div>
+
+                        <!-- Capture Preview -->
+                        <div class="capture-preview-wrapper">
+                            <div class="capture-preview-container">
+                                <canvas id="capturePreviewCanvas" width="200" height="200"></canvas>
+                            </div>
+                            <div class="arrow-controls">
+                                <button class="arrow-btn up" onclick="adjustAnchorPoint(0, -1)" title="Move anchor up">↑</button>
+                                <div class="arrow-row">
+                                    <button class="arrow-btn left" onclick="adjustAnchorPoint(-1, 0)" title="Move anchor left">←</button>
+                                    <button class="arrow-btn right" onclick="adjustAnchorPoint(1, 0)" title="Move anchor right">→</button>
+                                </div>
+                                <button class="arrow-btn down" onclick="adjustAnchorPoint(0, 1)" title="Move anchor down">↓</button>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -1349,44 +1688,59 @@
             <!-- OCR View -->
             <div class="view" id="ocr-view">
                 <div class="settings-container">
+                    <!-- Mouse OCR Section -->
                     <div class="settings-section">
-                        <div class="settings-section-title">Mouse Text OCR</div>
-                        <div class="settings-section-content">
-                            <button id="start-mouse-ocr" class="btn" onclick="toggleMouseOCR()">Start Mouse OCR</button>
-                            <span id="mouse-ocr-status" class="status-text mouse-ocr-inactive">Inactive</span>
-                            
-                            <!-- Add canvas displays for mouse OCR -->
-                            <div class="ocr-display-container" style="margin-top: 15px; display: flex; flex-direction: column; align-items: center;">
-                                <div style="margin-bottom: 10px; font-size: 14px; font-weight: bold;">OCR Capture Area</div>
-                                <canvas id="previewCanvas" width="250" height="35" style="border: 1px solid #40444b; background-color: #202225;"></canvas>
-                                <div style="margin: 10px 0; font-size: 14px; font-weight: bold;">OCR Result</div>
-                                <div id="mouse-text-result" style="min-height: 30px; padding: 8px; width: 90%; background-color: #202225; border: 1px solid #40444b; border-radius: 3px;">No text detected</div>
-                                <div style="margin-top: 15px; font-size: 12px; color: #999;">
-                                    Position your mouse over text in the game and activate OCR to capture.
-                                </div>
+                        <div class="section-header">
+                            <h3>Mouse Text OCR</h3>
+                            <p class="section-description">Position your mouse over text in the game and activate OCR to capture and read text automatically.</p>
+                        </div>
+
+                        <div class="control-group">
+                            <button id="start-mouse-ocr" class="btn primary" onclick="toggleMouseOCR()">Start Mouse OCR</button>
+                            <span id="mouse-ocr-status" class="status-badge">Inactive</span>
+                        </div>
+
+                        <div class="ocr-display-container">
+                            <div class="ocr-preview">
+                                <h4>OCR Capture Area</h4>
+                                <canvas id="previewCanvas" width="250" height="35"></canvas>
                             </div>
-                            
-                            <!-- Hidden canvas elements -->
-                            <div style="display: none;">
-                                <canvas id="mouseTextCanvas" width="250" height="35"></canvas>
-                                <canvas id="croppedCanvas" width="250" height="35"></canvas>
+
+                            <div class="ocr-result">
+                                <h4>OCR Result</h4>
+                                <div id="mouse-text-result" class="result-display">No text detected</div>
                             </div>
                         </div>
                     </div>
+
+                    <!-- Locked Room Test Section -->
                     <div class="settings-section">
-                        <div class="settings-section-title">Locked Room OCR Test</div>
-                        <div class="viewport-container">
-                            <div class="file-upload-container" style="margin-bottom: 10px;">
-                                <input type="file" id="ocr-image-upload" accept="image/*" style="display: none;">
-                                <button class="btn" onclick="document.getElementById('ocr-image-upload').click()">Choose Image</button>
-                                <span id="selected-file-name" style="margin-left: 10px; color: #b9bbbe;"></span>
-                            </div>
-                            <div id="ocr-image-preview" style="margin: 10px 0; max-width: 100%; text-align: center;"></div>
-                            <div class="mouse-text-controls" style="margin-top: 10px;">
-                                <button id="test-locked-room-ocr" class="btn" onclick="testLockedRoomOCR()" disabled>Test OCR</button>
-                            </div>
-                            <div id="locked-room-ocr-result" style="margin-top: 10px; padding: 8px; background: rgba(0, 0, 0, 0.3); border-radius: 4px; min-height: 20px;"></div>
+                        <div class="section-header">
+                            <h3>Locked Room OCR Test</h3>
+                            <p class="section-description">Test OCR functionality with uploaded images to verify text recognition accuracy.</p>
+
+                        <div class="control-group">
+                            <input type="file" id="ocr-image-upload" accept="image/*" style="display: none;">
+                            <button class="btn secondary" onclick="document.getElementById('ocr-image-upload').click()">Choose Image</button>
+                            <span id="selected-file-name" class="file-info"></span>
                         </div>
+
+                        <div id="ocr-image-preview" class="image-preview"></div>
+
+                        <div class="control-group">
+                            <button id="test-locked-room-ocr" class="btn primary" onclick="testLockedRoomOCR()" disabled>Test OCR</button>
+                        </div>
+
+                        <div class="ocr-result">
+                            <h4>Test Result</h4>
+                            <div id="locked-room-ocr-result" class="result-display"></div>
+                        </div>
+                    </div>
+
+                    <!-- Hidden canvas elements -->
+                    <div style="display: none;">
+                        <canvas id="mouseTextCanvas" width="250" height="35"></canvas>
+                        <canvas id="croppedCanvas" width="250" height="35"></canvas>
                     </div>
                 </div>
             </div>
@@ -1443,17 +1797,17 @@
             <div class="clear-option" onclick="clearCell()">Clear Cell</div>
             <div class="gatestone-options">
                 <div class="gatestone-option" onclick="addGatestone('Gatestone')" title="Gatestone">
-                    <img src="../assets/gatestones/Gatestone.png" alt="Gatestone" class="gatestone-preview">
+                    <img src="./assets/gatestones/Gatestone.png" alt="Gatestone" class="gatestone-preview">
                 </div>
                 <div class="gatestone-option" onclick="addGatestone('Gatestone_2')" title="Gatestone 2">
-                    <img src="../assets/gatestones/Gatestone_2.png" alt="Gatestone 2" class="gatestone-preview">
+                    <img src="./assets/gatestones/Gatestone_2.png" alt="Gatestone 2" class="gatestone-preview">
                 </div>
                 <div class="gatestone-option" onclick="addGatestone('Group_Gatestone')" title="Group Gatestone">
-                    <img src="../assets/gatestones/Group_Gatestone.png" alt="Group Gatestone" class="gatestone-preview">
+                    <img src="./assets/gatestones/Group_Gatestone.png" alt="Group Gatestone" class="gatestone-preview">
                 </div>
             </div>
             <div class="blocked-room-option" onclick="addBlockedRoom()">
-                <img src="../assets/rooms/blocked_room.png" alt="Blocked Room" class="blocked-room-preview">
+                <img src="./assets/rooms/blocked_room.png" alt="Blocked Room" class="blocked-room-preview">
                 <span>Blocked</span>
             </div>
             <div class="skill-option" onclick="showSkillTierMenu()">Select Skill Tier</div>
@@ -1939,16 +2293,94 @@
             }
         }
 
+        // Function to initialize canvas fallbacks
+        function initializeCanvasFallbacks() {
+            // Initialize capture preview canvas
+            const captureCanvas = document.getElementById('capturePreviewCanvas');
+            if (captureCanvas) {
+                const ctx = captureCanvas.getContext('2d');
+                ctx.fillStyle = '#202225';
+                ctx.fillRect(0, 0, captureCanvas.width, captureCanvas.height);
+                ctx.fillStyle = '#dcddde';
+                ctx.font = '12px Arial';
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'middle';
+                ctx.fillText('Screen capture preview', captureCanvas.width / 2, captureCanvas.height / 2);
+                ctx.strokeStyle = '#555';
+                ctx.lineWidth = 1;
+                ctx.strokeRect(0, 0, captureCanvas.width, captureCanvas.height);
+            }
+
+            // Initialize OCR preview canvas
+            const ocrCanvas = document.getElementById('previewCanvas');
+            if (ocrCanvas) {
+                const ctx = ocrCanvas.getContext('2d');
+                ctx.fillStyle = '#202225';
+                ctx.fillRect(0, 0, ocrCanvas.width, ocrCanvas.height);
+                ctx.fillStyle = '#dcddde';
+                ctx.font = '10px Arial';
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'middle';
+                ctx.fillText('OCR capture area will appear here', ocrCanvas.width / 2, ocrCanvas.height / 2);
+                ctx.strokeStyle = '#555';
+                ctx.lineWidth = 1;
+                ctx.strokeRect(0, 0, ocrCanvas.width, ocrCanvas.height);
+            }
+
+            // Initialize map background canvas
+            const mapCanvas = document.getElementById('mapBackgroundCanvas');
+            if (mapCanvas) {
+                // Set canvas size to match container
+                const mapContainer = document.getElementById('map-container');
+                if (mapContainer) {
+                    mapCanvas.width = mapContainer.clientWidth || 200;
+                    mapCanvas.height = mapContainer.clientHeight || 200;
+                }
+
+                const ctx = mapCanvas.getContext('2d');
+                ctx.fillStyle = '#2f3136';
+                ctx.fillRect(0, 0, mapCanvas.width, mapCanvas.height);
+                ctx.fillStyle = '#dcddde';
+                ctx.font = '12px Arial';
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'middle';
+                ctx.fillText('Dungeon map background', mapCanvas.width / 2, mapCanvas.height / 2);
+                ctx.strokeStyle = '#555';
+                ctx.lineWidth = 1;
+                ctx.strokeRect(0, 0, mapCanvas.width, mapCanvas.height);
+            }
+        }
+
         // Document ready function
         document.addEventListener('DOMContentLoaded', async function() {
             console.log("Document loaded");
-            
+
             try {
                 // Initialize Tesseract worker
                 await initTesseractWorker();
-            
+
             // Setup Alt1 status
             setupAlt1();
+
+            // Initialize canvas fallbacks to show something immediately
+            setTimeout(initializeCanvasFallbacks, 100);
+
+            // Setup image upload functionality
+            setupImageUpload();
+
+            // Update map information display
+            updateMapInfo();
+
+            // Initialize result displays with placeholder content
+            const mouseTextResult = document.getElementById('mouse-text-result');
+            if (mouseTextResult && !mouseTextResult.textContent.trim()) {
+                mouseTextResult.textContent = 'No text detected - activate OCR and hover over game text';
+            }
+
+            const lockedRoomResult = document.getElementById('locked-room-ocr-result');
+            if (lockedRoomResult && !lockedRoomResult.textContent.trim()) {
+                lockedRoomResult.textContent = 'Upload an image and click Test OCR to see results here';
+            }
             
                 // Periodically check Alt1 status
                 setInterval(setupAlt1, 5000);
@@ -1994,6 +2426,31 @@
                 statusIndicatorDiv.innerHTML = `
                     <div class="status-item"><span class="status-label">Alt1:</span> <span class="status-value status-error">Not Detected</span></div>
                 `;
+            }
+        }
+
+        // Function to update the app
+        function updateApp() {
+            if (window.alt1) {
+                // Re-identify the app with Alt1 to check for updates
+                alt1.identifyAppUrl("./appconfig.json");
+
+                // Show feedback to user
+                const updateButton = document.getElementById('update-app-button');
+                const originalText = updateButton.textContent;
+                updateButton.textContent = 'Checking...';
+                updateButton.disabled = true;
+
+                // Reset button after a short delay
+                setTimeout(() => {
+                    updateButton.textContent = originalText;
+                    updateButton.disabled = false;
+
+                    // Re-run the status update
+                    setupAlt1();
+                }, 2000);
+            } else {
+                alert('Alt1 not detected. Please install Alt1 first.');
             }
         }
 
@@ -2104,6 +2561,26 @@
         function updateDungeonSize(value) {
             saveSetting('dungeonSize', value);
             updateCapturePreviewSize();
+            updateMapInfo();
+        }
+
+        // Function to update map information display
+        function updateMapInfo() {
+            const sizeElement = document.getElementById('current-dungeon-size');
+            if (sizeElement) {
+                const sizeText = {
+                    'small': 'Small (4x4)',
+                    'medium': 'Medium (4x8)',
+                    'large': 'Large (8x8)'
+                };
+                sizeElement.textContent = sizeText[settings.dungeonSize] || 'Small (4x4)';
+            }
+
+            // Update rooms discovered count (placeholder for now)
+            const roomsElement = document.getElementById('rooms-discovered');
+            if (roomsElement) {
+                roomsElement.textContent = '0 rooms discovered';
+            }
         }
 
         // Function to update map size based on settings
@@ -2472,7 +2949,7 @@
             // Create preview image
             const previewImg = document.createElement('img');
             previewImg.className = 'shape-preview';
-            previewImg.src = `../assets/keys/${selectedColor}_${shape}_key.png`;
+            previewImg.src = `./assets/keys/${selectedColor}_${shape}_key.png`;
             previewImg.alt = `${selectedColor} ${shape}`;
             
             // Add shape name
@@ -2533,7 +3010,7 @@
                     
                     // Add the key image
                     const img = document.createElement('img');
-                    img.src = `../assets/keys/${color}_${shape}_key.png`;
+                    img.src = `./assets/keys/${color}_${shape}_key.png`;
                     img.alt = `${color} ${shape} key`;
                     activeCell.appendChild(img);
                     
@@ -2611,7 +3088,7 @@
                         cell.dataset.shape = state.shape;
                         
                         const img = document.createElement('img');
-                        img.src = `../assets/keys/${state.color}_${state.shape}_key.png`;
+                        img.src = `./assets/keys/${state.color}_${state.shape}_key.png`;
                         img.alt = `${state.color} ${state.shape} key`;
                         cell.appendChild(img);
                     }
@@ -2620,7 +3097,7 @@
                         cell.dataset.gatestone = state.gatestone;
                         
                         const img = document.createElement('img');
-                        img.src = `../assets/gatestones/${state.gatestone}.png`;
+                        img.src = `./assets/gatestones/${state.gatestone}.png`;
                         img.alt = state.gatestone.replace('_', ' ');
                         cell.appendChild(img);
                     }
@@ -2629,7 +3106,7 @@
                         cell.dataset.blocked = 'true';
                         
                         const img = document.createElement('img');
-                        img.src = '../assets/rooms/blocked_room.png';
+                        img.src = './assets/rooms/blocked_room.png';
                         img.alt = 'Blocked Room';
                         cell.appendChild(img);
                     }
@@ -3485,7 +3962,7 @@
                 
                 if (keyPreview) {
                     keyPreview.innerHTML = `
-                        <img src="../assets/keys/${keyFile}" alt="${cachedKey.color} ${cachedKey.shape} key">
+                        <img src="./assets/keys/${keyFile}" alt="${cachedKey.color} ${cachedKey.shape} key">
                         <span>Apply ${cachedKey.color} ${cachedKey.shape} Key</span>
                     `;
                 }
@@ -3589,7 +4066,7 @@
             
             // Add the gatestone image
             const img = document.createElement('img');
-            img.src = `../assets/gatestones/${gatestoneType}.png`;
+            img.src = `./assets/gatestones/${gatestoneType}.png`;
             img.alt = gatestoneType.replace('_', ' ');
             activeCell.appendChild(img);
             
@@ -3614,7 +4091,7 @@
             try {
                 // Create an image element
                 const img = new Image();
-                img.src = '../assets/rooms/locked_room.png';
+                img.src = './assets/rooms/locked_room.png';
                 
                 // Wait for image to load
                 await new Promise((resolve, reject) => {
@@ -3728,7 +4205,7 @@ Processed Image (for debugging):`;
                     
                     // Add the blocked room image
                     const img = document.createElement('img');
-                    img.src = '../assets/rooms/blocked_room.png';
+                    img.src = './assets/rooms/blocked_room.png';
                     img.alt = 'Blocked Room';
                     activeCell.appendChild(img);
                     
@@ -4263,30 +4740,56 @@ Processed Image (for debugging):`;
         }
 
         // Function to handle image upload
-        document.getElementById('ocr-image-upload').addEventListener('change', function(event) {
-            const file = event.target.files[0];
-            if (!file) return;
+        function setupImageUpload() {
+            const uploadInput = document.getElementById('ocr-image-upload');
+            if (!uploadInput) {
+                console.warn('OCR image upload input not found');
+                return;
+            }
 
-            // Update selected file name
-            document.getElementById('selected-file-name').textContent = file.name;
+            uploadInput.addEventListener('change', function(event) {
+                const file = event.target.files[0];
+                if (!file) return;
 
-            // Create preview
-            const reader = new FileReader();
-            reader.onload = function(e) {
-                const img = new Image();
-                img.src = e.target.result;
-                img.style.maxWidth = '100%';
-                img.style.height = 'auto';
-                
-                const previewDiv = document.getElementById('ocr-image-preview');
-                previewDiv.innerHTML = '';
-                previewDiv.appendChild(img);
+                console.log('Image file selected:', file.name);
 
-                // Enable the OCR test button
-                document.getElementById('test-locked-room-ocr').disabled = false;
-            };
-            reader.readAsDataURL(file);
-        });
+                // Update selected file name
+                const fileNameElement = document.getElementById('selected-file-name');
+                if (fileNameElement) {
+                    fileNameElement.textContent = file.name;
+                }
+
+                // Create preview
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    const img = new Image();
+                    img.src = e.target.result;
+                    img.style.maxWidth = '100%';
+                    img.style.height = 'auto';
+                    img.style.border = '1px solid #555';
+                    img.style.borderRadius = '3px';
+
+                    const previewDiv = document.getElementById('ocr-image-preview');
+                    if (previewDiv) {
+                        previewDiv.innerHTML = '';
+                        previewDiv.appendChild(img);
+                        console.log('Image preview created');
+                    } else {
+                        console.warn('OCR image preview div not found');
+                    }
+
+                    // Enable the OCR test button
+                    const testButton = document.getElementById('test-locked-room-ocr');
+                    if (testButton) {
+                        testButton.disabled = false;
+                    }
+                };
+                reader.onerror = function(error) {
+                    console.error('Error reading file:', error);
+                };
+                reader.readAsDataURL(file);
+            });
+        }
 
         // Function to check if a cell contains a question mark (locked room)
         async function checkForLockedRoom(cell) {
@@ -4946,7 +5449,9 @@ Processed Image (for debugging):`;
             }
         }
     </script>
+    <!-- Include Alt1 library -->
+    <script src="https://runeapps.org/alt1lib-v2.5.1.js"></script>
     <!-- Include the bundled JavaScript file -->
-    <script src="https://baglett.github.io/tmg_alt1_toolset/development/index.bundle.js"></script>
+    <script src="./index.bundle.js"></script>
 </body>
 </html>

@@ -1797,17 +1797,17 @@
             <div class="clear-option" onclick="clearCell()">Clear Cell</div>
             <div class="gatestone-options">
                 <div class="gatestone-option" onclick="addGatestone('Gatestone')" title="Gatestone">
-                    <img src="../assets/gatestones/Gatestone.png" alt="Gatestone" class="gatestone-preview">
+                    <img src="./assets/gatestones/Gatestone.png" alt="Gatestone" class="gatestone-preview">
                 </div>
                 <div class="gatestone-option" onclick="addGatestone('Gatestone_2')" title="Gatestone 2">
-                    <img src="../assets/gatestones/Gatestone_2.png" alt="Gatestone 2" class="gatestone-preview">
+                    <img src="./assets/gatestones/Gatestone_2.png" alt="Gatestone 2" class="gatestone-preview">
                 </div>
                 <div class="gatestone-option" onclick="addGatestone('Group_Gatestone')" title="Group Gatestone">
-                    <img src="../assets/gatestones/Group_Gatestone.png" alt="Group Gatestone" class="gatestone-preview">
+                    <img src="./assets/gatestones/Group_Gatestone.png" alt="Group Gatestone" class="gatestone-preview">
                 </div>
             </div>
             <div class="blocked-room-option" onclick="addBlockedRoom()">
-                <img src="../assets/rooms/blocked_room.png" alt="Blocked Room" class="blocked-room-preview">
+                <img src="./assets/rooms/blocked_room.png" alt="Blocked Room" class="blocked-room-preview">
                 <span>Blocked</span>
             </div>
             <div class="skill-option" onclick="showSkillTierMenu()">Select Skill Tier</div>
@@ -2949,7 +2949,7 @@
             // Create preview image
             const previewImg = document.createElement('img');
             previewImg.className = 'shape-preview';
-            previewImg.src = `../assets/keys/${selectedColor}_${shape}_key.png`;
+            previewImg.src = `./assets/keys/${selectedColor}_${shape}_key.png`;
             previewImg.alt = `${selectedColor} ${shape}`;
             
             // Add shape name
@@ -3010,7 +3010,7 @@
                     
                     // Add the key image
                     const img = document.createElement('img');
-                    img.src = `../assets/keys/${color}_${shape}_key.png`;
+                    img.src = `./assets/keys/${color}_${shape}_key.png`;
                     img.alt = `${color} ${shape} key`;
                     activeCell.appendChild(img);
                     
@@ -3088,7 +3088,7 @@
                         cell.dataset.shape = state.shape;
                         
                         const img = document.createElement('img');
-                        img.src = `../assets/keys/${state.color}_${state.shape}_key.png`;
+                        img.src = `./assets/keys/${state.color}_${state.shape}_key.png`;
                         img.alt = `${state.color} ${state.shape} key`;
                         cell.appendChild(img);
                     }
@@ -3097,7 +3097,7 @@
                         cell.dataset.gatestone = state.gatestone;
                         
                         const img = document.createElement('img');
-                        img.src = `../assets/gatestones/${state.gatestone}.png`;
+                        img.src = `./assets/gatestones/${state.gatestone}.png`;
                         img.alt = state.gatestone.replace('_', ' ');
                         cell.appendChild(img);
                     }
@@ -3106,7 +3106,7 @@
                         cell.dataset.blocked = 'true';
                         
                         const img = document.createElement('img');
-                        img.src = '../assets/rooms/blocked_room.png';
+                        img.src = './assets/rooms/blocked_room.png';
                         img.alt = 'Blocked Room';
                         cell.appendChild(img);
                     }
@@ -3962,7 +3962,7 @@
                 
                 if (keyPreview) {
                     keyPreview.innerHTML = `
-                        <img src="../assets/keys/${keyFile}" alt="${cachedKey.color} ${cachedKey.shape} key">
+                        <img src="./assets/keys/${keyFile}" alt="${cachedKey.color} ${cachedKey.shape} key">
                         <span>Apply ${cachedKey.color} ${cachedKey.shape} Key</span>
                     `;
                 }
@@ -4066,7 +4066,7 @@
             
             // Add the gatestone image
             const img = document.createElement('img');
-            img.src = `../assets/gatestones/${gatestoneType}.png`;
+            img.src = `./assets/gatestones/${gatestoneType}.png`;
             img.alt = gatestoneType.replace('_', ' ');
             activeCell.appendChild(img);
             
@@ -4091,7 +4091,7 @@
             try {
                 // Create an image element
                 const img = new Image();
-                img.src = '../assets/rooms/locked_room.png';
+                img.src = './assets/rooms/locked_room.png';
                 
                 // Wait for image to load
                 await new Promise((resolve, reject) => {
@@ -4205,7 +4205,7 @@ Processed Image (for debugging):`;
                     
                     // Add the blocked room image
                     const img = document.createElement('img');
-                    img.src = '../assets/rooms/blocked_room.png';
+                    img.src = './assets/rooms/blocked_room.png';
                     img.alt = 'Blocked Room';
                     activeCell.appendChild(img);
                     
