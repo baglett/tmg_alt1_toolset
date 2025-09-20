@@ -18,7 +18,15 @@
       "Bash(git add:*)",
       "Bash(git commit:*)",
       "Bash(git push:*)",
-      "Read(//c/Users/jmbag/OneDrive/Pictures/Screenshots/**)"
+      "Read(//c/Users/jmbag/OneDrive/Pictures/Screenshots/**)",
+      "WebFetch(domain:baglett.github.io)",
+      "mcp__github__get_me",
+      "WebFetch(domain:docs.github.com)",
+      "Bash(git log:*)",
+      "Bash(set)",
+      "mcp__github__list_branches",
+      "WebFetch(domain:jaredbagwell.ddns.net)",
+      "Read(//c/Users/jmbag/**)"
     ],
     "deny": [],
     "ask": []
