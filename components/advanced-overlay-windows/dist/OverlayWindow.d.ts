@@ -15,7 +15,7 @@ export declare class OverlayWindow {
     private readonly borderWidth;
     private readonly shadowOffset;
     private readonly shadowBlur;
-    private static readonly DEFAULT_THEME;
+    private static getDefaultTheme;
     constructor(config: WindowConfig);
     /**
      * Get window ID

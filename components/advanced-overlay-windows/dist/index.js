@@ -284,6 +284,17 @@ __webpack_require__.r(__webpack_exports__);
  * Individual overlay window with advanced rendering and interaction capabilities
  */
 class OverlayWindow {
+    // Default theme - lazy initialization to avoid alt1lib import issues
+    static getDefaultTheme() {
+        return {
+            titleBarColor: alt1__WEBPACK_IMPORTED_MODULE_0__.mixColor(88, 101, 242, 240), // Discord purple
+            titleBarTextColor: alt1__WEBPACK_IMPORTED_MODULE_0__.mixColor(255, 255, 255, 255), // White text
+            borderColor: alt1__WEBPACK_IMPORTED_MODULE_0__.mixColor(88, 101, 242, 255), // Purple border
+            backgroundColor: alt1__WEBPACK_IMPORTED_MODULE_0__.mixColor(47, 49, 54, 240), // Dark background
+            shadowColor: alt1__WEBPACK_IMPORTED_MODULE_0__.mixColor(0, 0, 0, 80), // Dark shadow
+            accentColor: alt1__WEBPACK_IMPORTED_MODULE_0__.mixColor(114, 137, 218, 255) // Light purple accent
+        };
+    }
     constructor(config) {
         this.interactionRegions = [];
         this.contentRenderer = null;
@@ -312,7 +323,7 @@ class OverlayWindow {
             overlayGroup: `window_${config.id || this.generateId()}`,
             lastInteraction: Date.now()
         };
-        this.theme = config.theme || { ...OverlayWindow.DEFAULT_THEME };
+        this.theme = config.theme || OverlayWindow.getDefaultTheme();
         this.setupInteractionRegions();
     }
     /**
@@ -684,15 +695,6 @@ class OverlayWindow {
         }
     }
 }
-// Default theme
-OverlayWindow.DEFAULT_THEME = {
-    titleBarColor: alt1__WEBPACK_IMPORTED_MODULE_0__.mixColor(88, 101, 242, 240), // Discord purple
-    titleBarTextColor: alt1__WEBPACK_IMPORTED_MODULE_0__.mixColor(255, 255, 255, 255), // White text
-    borderColor: alt1__WEBPACK_IMPORTED_MODULE_0__.mixColor(88, 101, 242, 255), // Purple border
-    backgroundColor: alt1__WEBPACK_IMPORTED_MODULE_0__.mixColor(47, 49, 54, 240), // Dark background
-    shadowColor: alt1__WEBPACK_IMPORTED_MODULE_0__.mixColor(0, 0, 0, 80), // Dark shadow
-    accentColor: alt1__WEBPACK_IMPORTED_MODULE_0__.mixColor(114, 137, 218, 255) // Light purple accent
-};
 
 
 /***/ }),

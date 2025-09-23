@@ -299,6 +299,17 @@ __nested_webpack_require_9306__.r(__nested_webpack_exports__);
  * Individual overlay window with advanced rendering and interaction capabilities
  */
 class OverlayWindow {
+    // Default theme - lazy initialization to avoid alt1lib import issues
+    static getDefaultTheme() {
+        return {
+            titleBarColor: alt1__WEBPACK_IMPORTED_MODULE_0__.mixColor(88, 101, 242, 240), // Discord purple
+            titleBarTextColor: alt1__WEBPACK_IMPORTED_MODULE_0__.mixColor(255, 255, 255, 255), // White text
+            borderColor: alt1__WEBPACK_IMPORTED_MODULE_0__.mixColor(88, 101, 242, 255), // Purple border
+            backgroundColor: alt1__WEBPACK_IMPORTED_MODULE_0__.mixColor(47, 49, 54, 240), // Dark background
+            shadowColor: alt1__WEBPACK_IMPORTED_MODULE_0__.mixColor(0, 0, 0, 80), // Dark shadow
+            accentColor: alt1__WEBPACK_IMPORTED_MODULE_0__.mixColor(114, 137, 218, 255) // Light purple accent
+        };
+    }
     constructor(config) {
         this.interactionRegions = [];
         this.contentRenderer = null;
@@ -327,7 +338,7 @@ class OverlayWindow {
             overlayGroup: `window_${config.id || this.generateId()}`,
             lastInteraction: Date.now()
         };
-        this.theme = config.theme || { ...OverlayWindow.DEFAULT_THEME };
+        this.theme = config.theme || OverlayWindow.getDefaultTheme();
         this.setupInteractionRegions();
     }
     /**
@@ -699,15 +710,6 @@ class OverlayWindow {
         }
     }
 }
-// Default theme
-OverlayWindow.DEFAULT_THEME = {
-    titleBarColor: alt1__WEBPACK_IMPORTED_MODULE_0__.mixColor(88, 101, 242, 240), // Discord purple
-    titleBarTextColor: alt1__WEBPACK_IMPORTED_MODULE_0__.mixColor(255, 255, 255, 255), // White text
-    borderColor: alt1__WEBPACK_IMPORTED_MODULE_0__.mixColor(88, 101, 242, 255), // Purple border
-    backgroundColor: alt1__WEBPACK_IMPORTED_MODULE_0__.mixColor(47, 49, 54, 240), // Dark background
-    shadowColor: alt1__WEBPACK_IMPORTED_MODULE_0__.mixColor(0, 0, 0, 80), // Dark shadow
-    accentColor: alt1__WEBPACK_IMPORTED_MODULE_0__.mixColor(114, 137, 218, 255) // Light purple accent
-};
 
 
 /***/ }),
@@ -716,16 +718,16 @@ OverlayWindow.DEFAULT_THEME = {
 /*!*********************************!*\
   !*** ./OverlayWindowManager.ts ***!
   \*********************************/
-/***/ ((__unused_webpack_module, __nested_webpack_exports__, __nested_webpack_require_23425__) => {
+/***/ ((__unused_webpack_module, __nested_webpack_exports__, __nested_webpack_require_23557__) => {
 
-__nested_webpack_require_23425__.r(__nested_webpack_exports__);
-/* harmony export */ __nested_webpack_require_23425__.d(__nested_webpack_exports__, {
+__nested_webpack_require_23557__.r(__nested_webpack_exports__);
+/* harmony export */ __nested_webpack_require_23557__.d(__nested_webpack_exports__, {
 /* harmony export */   OverlayWindowManager: () => (/* binding */ OverlayWindowManager)
 /* harmony export */ });
-/* harmony import */ var alt1__WEBPACK_IMPORTED_MODULE_0__ = __nested_webpack_require_23425__(/*! alt1 */ "alt1");
-/* harmony import */ var alt1__WEBPACK_IMPORTED_MODULE_0___default = /*#__PURE__*/__nested_webpack_require_23425__.n(alt1__WEBPACK_IMPORTED_MODULE_0__);
-/* harmony import */ var _OverlayWindow__WEBPACK_IMPORTED_MODULE_1__ = __nested_webpack_require_23425__(/*! ./OverlayWindow */ "./OverlayWindow.ts");
-/* harmony import */ var _InteractionDetector__WEBPACK_IMPORTED_MODULE_2__ = __nested_webpack_require_23425__(/*! ./InteractionDetector */ "./InteractionDetector.ts");
+/* harmony import */ var alt1__WEBPACK_IMPORTED_MODULE_0__ = __nested_webpack_require_23557__(/*! alt1 */ "alt1");
+/* harmony import */ var alt1__WEBPACK_IMPORTED_MODULE_0___default = /*#__PURE__*/__nested_webpack_require_23557__.n(alt1__WEBPACK_IMPORTED_MODULE_0__);
+/* harmony import */ var _OverlayWindow__WEBPACK_IMPORTED_MODULE_1__ = __nested_webpack_require_23557__(/*! ./OverlayWindow */ "./OverlayWindow.ts");
+/* harmony import */ var _InteractionDetector__WEBPACK_IMPORTED_MODULE_2__ = __nested_webpack_require_23557__(/*! ./InteractionDetector */ "./InteractionDetector.ts");
 
 
 
@@ -1085,7 +1087,7 @@ module.exports = __WEBPACK_EXTERNAL_MODULE_alt1__;
 /******/ 	var __webpack_module_cache__ = {};
 /******/ 	
 /******/ 	// The require function
-/******/ 	function __nested_webpack_require_35611__(moduleId) {
+/******/ 	function __nested_webpack_require_35743__(moduleId) {
 /******/ 		// Check if module is in cache
 /******/ 		var cachedModule = __webpack_module_cache__[moduleId];
 /******/ 		if (cachedModule !== undefined) {
@@ -1099,7 +1101,7 @@ module.exports = __WEBPACK_EXTERNAL_MODULE_alt1__;
 /******/ 		};
 /******/ 	
 /******/ 		// Execute the module function
-/******/ 		__webpack_modules__[moduleId](module, module.exports, __nested_webpack_require_35611__);
+/******/ 		__webpack_modules__[moduleId](module, module.exports, __nested_webpack_require_35743__);
 /******/ 	
 /******/ 		// Return the exports of the module
 /******/ 		return module.exports;
@@ -1109,11 +1111,11 @@ module.exports = __WEBPACK_EXTERNAL_MODULE_alt1__;
 /******/ 	/* webpack/runtime/compat get default export */
 /******/ 	(() => {
 /******/ 		// getDefaultExport function for compatibility with non-harmony modules
-/******/ 		__nested_webpack_require_35611__.n = (module) => {
+/******/ 		__nested_webpack_require_35743__.n = (module) => {
 /******/ 			var getter = module && module.__esModule ?
 /******/ 				() => (module['default']) :
 /******/ 				() => (module);
-/******/ 			__nested_webpack_require_35611__.d(getter, { a: getter });
+/******/ 			__nested_webpack_require_35743__.d(getter, { a: getter });
 /******/ 			return getter;
 /******/ 		};
 /******/ 	})();
@@ -1121,9 +1123,9 @@ module.exports = __WEBPACK_EXTERNAL_MODULE_alt1__;
 /******/ 	/* webpack/runtime/define property getters */
 /******/ 	(() => {
 /******/ 		// define getter functions for harmony exports
-/******/ 		__nested_webpack_require_35611__.d = (exports, definition) => {
+/******/ 		__nested_webpack_require_35743__.d = (exports, definition) => {
 /******/ 			for(var key in definition) {
-/******/ 				if(__nested_webpack_require_35611__.o(definition, key) && !__nested_webpack_require_35611__.o(exports, key)) {
+/******/ 				if(__nested_webpack_require_35743__.o(definition, key) && !__nested_webpack_require_35743__.o(exports, key)) {
 /******/ 					Object.defineProperty(exports, key, { enumerable: true, get: definition[key] });
 /******/ 				}
 /******/ 			}
@@ -1132,13 +1134,13 @@ module.exports = __WEBPACK_EXTERNAL_MODULE_alt1__;
 /******/ 	
 /******/ 	/* webpack/runtime/hasOwnProperty shorthand */
 /******/ 	(() => {
-/******/ 		__nested_webpack_require_35611__.o = (obj, prop) => (Object.prototype.hasOwnProperty.call(obj, prop))
+/******/ 		__nested_webpack_require_35743__.o = (obj, prop) => (Object.prototype.hasOwnProperty.call(obj, prop))
 /******/ 	})();
 /******/ 	
 /******/ 	/* webpack/runtime/make namespace object */
 /******/ 	(() => {
 /******/ 		// define __esModule on exports
-/******/ 		__nested_webpack_require_35611__.r = (exports) => {
+/******/ 		__nested_webpack_require_35743__.r = (exports) => {
 /******/ 			if(typeof Symbol !== 'undefined' && Symbol.toStringTag) {
 /******/ 				Object.defineProperty(exports, Symbol.toStringTag, { value: 'Module' });
 /******/ 			}
@@ -1153,8 +1155,8 @@ var __nested_webpack_exports__ = {};
 /*!******************!*\
   !*** ./index.ts ***!
   \******************/
-__nested_webpack_require_35611__.r(__nested_webpack_exports__);
-/* harmony export */ __nested_webpack_require_35611__.d(__nested_webpack_exports__, {
+__nested_webpack_require_35743__.r(__nested_webpack_exports__);
+/* harmony export */ __nested_webpack_require_35743__.d(__nested_webpack_exports__, {
 /* harmony export */   InteractionDetector: () => (/* reexport safe */ _InteractionDetector__WEBPACK_IMPORTED_MODULE_2__.InteractionDetector),
 /* harmony export */   OverlayWindow: () => (/* reexport safe */ _OverlayWindow__WEBPACK_IMPORTED_MODULE_1__.OverlayWindow),
 /* harmony export */   OverlayWindowManager: () => (/* reexport safe */ _OverlayWindowManager__WEBPACK_IMPORTED_MODULE_0__.OverlayWindowManager),
@@ -1162,9 +1164,9 @@ __nested_webpack_require_35611__.r(__nested_webpack_exports__);
 /* harmony export */   createWindowManager: () => (/* binding */ createWindowManager),
 /* harmony export */   "default": () => (__WEBPACK_DEFAULT_EXPORT__)
 /* harmony export */ });
-/* harmony import */ var _OverlayWindowManager__WEBPACK_IMPORTED_MODULE_0__ = __nested_webpack_require_35611__(/*! ./OverlayWindowManager */ "./OverlayWindowManager.ts");
-/* harmony import */ var _OverlayWindow__WEBPACK_IMPORTED_MODULE_1__ = __nested_webpack_require_35611__(/*! ./OverlayWindow */ "./OverlayWindow.ts");
-/* harmony import */ var _InteractionDetector__WEBPACK_IMPORTED_MODULE_2__ = __nested_webpack_require_35611__(/*! ./InteractionDetector */ "./InteractionDetector.ts");
+/* harmony import */ var _OverlayWindowManager__WEBPACK_IMPORTED_MODULE_0__ = __nested_webpack_require_35743__(/*! ./OverlayWindowManager */ "./OverlayWindowManager.ts");
+/* harmony import */ var _OverlayWindow__WEBPACK_IMPORTED_MODULE_1__ = __nested_webpack_require_35743__(/*! ./OverlayWindow */ "./OverlayWindow.ts");
+/* harmony import */ var _InteractionDetector__WEBPACK_IMPORTED_MODULE_2__ = __nested_webpack_require_35743__(/*! ./InteractionDetector */ "./InteractionDetector.ts");
 // Advanced Overlay Windows - Main Export
 //
 // This component provides sophisticated window management for Alt1 applications

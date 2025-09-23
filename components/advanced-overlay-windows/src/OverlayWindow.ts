@@ -22,15 +22,17 @@ export class OverlayWindow {
     private readonly shadowOffset = 3;
     private readonly shadowBlur = 5;
 
-    // Default theme
-    private static readonly DEFAULT_THEME: WindowTheme = {
-        titleBarColor: alt1lib.mixColor(88, 101, 242, 240),     // Discord purple
-        titleBarTextColor: alt1lib.mixColor(255, 255, 255, 255), // White text
-        borderColor: alt1lib.mixColor(88, 101, 242, 255),       // Purple border
-        backgroundColor: alt1lib.mixColor(47, 49, 54, 240),     // Dark background
-        shadowColor: alt1lib.mixColor(0, 0, 0, 80),             // Dark shadow
-        accentColor: alt1lib.mixColor(114, 137, 218, 255)       // Light purple accent
-    };
+    // Default theme - lazy initialization to avoid alt1lib import issues
+    private static getDefaultTheme(): WindowTheme {
+        return {
+            titleBarColor: alt1lib.mixColor(88, 101, 242, 240),     // Discord purple
+            titleBarTextColor: alt1lib.mixColor(255, 255, 255, 255), // White text
+            borderColor: alt1lib.mixColor(88, 101, 242, 255),       // Purple border
+            backgroundColor: alt1lib.mixColor(47, 49, 54, 240),     // Dark background
+            shadowColor: alt1lib.mixColor(0, 0, 0, 80),             // Dark shadow
+            accentColor: alt1lib.mixColor(114, 137, 218, 255)       // Light purple accent
+        };
+    }
 
     constructor(config: WindowConfig) {
         this.state = {
@@ -49,7 +51,7 @@ export class OverlayWindow {
             lastInteraction: Date.now()
         };
 
-        this.theme = config.theme || { ...OverlayWindow.DEFAULT_THEME };
+        this.theme = config.theme || OverlayWindow.getDefaultTheme();
         this.setupInteractionRegions();
     }
 
