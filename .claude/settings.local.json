@@ -37,7 +37,13 @@
       "Bash(git config:*)",
       "mcp__github__list_workflows",
       "Bash(dir:*)",
-      "mcp__context7__resolve-library-id"
+      "mcp__context7__resolve-library-id",
+      "mcp__github__search_code",
+      "Bash(npm audit:*)",
+      "Bash(npm run build:all:*)",
+      "Bash(npx tsc:*)",
+      "Bash(npm install:*)",
+      "Bash(npm run deploy:*)"
     ],
     "deny": [],
     "ask": []

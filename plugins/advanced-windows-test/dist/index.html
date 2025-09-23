@@ -1,0 +1,251 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Advanced Windows Test</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0;
+            padding: 0;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        .header {
+            background: rgba(0, 0, 0, 0.2);
+            padding: 15px 20px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .header h1 {
+            margin: 0;
+            font-size: 20px;
+            font-weight: 600;
+        }
+
+        .header p {
+            margin: 5px 0 0 0;
+            opacity: 0.8;
+            font-size: 14px;
+        }
+
+        .main-content {
+            flex: 1;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        .control-panel {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 10px;
+            padding: 20px;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .control-panel h3 {
+            margin: 0 0 15px 0;
+            font-size: 16px;
+            color: #fff;
+        }
+
+        .button-group {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        .btn {
+            background: linear-gradient(45deg, #667eea, #764ba2);
+            border: none;
+            color: white;
+            padding: 12px 20px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 500;
+            transition: all 0.2s ease;
+            min-width: 120px;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+        }
+
+        .btn:active {
+            transform: translateY(0);
+        }
+
+        .btn.danger {
+            background: linear-gradient(45deg, #ff6b6b, #ee5a52);
+        }
+
+        .btn.success {
+            background: linear-gradient(45deg, #51cf66, #40c057);
+        }
+
+        .btn.warning {
+            background: linear-gradient(45deg, #ffd43b, #fab005);
+        }
+
+        .btn:disabled {
+            background: #666;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .status {
+            background: rgba(0, 0, 0, 0.2);
+            border-radius: 6px;
+            padding: 15px;
+            margin-top: 15px;
+        }
+
+        .status h4 {
+            margin: 0 0 10px 0;
+            font-size: 14px;
+            color: #fff;
+        }
+
+        .status-item {
+            display: flex;
+            justify-content: space-between;
+            margin: 5px 0;
+            font-size: 13px;
+        }
+
+        .status-value {
+            font-weight: 600;
+            color: #51cf66;
+        }
+
+        .alt1-status {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 10px;
+            padding: 15px;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .alt1-status.not-detected {
+            border-color: #ff6b6b;
+            background: rgba(255, 107, 107, 0.1);
+        }
+
+        .alt1-status.detected {
+            border-color: #51cf66;
+            background: rgba(81, 207, 102, 0.1);
+        }
+
+        .alt1-link {
+            color: #74c0fc;
+            text-decoration: none;
+            font-weight: 500;
+        }
+
+        .alt1-link:hover {
+            text-decoration: underline;
+        }
+
+        .example-section {
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 10px;
+            padding: 20px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .example-section h3 {
+            margin: 0 0 15px 0;
+            color: #74c0fc;
+        }
+
+        .example-section code {
+            background: rgba(0, 0, 0, 0.3);
+            padding: 2px 6px;
+            border-radius: 3px;
+            font-family: 'Consolas', 'Monaco', monospace;
+            font-size: 12px;
+        }
+
+        @media (max-width: 480px) {
+            .button-group {
+                flex-direction: column;
+            }
+
+            .btn {
+                min-width: auto;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>🚀 Advanced Windows Test</h1>
+        <p>Demonstration of the Advanced Overlay Windows Component</p>
+    </div>
+
+    <div class="main-content">
+        <!-- Alt1 Status -->
+        <div id="alt1Status" class="alt1-status not-detected">
+            <h3>Alt1 Status</h3>
+            <p id="alt1StatusText">Alt1 not detected. This app requires Alt1 to function properly.</p>
+            <p><a href="#" id="alt1InstallLink" class="alt1-link">Click here to install this app in Alt1</a></p>
+        </div>
+
+        <!-- Window Controls -->
+        <div class="control-panel">
+            <h3>🪟 Window Management</h3>
+            <div class="button-group">
+                <button id="openExampleWindow" class="btn success">Open Example Window</button>
+                <button id="closeExampleWindow" class="btn danger" disabled>Close Example Window</button>
+                <button id="openMultipleWindows" class="btn warning">Open Multiple Windows</button>
+                <button id="closeAllWindows" class="btn danger">Close All Windows</button>
+            </div>
+
+            <div class="status">
+                <h4>📊 Window Status</h4>
+                <div class="status-item">
+                    <span>Windows Manager:</span>
+                    <span id="managerStatus" class="status-value">Not Initialized</span>
+                </div>
+                <div class="status-item">
+                    <span>Open Windows:</span>
+                    <span id="windowCount" class="status-value">0</span>
+                </div>
+                <div class="status-item">
+                    <span>Focused Window:</span>
+                    <span id="focusedWindow" class="status-value">None</span>
+                </div>
+                <div class="status-item">
+                    <span>Interaction Detection:</span>
+                    <span id="interactionStatus" class="status-value">Stopped</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Example Usage -->
+        <div class="example-section">
+            <h3>💡 How to Use</h3>
+            <p>This test plugin demonstrates the advanced overlay windows component capabilities:</p>
+            <ul>
+                <li><strong>Create Windows:</strong> Click "Open Example Window" to create overlay windows</li>
+                <li><strong>Interact:</strong> Drag windows by their title bars, resize using corner handles</li>
+                <li><strong>Focus:</strong> Click on windows to bring them to front</li>
+                <li><strong>Close:</strong> Use the × button on windows or the "Close" buttons below</li>
+            </ul>
+            <p>Windows are created using: <code>windowManager.createWindow(config)</code></p>
+            <p>All interactions are detected using computer vision and mouse tracking!</p>
+        </div>
+    </div>
+
+    <script src="index.bundle.js"></script>
+</body>
+</html>

@@ -1,0 +1,25 @@
+{
+  "compilerOptions": {
+    "target": "es5",
+    "module": "ESNext",
+    "strict": false,
+    "esModuleInterop": true,
+    "skipLibCheck": true,
+    "forceConsistentCasingInFileNames": true,
+    "outDir": "./dist",
+    "rootDir": "./src",
+    "sourceMap": true,
+    "noImplicitAny": false,
+    "strictNullChecks": false,
+    "allowJs": true,
+    "moduleResolution": "bundler",
+    "resolvePackageJsonExports": true,
+    "baseUrl": ".",
+    "paths": {
+      "alt1/*": ["node_modules/alt1/dist/*"],
+      "alt1": ["node_modules/alt1/dist"]
+    }
+  },
+  "include": ["src/**/*", "../../shared/types/**/*"],
+  "exclude": ["node_modules", "src/index_old.ts"]
+} 

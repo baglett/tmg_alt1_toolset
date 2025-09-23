@@ -1,0 +1,39 @@
+{
+  "compilerOptions": {
+    "target": "ES2020",
+    "lib": ["ES2020", "DOM", "DOM.Iterable"],
+    "allowJs": true,
+    "skipLibCheck": true,
+    "esModuleInterop": true,
+    "allowSyntheticDefaultImports": true,
+    "strict": true,
+    "forceConsistentCasingInFileNames": true,
+    "noFallthroughCasesInSwitch": true,
+    "module": "ESNext",
+    "moduleResolution": "node",
+    "resolveJsonModule": true,
+    "isolatedModules": true,
+    "noEmit": false,
+    "declaration": true,
+    "declarationMap": true,
+    "sourceMap": true,
+    "outDir": "./dist",
+    "baseUrl": ".",
+    "typeRoots": ["node_modules/@types", "../shared/types"],
+    "paths": {
+      "@tmg-alt1/mouse-text-tool": ["../components/mouse-text-tool/src"],
+      "@tmg-alt1/advanced-overlay-windows": ["../components/advanced-overlay-windows/src"],
+      "@shared/*": ["../shared/*"]
+    }
+  },
+  "include": [
+    "src/**/*",
+    "../shared/types/**/*"
+  ],
+  "exclude": [
+    "node_modules",
+    "dist",
+    "**/*.test.ts",
+    "**/*.spec.ts"
+  ]
+}

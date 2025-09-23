@@ -1,0 +1,14 @@
+{
+  "extends": "../../shared/tsconfig.base.json",
+  "compilerOptions": {
+    "outDir": "./dist",
+    "rootDir": "./src",
+    "paths": {
+      "alt1/*": ["node_modules/alt1/dist/*"],
+      "alt1": ["node_modules/alt1/dist"],
+      "@tmg-alt1/advanced-overlay-windows": ["../../components/advanced-overlay-windows/src"]
+    }
+  },
+  "include": ["src/**/*"],
+  "exclude": ["node_modules", "dist"]
+}

@@ -1,8 +1,8 @@
-name: Deploy to GitHub Pages
+name: Deploy Alt1 Plugins to GitHub Pages
 
 on:
   push:
-    branches: [ main, feature/claude_setup ]
+    branches: [ main, development, feature/claude_setup ]
   workflow_dispatch:
 
 permissions:
@@ -26,17 +26,79 @@ jobs:
         with:
           node-version: '18'
           cache: 'npm'
-          cache-dependency-path: 'dungeoneering-optimization-gate-engine/package-lock.json'
+          cache-dependency-path: 'package-lock.json'
 
       - name: Install dependencies
-        run: |
-          cd dungeoneering-optimization-gate-engine
-          npm ci
+        run: npm ci
 
-      - name: Build app
+      - name: Build all plugins
+        run: npm run build:all
+
+      - name: Create deployment structure
         run: |
-          cd dungeoneering-optimization-gate-engine
-          npm run build
+          mkdir -p deploy-output
+
+          # Determine branch-specific directory
+          BRANCH_NAME="${{ github.ref_name }}"
+          if [ "$BRANCH_NAME" = "main" ]; then
+            DEPLOY_DIR="deploy-output"
+          else
+            DEPLOY_DIR="deploy-output/$BRANCH_NAME"
+            mkdir -p "$DEPLOY_DIR"
+          fi
+
+          # Deploy each plugin to its own subdirectory
+          if [ -d "plugins/dungeoneering-optimizer/dist" ]; then
+            cp -r plugins/dungeoneering-optimizer/dist "$DEPLOY_DIR/dungeoneering-optimizer"
+          fi
+
+          if [ -d "plugins/advanced-windows-test/dist" ]; then
+            cp -r plugins/advanced-windows-test/dist "$DEPLOY_DIR/advanced-windows-test"
+          fi
+
+          # Create index page for plugin directory
+          cat > "$DEPLOY_DIR/index.html" << 'EOF'
+          <!DOCTYPE html>
+          <html>
+          <head>
+            <title>TMG Alt1 Toolset - ${{ github.ref_name }}</title>
+            <style>
+              body { font-family: Arial, sans-serif; margin: 40px; }
+              .plugin { margin: 20px 0; padding: 15px; border: 1px solid #ddd; border-radius: 8px; }
+              .install-link { background: #007cba; color: white; padding: 8px 16px; text-decoration: none; border-radius: 4px; }
+              .install-link:hover { background: #005a87; }
+            </style>
+          </head>
+          <body>
+            <h1>TMG Alt1 Toolset - ${{ github.ref_name }} Branch</h1>
+            <p>Alt1 plugins for RuneScape automation and optimization.</p>
+
+            <div class="plugin">
+              <h2>🏰 Dungeoneering Optimizer</h2>
+              <p>Advanced gate engine and optimization tools for RuneScape Dungeoneering.</p>
+              <a href="alt1://addapp/https://baglett.github.io/tmg_alt1_toolset/${{ github.ref_name == 'main' && '' || github.ref_name }}${{ github.ref_name == 'main' && '' || '/' }}dungeoneering-optimizer/appconfig.json" class="install-link">📥 Install in Alt1</a>
+              <a href="dungeoneering-optimizer/" style="margin-left: 10px;">📂 Browse Files</a>
+            </div>
+
+            <div class="plugin">
+              <h2>🪟 Advanced Windows Test</h2>
+              <p>Test plugin demonstrating advanced overlay window management capabilities.</p>
+              <a href="alt1://addapp/https://baglett.github.io/tmg_alt1_toolset/${{ github.ref_name == 'main' && '' || github.ref_name }}${{ github.ref_name == 'main' && '' || '/' }}advanced-windows-test/appconfig.json" class="install-link">📥 Install in Alt1</a>
+              <a href="advanced-windows-test/" style="margin-left: 10px;">📂 Browse Files</a>
+            </div>
+
+            <h3>Installation Instructions</h3>
+            <ol>
+              <li>Ensure Alt1 Toolkit is installed and running</li>
+              <li>Click the "📥 Install in Alt1" button for the desired plugin</li>
+              <li>Alt1 will prompt to add the app - click "Add App"</li>
+              <li>Grant necessary permissions (pixel, overlay) when prompted</li>
+            </ol>
+
+            <p><small>Branch: ${{ github.ref_name }} | Commit: ${{ github.sha }}</small></p>
+          </body>
+          </html>
+          EOF
 
       - name: Setup Pages
         uses: actions/configure-pages@v4
@@ -44,7 +106,7 @@ jobs:
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
         with:
-          path: 'dungeoneering-optimization-gate-engine/dist'
+          path: 'deploy-output'
 
   deploy:
     environment:

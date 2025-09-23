@@ -1,0 +1,33 @@
+{
+    "appName": "Advanced Windows Test",
+    "description": "Test plugin demonstrating the advanced overlay windows component with interactive examples and comprehensive feature showcase",
+    "appUrl": "./index.html",
+    "configUrl": "./appconfig.json",
+    "iconUrl": "./assets/icon.png",
+    "defaultWidth": 450,
+    "defaultHeight": 600,
+    "minWidth": 400,
+    "maxWidth": 600,
+    "minHeight": 500,
+    "maxHeight": 800,
+    "requestedPermissions": [
+        "pixel",
+        "overlay",
+        "gamestate"
+    ],
+    "version": "1.0.0",
+    "author": "TMG Development Team",
+    "website": "https://github.com/baglett/tmg_alt1_toolset",
+    "tags": [
+        "test",
+        "example",
+        "advanced-windows",
+        "overlay",
+        "demo",
+        "component-showcase"
+    ],
+    "category": "Development Tools",
+    "launchText": "Launch Advanced Windows Test",
+    "updateUrl": "./appconfig.json",
+    "helpUrl": "https://github.com/baglett/tmg_alt1_toolset/blob/main/components/advanced-overlay-windows/README.md"
+}
