@@ -1401,7 +1401,7 @@ class AdvancedWindowsTestApp {
                 this.elements.alt1StatusText.textContent = '✅ Alt1 detected! Advanced overlay windows are available.';
             }
             // Tell Alt1 about our app
-            alt1__WEBPACK_IMPORTED_MODULE_0__.identifyApp('./appconfig.json');
+            (0,alt1__WEBPACK_IMPORTED_MODULE_0__.identifyApp)('./appconfig.json');
             // Check permissions
             if (window.alt1.permissionPixel && window.alt1.permissionOverlay) {
                 if (this.elements.alt1StatusText) {

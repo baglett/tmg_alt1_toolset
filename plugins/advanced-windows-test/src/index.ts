@@ -2,6 +2,7 @@
 // Demonstrates the capabilities of the @tmg-alt1/advanced-overlay-windows component
 
 import * as alt1lib from 'alt1';
+import { identifyApp } from 'alt1';
 import { OverlayWindowManager, WindowThemes, OverlayWindow } from '../../../components/advanced-overlay-windows/dist/index';
 
 /**
@@ -94,7 +95,7 @@ class AdvancedWindowsTestApp {
             }
 
             // Tell Alt1 about our app
-            alt1lib.identifyApp('./appconfig.json');
+            identifyApp('./appconfig.json');
 
             // Check permissions
             if (window.alt1.permissionPixel && window.alt1.permissionOverlay) {
