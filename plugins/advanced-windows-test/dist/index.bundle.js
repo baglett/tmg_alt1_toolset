@@ -111,11 +111,11 @@ class InteractionDetector {
         if (!window.alt1)
             return null;
         const pos = window.alt1.mousePosition;
-        if (pos === -1)
+        if (!pos)
             return null;
         return {
-            x: pos >>> 16,
-            y: pos & 0xFFFF
+            x: pos.x,
+            y: pos.y
         };
     }
     /**

@@ -368,11 +368,12 @@ export async function findHomeRoomIcon(debugMode = false): Promise<{ x: number, 
             window.alt1.overLayClearGroup("debug_info");
             window.alt1.overLaySetGroup("debug_info");
             window.alt1.overLayText(
+                `Searching for home icon (${homeRoomIcon.width}x${homeRoomIcon.height}px)`,
                 a1lib.mixColor(255, 255, 255, 255),
-                10, 
-                10, 
-                5000,
-                `Searching for home icon (${homeRoomIcon.width}x${homeRoomIcon.height}px)`
+                10,
+                10,
+                50,
+                5000
             );
             window.alt1.overLayRefreshGroup("debug_info");
         }
@@ -381,11 +382,12 @@ export async function findHomeRoomIcon(debugMode = false): Promise<{ x: number, 
         if (debugMode) {
             console.log("Searching entire screen first...");
             window.alt1.overLayText(
+                "Searching entire screen...",
                 a1lib.mixColor(255, 255, 255, 255),
-                10, 
-                30, 
-                5000,
-                "Searching entire screen..."
+                10,
+                10,
+                30,
+                5000
             );
         }
         
@@ -544,19 +546,13 @@ export async function findHomeRoomIcon(debugMode = false): Promise<{ x: number, 
             console.log("Trying color-based detection...");
             
             // Save a screenshot of the game for debugging
-            if (window.alt1.captureAsync) {
-                try {
-                    window.alt1.captureAsync({
-                        left: 0,
-                        top: 0,
-                        width: fullImg.width,
-                        height: fullImg.height
-                    }, (img) => {
-                        console.log("Debug screenshot captured");
-                    });
-                } catch (e) {
-                    console.error("Failed to capture debug screenshot:", e);
+            try {
+                const debugImg = a1lib.captureHoldFullRs();
+                if (debugImg) {
+                    console.log("Debug screenshot captured");
                 }
+            } catch (e) {
+                console.error("Failed to capture debug screenshot:", e);
             }
         }
 
@@ -612,11 +608,12 @@ export function highlightHomeRoomIcon(x: number, y: number, duration: number = 5
         
         // Add a text label
         window.alt1.overLayText(
+            "Home Room",
             a1lib.mixColor(255, 255, 255, 255), // White
+            12,
             x,
             y - 10,
-            duration,
-            "Home Room"
+            duration
         );
         
         // Add a pulsing circle for better visibility
@@ -667,11 +664,12 @@ export async function findRedXMarker(debugMode = false): Promise<{ x: number, y:
             window.alt1.overLayClearGroup("debug_info");
             window.alt1.overLaySetGroup("debug_info");
             window.alt1.overLayText(
+                "Searching for red X marker on minimap",
                 a1lib.mixColor(255, 255, 255, 255),
-                10, 
-                10, 
-                5000,
-                "Searching for red X marker on minimap"
+                10,
+                10,
+                10,
+                5000
             );
             window.alt1.overLayRefreshGroup("debug_info");
         }
@@ -1010,11 +1008,12 @@ export async function findDungMapXIcon(debugMode = false): Promise<{ x: number, 
             window.alt1.overLayClearGroup("debug_info");
             window.alt1.overLaySetGroup("debug_info");
             window.alt1.overLayText(
+                `Searching for dungeon map X (${dungMapXIcon.width}x${dungMapXIcon.height}px)`,
                 a1lib.mixColor(255, 255, 255, 255),
-                10, 
-                10, 
-                5000,
-                `Searching for dungeon map X (${dungMapXIcon.width}x${dungMapXIcon.height}px)`
+                10,
+                10,
+                10,
+                5000
             );
             window.alt1.overLayRefreshGroup("debug_info");
         }
@@ -1023,11 +1022,12 @@ export async function findDungMapXIcon(debugMode = false): Promise<{ x: number, 
         if (debugMode) {
             console.log("Searching entire screen for dungeon map X...");
             window.alt1.overLayText(
+                "Searching entire screen...",
                 a1lib.mixColor(255, 255, 255, 255),
-                10, 
-                30, 
-                5000,
-                "Searching entire screen..."
+                10,
+                10,
+                30,
+                5000
             );
         }
         
@@ -1232,11 +1232,12 @@ export function highlightDungMapXIcon(x: number, y: number, duration: number = 5
         
         // Add a text label
         window.alt1.overLayText(
+            "Map X",
             a1lib.mixColor(255, 255, 255, 255), // White
+            12,
             x,
             y - 10,
-            duration,
-            "Map X"
+            duration
         );
         
         // Add a pulsing circle for better visibility
@@ -1306,11 +1307,12 @@ export async function scanForRedXAroundMouse(mousePosition: { x: number, y: numb
             );
             
             window.alt1.overLayText(
+                "Scanning for red X around mouse (30px radius)",
                 a1lib.mixColor(255, 255, 255, 255),
+                10,
                 regionX,
                 regionY - 10,
-                3000,
-                "Scanning for red X around mouse (30px radius)"
+                3000
             );
             
             window.alt1.overLayRefreshGroup("debug_info");
