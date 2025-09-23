@@ -186,15 +186,14 @@ export class OverlayWindow {
         if (!this.state.isVisible || !window.alt1) return;
 
         try {
-            // Set overlay group and z-index
-            alt1.overLaySetGroup(this.state.overlayGroup);
-            alt1.overLaySetGroupZIndex(this.state.overlayGroup, this.state.zIndex);
+            // Set overlay group
+            window.alt1.overLaySetGroup(this.state.overlayGroup);
 
             // Clear previous overlays
-            alt1.overLayClearGroup(this.state.overlayGroup);
+            window.alt1.overLayClearGroup(this.state.overlayGroup);
 
             // Freeze group for smooth rendering
-            alt1.overLayFreezeGroup(this.state.overlayGroup);
+            window.alt1.overLayFreezeGroup(this.state.overlayGroup, true);
 
             // Render window components
             this.renderShadow();
@@ -203,8 +202,8 @@ export class OverlayWindow {
             this.renderContent();
             this.renderControlButtons();
 
-            // Continue automatic updates
-            alt1.overLayContinueGroup(this.state.overlayGroup);
+            // Unfreeze group to display overlays
+            window.alt1.overLayFreezeGroup(this.state.overlayGroup, false);
 
         } catch (error) {
             console.error('Error rendering overlay window:', error);
@@ -329,7 +328,7 @@ export class OverlayWindow {
         const { width, height } = this.state.size;
 
         // Main window background
-        alt1.overLayRect(
+        window.alt1.overLayRect(
             this.theme.backgroundColor,
             x,
             y,
@@ -344,7 +343,7 @@ export class OverlayWindow {
             ? this.theme.accentColor
             : this.theme.borderColor;
 
-        alt1.overLayRect(
+        window.alt1.overLayRect(
             borderColor,
             x - this.borderWidth,
             y - this.borderWidth,
@@ -362,7 +361,7 @@ export class OverlayWindow {
         const { width } = this.state.size;
 
         // Title bar background
-        alt1.overLayRect(
+        window.alt1.overLayRect(
             this.theme.titleBarColor,
             x,
             y,
@@ -373,7 +372,7 @@ export class OverlayWindow {
         );
 
         // Title text
-        alt1.overLayText(
+        window.alt1.overLayText(
             this.state.config.title,
             this.theme.titleBarTextColor,
             14,
@@ -397,7 +396,7 @@ export class OverlayWindow {
         const { x, y } = this.state.position;
 
         // Default content message
-        alt1.overLayText(
+        window.alt1.overLayText(
             `Window Content (${this.state.config.contentType || 'default'})`,
             this.theme.titleBarTextColor,
             12,
@@ -419,7 +418,7 @@ export class OverlayWindow {
             const closeY = y + 5;
 
             // Close button background
-            alt1.overLayRect(
+            window.alt1.overLayRect(
                 alt1lib.mixColor(220, 53, 69, 200), // Red background
                 closeX,
                 closeY,
@@ -430,7 +429,7 @@ export class OverlayWindow {
             );
 
             // Close button X
-            alt1.overLayText(
+            window.alt1.overLayText(
                 '×',
                 alt1lib.mixColor(255, 255, 255, 255),
                 16,
@@ -527,7 +526,7 @@ export class OverlayWindow {
 
     private clearOverlays(): void {
         if (window.alt1) {
-            alt1.overLayClearGroup(this.state.overlayGroup);
+            window.alt1.overLayClearGroup(this.state.overlayGroup);
         }
     }
 

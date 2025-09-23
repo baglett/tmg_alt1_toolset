@@ -316,6 +316,12 @@ function main() {
     }
 
     console.log('✅ Deployment completed successfully!');
+    console.log('');
+    console.log('🚨 IMPORTANT: After pushing to GitHub, ALWAYS monitor deployment:');
+    console.log('   📊 Check: https://github.com/baglett/tmg_alt1_toolset/actions');
+    console.log('   ⏱️  Monitor the latest workflow run for success/failure');
+    console.log('   🔧 Fix any failures immediately before next commit');
+    console.log('   🌐 Verify deployment URL is accessible after success');
 }
 
 // Run the deployment

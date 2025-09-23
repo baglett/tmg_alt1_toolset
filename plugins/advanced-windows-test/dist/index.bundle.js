@@ -433,21 +433,20 @@ class OverlayWindow {
         if (!this.state.isVisible || !window.alt1)
             return;
         try {
-            // Set overlay group and z-index
-            alt1.overLaySetGroup(this.state.overlayGroup);
-            alt1.overLaySetGroupZIndex(this.state.overlayGroup, this.state.zIndex);
+            // Set overlay group
+            window.alt1.overLaySetGroup(this.state.overlayGroup);
             // Clear previous overlays
-            alt1.overLayClearGroup(this.state.overlayGroup);
+            window.alt1.overLayClearGroup(this.state.overlayGroup);
             // Freeze group for smooth rendering
-            alt1.overLayFreezeGroup(this.state.overlayGroup);
+            window.alt1.overLayFreezeGroup(this.state.overlayGroup, true);
             // Render window components
             this.renderShadow();
             this.renderFrame();
             this.renderTitleBar();
             this.renderContent();
             this.renderControlButtons();
-            // Continue automatic updates
-            alt1.overLayContinueGroup(this.state.overlayGroup);
+            // Unfreeze group to display overlays
+            window.alt1.overLayFreezeGroup(this.state.overlayGroup, false);
         }
         catch (error) {
             console.error('Error rendering overlay window:', error);
@@ -550,12 +549,12 @@ class OverlayWindow {
         const { x, y } = this.state.position;
         const { width, height } = this.state.size;
         // Main window background
-        alt1.overLayRect(this.theme.backgroundColor, x, y, width, height, 60000, 0);
+        window.alt1.overLayRect(this.theme.backgroundColor, x, y, width, height, 60000, 0);
         // Border with focus highlight
         const borderColor = this.state.isFocused
             ? this.theme.accentColor
             : this.theme.borderColor;
-        alt1.overLayRect(borderColor, x - this.borderWidth, y - this.borderWidth, width + (this.borderWidth * 2), height + (this.borderWidth * 2), 60000, this.borderWidth);
+        window.alt1.overLayRect(borderColor, x - this.borderWidth, y - this.borderWidth, width + (this.borderWidth * 2), height + (this.borderWidth * 2), 60000, this.borderWidth);
     }
     renderTitleBar() {
         if (!window.alt1)
@@ -563,9 +562,9 @@ class OverlayWindow {
         const { x, y } = this.state.position;
         const { width } = this.state.size;
         // Title bar background
-        alt1.overLayRect(this.theme.titleBarColor, x, y, width, this.titleBarHeight, 60000, 0);
+        window.alt1.overLayRect(this.theme.titleBarColor, x, y, width, this.titleBarHeight, 60000, 0);
         // Title text
-        alt1.overLayText(this.state.config.title, this.theme.titleBarTextColor, 14, x + 10, y + 20, 60000);
+        window.alt1.overLayText(this.state.config.title, this.theme.titleBarTextColor, 14, x + 10, y + 20, 60000);
     }
     renderContent() {
         if (this.contentRenderer) {
@@ -580,7 +579,7 @@ class OverlayWindow {
             return;
         const { x, y } = this.state.position;
         // Default content message
-        alt1.overLayText(`Window Content (${this.state.config.contentType || 'default'})`, this.theme.titleBarTextColor, 12, x + 10, y + this.titleBarHeight + 20, 60000);
+        window.alt1.overLayText(`Window Content (${this.state.config.contentType || 'default'})`, this.theme.titleBarTextColor, 12, x + 10, y + this.titleBarHeight + 20, 60000);
     }
     renderControlButtons() {
         if (!window.alt1)
@@ -592,10 +591,10 @@ class OverlayWindow {
             const closeX = x + width - 25;
             const closeY = y + 5;
             // Close button background
-            alt1.overLayRect(alt1__WEBPACK_IMPORTED_MODULE_0__.mixColor(220, 53, 69, 200), // Red background
+            window.alt1.overLayRect(alt1__WEBPACK_IMPORTED_MODULE_0__.mixColor(220, 53, 69, 200), // Red background
             closeX, closeY, 20, 20, 60000, 0);
             // Close button X
-            alt1.overLayText('×', alt1__WEBPACK_IMPORTED_MODULE_0__.mixColor(255, 255, 255, 255), 16, closeX + 6, closeY + 15, 60000);
+            window.alt1.overLayText('×', alt1__WEBPACK_IMPORTED_MODULE_0__.mixColor(255, 255, 255, 255), 16, closeX + 6, closeY + 15, 60000);
         }
     }
     handleClick(position) {
@@ -668,7 +667,7 @@ class OverlayWindow {
     }
     clearOverlays() {
         if (window.alt1) {
-            alt1.overLayClearGroup(this.state.overlayGroup);
+            window.alt1.overLayClearGroup(this.state.overlayGroup);
         }
     }
     emit(event, data) {
@@ -1080,11 +1079,12 @@ __webpack_require__.r(__webpack_exports__);
 
 
 
+
 // Default export for easier consumption
-/* harmony default export */ const __WEBPACK_DEFAULT_EXPORT__ = (OverlayWindowManager);
+/* harmony default export */ const __WEBPACK_DEFAULT_EXPORT__ = (_OverlayWindowManager__WEBPACK_IMPORTED_MODULE_0__.OverlayWindowManager);
 // Convenience factory function
 function createWindowManager() {
-    return new OverlayWindowManager();
+    return new _OverlayWindowManager__WEBPACK_IMPORTED_MODULE_0__.OverlayWindowManager();
 }
 // Pre-configured themes
 const WindowThemes = {
@@ -1297,7 +1297,7 @@ class AdvancedWindowsTestApp {
             // Tell Alt1 about our app
             alt1__WEBPACK_IMPORTED_MODULE_0__.identifyApp('./appconfig.json');
             // Check permissions
-            if (alt1.permissionPixel && alt1.permissionOverlay) {
+            if (window.alt1.permissionPixel && window.alt1.permissionOverlay) {
                 if (this.elements.alt1StatusText) {
                     this.elements.alt1StatusText.textContent = '🎉 Alt1 detected with full permissions! Ready to test advanced windows.';
                 }

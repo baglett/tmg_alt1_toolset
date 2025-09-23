@@ -97,7 +97,7 @@ class AdvancedWindowsTestApp {
             alt1lib.identifyApp('./appconfig.json');
 
             // Check permissions
-            if (alt1.permissionPixel && alt1.permissionOverlay) {
+            if (window.alt1.permissionPixel && window.alt1.permissionOverlay) {
                 if (this.elements.alt1StatusText) {
                     this.elements.alt1StatusText.textContent = '🎉 Alt1 detected with full permissions! Ready to test advanced windows.';
                 }

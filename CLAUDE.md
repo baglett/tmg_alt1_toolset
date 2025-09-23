@@ -161,8 +161,11 @@ cd plugins/dungeoneering-optimizer && npm run dev
 # Component: alt1://addapp/http://localhost:9000/appconfig.json
 # Plugin: alt1://addapp/http://localhost:9000/appconfig.json
 
-# Production deployment
-npm run deploy                 # Build all and deploy via GitHub Actions
+# Production deployment with monitoring
+git add . && git commit -m "Your changes"
+git push                       # Triggers GitHub Actions
+# REQUIRED: Check https://github.com/baglett/tmg_alt1_toolset/actions
+# Monitor deployment status and fix any failures immediately
 ```
 
 ### File Structure Convention
@@ -207,10 +210,20 @@ npm run lint       # ESLint (if configured)
 npm run typecheck  # TypeScript checking
 ```
 
-### Deployment
-- Commit triggers GitHub Actions
+### Deployment & Monitoring
+- Commit triggers GitHub Actions automatically
+- **CRITICAL**: Always monitor deployment status after pushing
 - Updates deployed to: `https://baglett.github.io/tmg_alt1_toolset/`
 - Alt1 install URLs: `alt1://addapp/https://baglett.github.io/tmg_alt1_toolset/[component]/dist/appconfig.json`
+
+#### Required Post-Push Protocol
+```bash
+# After pushing commits, ALWAYS check deployment status:
+1. Check GitHub Actions tab: https://github.com/baglett/tmg_alt1_toolset/actions
+2. Monitor latest workflow run for success/failure
+3. If failed, check logs and fix issues before next push
+4. Verify deployment URL is accessible after success
+```
 
 ## Key Dependencies
 

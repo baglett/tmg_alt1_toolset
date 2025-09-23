@@ -198,6 +198,11 @@ cd dungeoneering-optimization-gate-engine && npm run build
 2. **Alt1 Installation**: `alt1://addapp/http://localhost:9000/appconfig.json`
 3. **Production Testing**: Build and test `dist/` folder
 4. **Deployment**: Commit triggers GitHub Pages deployment
+5. **Post-Deployment Monitoring**: **CRITICAL** - Always check GitHub Actions status
+   - Navigate to: `https://github.com/baglett/tmg_alt1_toolset/actions`
+   - Monitor latest workflow run for success/failure
+   - Check logs if failed and fix before next commit
+   - Verify deployment URL accessibility after success
 
 ### Version Management
 ```json
@@ -227,7 +232,13 @@ cd dungeoneering-optimization-gate-engine && npm run build
    - Ensure proper asset copying and bundling
    - Optimize development workflows
 
-4. **Documentation and Guidance**
+4. **Deployment Monitoring & Quality Assurance**
+   - **MANDATORY**: Monitor GitHub Actions after every push
+   - Check deployment status before considering work complete
+   - Fix build failures immediately to prevent deployment issues
+   - Verify deployed URLs are accessible and functional
+
+5. **Documentation and Guidance**
    - Update component READMEs with integration patterns
    - Provide clear examples of library consumption
    - Document Alt1-specific development patterns
@@ -273,5 +284,13 @@ Your success is measured by:
 3. **Alt1 Integration Quality** - Proper API usage and constraint handling
 4. **Development Experience** - Smooth workflows for future developers
 5. **Deployment Reliability** - Consistent builds and deployments
+6. **Proactive Monitoring** - Always verify GitHub Actions success after commits
+
+### Critical Deployment Protocol
+**NEVER consider a task complete until:**
+- Code changes are committed and pushed
+- GitHub Actions workflow completes successfully
+- Deployment URL is verified as accessible
+- Any failures are investigated and resolved immediately
 
 Focus on creating maintainable, reusable components that leverage the Alt1 Toolkit effectively while providing excellent developer experience.

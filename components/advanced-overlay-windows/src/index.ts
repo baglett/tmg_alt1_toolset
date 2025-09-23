@@ -3,6 +3,8 @@
 // This component provides sophisticated window management for Alt1 applications
 // using overlay-based virtual windows with computer vision interaction detection.
 
+import { OverlayWindowManager } from './OverlayWindowManager';
+
 export { OverlayWindowManager } from './OverlayWindowManager';
 export { OverlayWindow } from './OverlayWindow';
 export { InteractionDetector } from './InteractionDetector';

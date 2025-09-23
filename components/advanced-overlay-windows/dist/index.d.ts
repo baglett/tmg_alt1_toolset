@@ -1,3 +1,4 @@
+import { OverlayWindowManager } from './OverlayWindowManager';
 export { OverlayWindowManager } from './OverlayWindowManager';
 export { OverlayWindow } from './OverlayWindow';
 export { InteractionDetector } from './InteractionDetector';
