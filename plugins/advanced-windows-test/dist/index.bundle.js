@@ -9,21 +9,36 @@
 		root["AdvancedWindowsTest"] = factory(root["alt1"]);
 })(this, (__WEBPACK_EXTERNAL_MODULE_alt1__) => {
 return /******/ (() => { // webpackBootstrap
+/******/ 	var __webpack_modules__ = ({
+
+/***/ "../../../components/advanced-overlay-windows/dist/index.js":
+/*!******************************************************************!*\
+  !*** ../../../components/advanced-overlay-windows/dist/index.js ***!
+  \******************************************************************/
+/***/ (function(module, __unused_webpack_exports, __webpack_require__) {
+
+(function webpackUniversalModuleDefinition(root, factory) {
+	if(true)
+		module.exports = factory(__webpack_require__(/*! alt1 */ "alt1"));
+	else // removed by dead control flow
+{}
+})(this, (__WEBPACK_EXTERNAL_MODULE_alt1__) => {
+return /******/ (() => { // webpackBootstrap
 /******/ 	"use strict";
 /******/ 	var __webpack_modules__ = ({
 
-/***/ "../../../components/advanced-overlay-windows/src/InteractionDetector.ts":
-/*!*******************************************************************************!*\
-  !*** ../../../components/advanced-overlay-windows/src/InteractionDetector.ts ***!
-  \*******************************************************************************/
-/***/ ((__unused_webpack_module, __webpack_exports__, __webpack_require__) => {
+/***/ "./InteractionDetector.ts":
+/*!********************************!*\
+  !*** ./InteractionDetector.ts ***!
+  \********************************/
+/***/ ((__unused_webpack_module, __nested_webpack_exports__, __nested_webpack_require_775__) => {
 
-__webpack_require__.r(__webpack_exports__);
-/* harmony export */ __webpack_require__.d(__webpack_exports__, {
+__nested_webpack_require_775__.r(__nested_webpack_exports__);
+/* harmony export */ __nested_webpack_require_775__.d(__nested_webpack_exports__, {
 /* harmony export */   InteractionDetector: () => (/* binding */ InteractionDetector)
 /* harmony export */ });
-/* harmony import */ var alt1__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! alt1 */ "alt1");
-/* harmony import */ var alt1__WEBPACK_IMPORTED_MODULE_0___default = /*#__PURE__*/__webpack_require__.n(alt1__WEBPACK_IMPORTED_MODULE_0__);
+/* harmony import */ var alt1__WEBPACK_IMPORTED_MODULE_0__ = __nested_webpack_require_775__(/*! alt1 */ "alt1");
+/* harmony import */ var alt1__WEBPACK_IMPORTED_MODULE_0___default = /*#__PURE__*/__nested_webpack_require_775__.n(alt1__WEBPACK_IMPORTED_MODULE_0__);
 
 /**
  * Advanced interaction detection system using computer vision and mouse tracking
@@ -267,18 +282,18 @@ class InteractionDetector {
 
 /***/ }),
 
-/***/ "../../../components/advanced-overlay-windows/src/OverlayWindow.ts":
-/*!*************************************************************************!*\
-  !*** ../../../components/advanced-overlay-windows/src/OverlayWindow.ts ***!
-  \*************************************************************************/
-/***/ ((__unused_webpack_module, __webpack_exports__, __webpack_require__) => {
+/***/ "./OverlayWindow.ts":
+/*!**************************!*\
+  !*** ./OverlayWindow.ts ***!
+  \**************************/
+/***/ ((__unused_webpack_module, __nested_webpack_exports__, __nested_webpack_require_9306__) => {
 
-__webpack_require__.r(__webpack_exports__);
-/* harmony export */ __webpack_require__.d(__webpack_exports__, {
+__nested_webpack_require_9306__.r(__nested_webpack_exports__);
+/* harmony export */ __nested_webpack_require_9306__.d(__nested_webpack_exports__, {
 /* harmony export */   OverlayWindow: () => (/* binding */ OverlayWindow)
 /* harmony export */ });
-/* harmony import */ var alt1__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! alt1 */ "alt1");
-/* harmony import */ var alt1__WEBPACK_IMPORTED_MODULE_0___default = /*#__PURE__*/__webpack_require__.n(alt1__WEBPACK_IMPORTED_MODULE_0__);
+/* harmony import */ var alt1__WEBPACK_IMPORTED_MODULE_0__ = __nested_webpack_require_9306__(/*! alt1 */ "alt1");
+/* harmony import */ var alt1__WEBPACK_IMPORTED_MODULE_0___default = /*#__PURE__*/__nested_webpack_require_9306__.n(alt1__WEBPACK_IMPORTED_MODULE_0__);
 
 /**
  * Individual overlay window with advanced rendering and interaction capabilities
@@ -697,20 +712,20 @@ OverlayWindow.DEFAULT_THEME = {
 
 /***/ }),
 
-/***/ "../../../components/advanced-overlay-windows/src/OverlayWindowManager.ts":
-/*!********************************************************************************!*\
-  !*** ../../../components/advanced-overlay-windows/src/OverlayWindowManager.ts ***!
-  \********************************************************************************/
-/***/ ((__unused_webpack_module, __webpack_exports__, __webpack_require__) => {
+/***/ "./OverlayWindowManager.ts":
+/*!*********************************!*\
+  !*** ./OverlayWindowManager.ts ***!
+  \*********************************/
+/***/ ((__unused_webpack_module, __nested_webpack_exports__, __nested_webpack_require_23425__) => {
 
-__webpack_require__.r(__webpack_exports__);
-/* harmony export */ __webpack_require__.d(__webpack_exports__, {
+__nested_webpack_require_23425__.r(__nested_webpack_exports__);
+/* harmony export */ __nested_webpack_require_23425__.d(__nested_webpack_exports__, {
 /* harmony export */   OverlayWindowManager: () => (/* binding */ OverlayWindowManager)
 /* harmony export */ });
-/* harmony import */ var alt1__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! alt1 */ "alt1");
-/* harmony import */ var alt1__WEBPACK_IMPORTED_MODULE_0___default = /*#__PURE__*/__webpack_require__.n(alt1__WEBPACK_IMPORTED_MODULE_0__);
-/* harmony import */ var _OverlayWindow__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ./OverlayWindow */ "../../../components/advanced-overlay-windows/src/OverlayWindow.ts");
-/* harmony import */ var _InteractionDetector__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ./InteractionDetector */ "../../../components/advanced-overlay-windows/src/InteractionDetector.ts");
+/* harmony import */ var alt1__WEBPACK_IMPORTED_MODULE_0__ = __nested_webpack_require_23425__(/*! alt1 */ "alt1");
+/* harmony import */ var alt1__WEBPACK_IMPORTED_MODULE_0___default = /*#__PURE__*/__nested_webpack_require_23425__.n(alt1__WEBPACK_IMPORTED_MODULE_0__);
+/* harmony import */ var _OverlayWindow__WEBPACK_IMPORTED_MODULE_1__ = __nested_webpack_require_23425__(/*! ./OverlayWindow */ "./OverlayWindow.ts");
+/* harmony import */ var _InteractionDetector__WEBPACK_IMPORTED_MODULE_2__ = __nested_webpack_require_23425__(/*! ./InteractionDetector */ "./InteractionDetector.ts");
 
 
 
@@ -1054,14 +1069,92 @@ class OverlayWindowManager {
 
 /***/ }),
 
-/***/ "../../../components/advanced-overlay-windows/src/index.ts":
-/*!*****************************************************************!*\
-  !*** ../../../components/advanced-overlay-windows/src/index.ts ***!
-  \*****************************************************************/
-/***/ ((__unused_webpack_module, __webpack_exports__, __webpack_require__) => {
+/***/ "alt1":
+/*!***********************!*\
+  !*** external "alt1" ***!
+  \***********************/
+/***/ ((module) => {
 
-__webpack_require__.r(__webpack_exports__);
-/* harmony export */ __webpack_require__.d(__webpack_exports__, {
+module.exports = __WEBPACK_EXTERNAL_MODULE_alt1__;
+
+/***/ })
+
+/******/ 	});
+/************************************************************************/
+/******/ 	// The module cache
+/******/ 	var __webpack_module_cache__ = {};
+/******/ 	
+/******/ 	// The require function
+/******/ 	function __nested_webpack_require_35611__(moduleId) {
+/******/ 		// Check if module is in cache
+/******/ 		var cachedModule = __webpack_module_cache__[moduleId];
+/******/ 		if (cachedModule !== undefined) {
+/******/ 			return cachedModule.exports;
+/******/ 		}
+/******/ 		// Create a new module (and put it into the cache)
+/******/ 		var module = __webpack_module_cache__[moduleId] = {
+/******/ 			// no module.id needed
+/******/ 			// no module.loaded needed
+/******/ 			exports: {}
+/******/ 		};
+/******/ 	
+/******/ 		// Execute the module function
+/******/ 		__webpack_modules__[moduleId](module, module.exports, __nested_webpack_require_35611__);
+/******/ 	
+/******/ 		// Return the exports of the module
+/******/ 		return module.exports;
+/******/ 	}
+/******/ 	
+/************************************************************************/
+/******/ 	/* webpack/runtime/compat get default export */
+/******/ 	(() => {
+/******/ 		// getDefaultExport function for compatibility with non-harmony modules
+/******/ 		__nested_webpack_require_35611__.n = (module) => {
+/******/ 			var getter = module && module.__esModule ?
+/******/ 				() => (module['default']) :
+/******/ 				() => (module);
+/******/ 			__nested_webpack_require_35611__.d(getter, { a: getter });
+/******/ 			return getter;
+/******/ 		};
+/******/ 	})();
+/******/ 	
+/******/ 	/* webpack/runtime/define property getters */
+/******/ 	(() => {
+/******/ 		// define getter functions for harmony exports
+/******/ 		__nested_webpack_require_35611__.d = (exports, definition) => {
+/******/ 			for(var key in definition) {
+/******/ 				if(__nested_webpack_require_35611__.o(definition, key) && !__nested_webpack_require_35611__.o(exports, key)) {
+/******/ 					Object.defineProperty(exports, key, { enumerable: true, get: definition[key] });
+/******/ 				}
+/******/ 			}
+/******/ 		};
+/******/ 	})();
+/******/ 	
+/******/ 	/* webpack/runtime/hasOwnProperty shorthand */
+/******/ 	(() => {
+/******/ 		__nested_webpack_require_35611__.o = (obj, prop) => (Object.prototype.hasOwnProperty.call(obj, prop))
+/******/ 	})();
+/******/ 	
+/******/ 	/* webpack/runtime/make namespace object */
+/******/ 	(() => {
+/******/ 		// define __esModule on exports
+/******/ 		__nested_webpack_require_35611__.r = (exports) => {
+/******/ 			if(typeof Symbol !== 'undefined' && Symbol.toStringTag) {
+/******/ 				Object.defineProperty(exports, Symbol.toStringTag, { value: 'Module' });
+/******/ 			}
+/******/ 			Object.defineProperty(exports, '__esModule', { value: true });
+/******/ 		};
+/******/ 	})();
+/******/ 	
+/************************************************************************/
+var __nested_webpack_exports__ = {};
+// This entry needs to be wrapped in an IIFE because it needs to be isolated against other modules in the chunk.
+(() => {
+/*!******************!*\
+  !*** ./index.ts ***!
+  \******************/
+__nested_webpack_require_35611__.r(__nested_webpack_exports__);
+/* harmony export */ __nested_webpack_require_35611__.d(__nested_webpack_exports__, {
 /* harmony export */   InteractionDetector: () => (/* reexport safe */ _InteractionDetector__WEBPACK_IMPORTED_MODULE_2__.InteractionDetector),
 /* harmony export */   OverlayWindow: () => (/* reexport safe */ _OverlayWindow__WEBPACK_IMPORTED_MODULE_1__.OverlayWindow),
 /* harmony export */   OverlayWindowManager: () => (/* reexport safe */ _OverlayWindowManager__WEBPACK_IMPORTED_MODULE_0__.OverlayWindowManager),
@@ -1069,9 +1162,9 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony export */   createWindowManager: () => (/* binding */ createWindowManager),
 /* harmony export */   "default": () => (__WEBPACK_DEFAULT_EXPORT__)
 /* harmony export */ });
-/* harmony import */ var _OverlayWindowManager__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ./OverlayWindowManager */ "../../../components/advanced-overlay-windows/src/OverlayWindowManager.ts");
-/* harmony import */ var _OverlayWindow__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ./OverlayWindow */ "../../../components/advanced-overlay-windows/src/OverlayWindow.ts");
-/* harmony import */ var _InteractionDetector__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ./InteractionDetector */ "../../../components/advanced-overlay-windows/src/InteractionDetector.ts");
+/* harmony import */ var _OverlayWindowManager__WEBPACK_IMPORTED_MODULE_0__ = __nested_webpack_require_35611__(/*! ./OverlayWindowManager */ "./OverlayWindowManager.ts");
+/* harmony import */ var _OverlayWindow__WEBPACK_IMPORTED_MODULE_1__ = __nested_webpack_require_35611__(/*! ./OverlayWindow */ "./OverlayWindow.ts");
+/* harmony import */ var _InteractionDetector__WEBPACK_IMPORTED_MODULE_2__ = __nested_webpack_require_35611__(/*! ./InteractionDetector */ "./InteractionDetector.ts");
 // Advanced Overlay Windows - Main Export
 //
 // This component provides sophisticated window management for Alt1 applications
@@ -1122,6 +1215,14 @@ const WindowThemes = {
     }
 };
 
+})();
+
+__nested_webpack_exports__ = __nested_webpack_exports__["default"];
+/******/ 	return __nested_webpack_exports__;
+/******/ })()
+;
+});
+//# sourceMappingURL=index.js.map
 
 /***/ }),
 
@@ -1131,6 +1232,7 @@ const WindowThemes = {
   \***********************/
 /***/ ((module) => {
 
+"use strict";
 module.exports = __WEBPACK_EXTERNAL_MODULE_alt1__;
 
 /***/ })
@@ -1155,7 +1257,7 @@ module.exports = __WEBPACK_EXTERNAL_MODULE_alt1__;
 /******/ 		};
 /******/ 	
 /******/ 		// Execute the module function
-/******/ 		__webpack_modules__[moduleId](module, module.exports, __webpack_require__);
+/******/ 		__webpack_modules__[moduleId].call(module.exports, module, module.exports, __webpack_require__);
 /******/ 	
 /******/ 		// Return the exports of the module
 /******/ 		return module.exports;
@@ -1204,15 +1306,17 @@ module.exports = __WEBPACK_EXTERNAL_MODULE_alt1__;
 /******/ 	
 /************************************************************************/
 var __webpack_exports__ = {};
-// This entry needs to be wrapped in an IIFE because it needs to be isolated against other modules in the chunk.
+// This entry needs to be wrapped in an IIFE because it needs to be in strict mode.
 (() => {
+"use strict";
 /*!******************!*\
   !*** ./index.ts ***!
   \******************/
 __webpack_require__.r(__webpack_exports__);
 /* harmony import */ var alt1__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! alt1 */ "alt1");
 /* harmony import */ var alt1__WEBPACK_IMPORTED_MODULE_0___default = /*#__PURE__*/__webpack_require__.n(alt1__WEBPACK_IMPORTED_MODULE_0__);
-/* harmony import */ var _tmg_alt1_advanced_overlay_windows__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! @tmg-alt1/advanced-overlay-windows */ "../../../components/advanced-overlay-windows/src/index.ts");
+/* harmony import */ var _components_advanced_overlay_windows_dist_index__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ../../../components/advanced-overlay-windows/dist/index */ "../../../components/advanced-overlay-windows/dist/index.js");
+/* harmony import */ var _components_advanced_overlay_windows_dist_index__WEBPACK_IMPORTED_MODULE_1___default = /*#__PURE__*/__webpack_require__.n(_components_advanced_overlay_windows_dist_index__WEBPACK_IMPORTED_MODULE_1__);
 // Advanced Windows Test Plugin
 // Demonstrates the capabilities of the @tmg-alt1/advanced-overlay-windows component
 
@@ -1321,7 +1425,7 @@ class AdvancedWindowsTestApp {
      */
     initializeWindowManager() {
         try {
-            this.windowManager = new _tmg_alt1_advanced_overlay_windows__WEBPACK_IMPORTED_MODULE_1__.OverlayWindowManager();
+            this.windowManager = new _components_advanced_overlay_windows_dist_index__WEBPACK_IMPORTED_MODULE_1__.OverlayWindowManager();
             // Set up global event handlers
             this.windowManager.on('window-created', (data) => {
                 console.log('🪟 Window created:', data.windowId);
@@ -1403,7 +1507,7 @@ class AdvancedWindowsTestApp {
                 draggable: true,
                 closable: true,
                 contentType: 'custom',
-                theme: _tmg_alt1_advanced_overlay_windows__WEBPACK_IMPORTED_MODULE_1__.WindowThemes.DISCORD
+                theme: _components_advanced_overlay_windows_dist_index__WEBPACK_IMPORTED_MODULE_1__.WindowThemes.DISCORD
             });
             // Set custom content renderer
             this.exampleWindow.setContentRenderer((window) => {
@@ -1446,19 +1550,19 @@ class AdvancedWindowsTestApp {
             {
                 title: '🎨 Theme Demo - RuneScape',
                 x: 100, y: 200, width: 300, height: 200,
-                theme: _tmg_alt1_advanced_overlay_windows__WEBPACK_IMPORTED_MODULE_1__.WindowThemes.RUNESCAPE,
+                theme: _components_advanced_overlay_windows_dist_index__WEBPACK_IMPORTED_MODULE_1__.WindowThemes.RUNESCAPE,
                 contentType: 'custom'
             },
             {
                 title: '🌙 Theme Demo - Dark',
                 x: 450, y: 200, width: 300, height: 200,
-                theme: _tmg_alt1_advanced_overlay_windows__WEBPACK_IMPORTED_MODULE_1__.WindowThemes.DARK,
+                theme: _components_advanced_overlay_windows_dist_index__WEBPACK_IMPORTED_MODULE_1__.WindowThemes.DARK,
                 contentType: 'custom'
             },
             {
                 title: '☀️ Theme Demo - Light',
                 x: 800, y: 200, width: 300, height: 200,
-                theme: _tmg_alt1_advanced_overlay_windows__WEBPACK_IMPORTED_MODULE_1__.WindowThemes.LIGHT,
+                theme: _components_advanced_overlay_windows_dist_index__WEBPACK_IMPORTED_MODULE_1__.WindowThemes.LIGHT,
                 contentType: 'custom'
             }
         ];

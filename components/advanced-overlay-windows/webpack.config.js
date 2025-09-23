@@ -12,7 +12,7 @@ module.exports = merge(baseConfig, {
     },
     output: {
         path: path.resolve(__dirname, "dist"),
-        filename: "[name].bundle.js",
+        filename: "[name].js",
         library: {
             type: "umd",
             name: "AdvancedOverlayWindows",

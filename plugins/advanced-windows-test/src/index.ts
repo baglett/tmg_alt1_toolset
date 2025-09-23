@@ -2,7 +2,7 @@
 // Demonstrates the capabilities of the @tmg-alt1/advanced-overlay-windows component
 
 import * as alt1lib from 'alt1';
-import { OverlayWindowManager, WindowThemes, OverlayWindow } from '@tmg-alt1/advanced-overlay-windows';
+import { OverlayWindowManager, WindowThemes, OverlayWindow } from '../../../components/advanced-overlay-windows/dist/index';
 
 /**
  * Main test application class demonstrating advanced overlay windows

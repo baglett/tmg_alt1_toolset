@@ -1207,4 +1207,4 @@ __webpack_exports__ = __webpack_exports__["default"];
 /******/ })()
 ;
 });
-//# sourceMappingURL=index.bundle.js.map
+//# sourceMappingURL=index.js.map
