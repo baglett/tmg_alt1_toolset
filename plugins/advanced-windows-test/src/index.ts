@@ -3,6 +3,7 @@
 
 import * as a1lib from 'alt1';
 import { OverlayWindowManager, WindowThemes, OverlayWindow } from '../../../components/advanced-overlay-windows/dist/index';
+import { Alt1Logger, LogLevel } from './logger';
 
 /**
  * Main test application class demonstrating advanced overlay windows
@@ -12,6 +13,7 @@ class AdvancedWindowsTestApp {
     private exampleWindow: OverlayWindow | null = null;
     private additionalWindows: OverlayWindow[] = [];
     private isInitialized = false;
+    private logger: Alt1Logger;
 
     // UI Elements
     private elements = {
@@ -29,6 +31,9 @@ class AdvancedWindowsTestApp {
     };
 
     constructor() {
+        // Initialize logger first
+        this.logger = new Alt1Logger('AdvancedWindowsTest', LogLevel.DEBUG);
+        this.logger.init('Initializing Advanced Windows Test App...');
         this.initialize();
     }
 
@@ -36,7 +41,7 @@ class AdvancedWindowsTestApp {
      * Initialize the test application
      */
     private async initialize(): Promise<void> {
-        console.log('🚀 Initializing Advanced Windows Test App...');
+        this.logger.group('Initialization');
 
         // Wait for DOM to be ready
         if (document.readyState === 'loading') {
@@ -84,8 +89,11 @@ class AdvancedWindowsTestApp {
      * Check Alt1 status and update UI accordingly
      */
     private checkAlt1Status(): void {
+        this.logger.alt1('Checking Alt1 status...');
+
         if (window.alt1) {
             // Alt1 detected
+            this.logger.alt1('Alt1 detected');
             if (this.elements.alt1Status) {
                 this.elements.alt1Status.className = 'alt1-status detected';
             }
@@ -94,6 +102,7 @@ class AdvancedWindowsTestApp {
             }
 
             // Tell Alt1 about our app
+            this.logger.alt1('Identifying app to Alt1...');
             a1lib.identifyApp('./appconfig.json');
 
             // Check permissions
@@ -170,8 +179,14 @@ class AdvancedWindowsTestApp {
      * Set up event handlers for UI buttons
      */
     private setupEventHandlers(): void {
+        this.logger.init('Setting up event handlers...');
+
         // Open example window
-        this.elements.openExampleWindow?.addEventListener('click', () => {
+        this.elements.openExampleWindow?.addEventListener('click', (event) => {
+            this.logger.ui('Button clicked: openExampleWindow', {
+                disabled: (event.target as HTMLButtonElement)?.disabled,
+                timestamp: Date.now()
+            });
             this.openExampleWindow();
         });
 
@@ -195,13 +210,17 @@ class AdvancedWindowsTestApp {
      * Open an example window with custom content
      */
     private openExampleWindow(): void {
+        this.logger.window('openExampleWindow() called');
+
         if (!this.windowManager) {
+            this.logger.error('openExampleWindow failed: Window manager not available');
             alert('Window manager not available. Please run in Alt1.');
             return;
         }
 
         if (this.exampleWindow) {
             // Window already exists, just focus it
+            this.logger.window('Example window already exists, focusing:', this.exampleWindow.id);
             this.windowManager.focusWindow(this.exampleWindow.id);
             return;
         }

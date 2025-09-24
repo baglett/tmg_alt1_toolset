@@ -1240,8 +1240,10 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony import */ var alt1__WEBPACK_IMPORTED_MODULE_0___default = /*#__PURE__*/__webpack_require__.n(alt1__WEBPACK_IMPORTED_MODULE_0__);
 /* harmony import */ var _components_advanced_overlay_windows_dist_index__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ../../../components/advanced-overlay-windows/dist/index */ "../../../components/advanced-overlay-windows/dist/index.js");
 /* harmony import */ var _components_advanced_overlay_windows_dist_index__WEBPACK_IMPORTED_MODULE_1___default = /*#__PURE__*/__webpack_require__.n(_components_advanced_overlay_windows_dist_index__WEBPACK_IMPORTED_MODULE_1__);
+/* harmony import */ var _logger__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ./logger */ "./logger.ts");
 // Advanced Windows Test Plugin
 // Demonstrates the capabilities of the @tmg-alt1/advanced-overlay-windows component
+
 
 
 /**
@@ -1267,13 +1269,16 @@ class AdvancedWindowsTestApp {
             focusedWindow: null,
             interactionStatus: null
         };
+        // Initialize logger first
+        this.logger = new _logger__WEBPACK_IMPORTED_MODULE_2__.Alt1Logger('AdvancedWindowsTest', _logger__WEBPACK_IMPORTED_MODULE_2__.LogLevel.DEBUG);
+        this.logger.init('Initializing Advanced Windows Test App...');
         this.initialize();
     }
     /**
      * Initialize the test application
      */
     async initialize() {
-        console.log('🚀 Initializing Advanced Windows Test App...');
+        this.logger.group('Initialization');
         // Wait for DOM to be ready
         if (document.readyState === 'loading') {
             await new Promise(resolve => {
@@ -1313,8 +1318,10 @@ class AdvancedWindowsTestApp {
      * Check Alt1 status and update UI accordingly
      */
     checkAlt1Status() {
+        this.logger.alt1('Checking Alt1 status...');
         if (window.alt1) {
             // Alt1 detected
+            this.logger.alt1('Alt1 detected');
             if (this.elements.alt1Status) {
                 this.elements.alt1Status.className = 'alt1-status detected';
             }
@@ -1322,6 +1329,7 @@ class AdvancedWindowsTestApp {
                 this.elements.alt1StatusText.textContent = '✅ Alt1 detected! Advanced overlay windows are available.';
             }
             // Tell Alt1 about our app
+            this.logger.alt1('Identifying app to Alt1...');
             alt1__WEBPACK_IMPORTED_MODULE_0__.identifyApp('./appconfig.json');
             // Check permissions
             if (window.alt1.permissionPixel && window.alt1.permissionOverlay) {
@@ -1389,8 +1397,13 @@ class AdvancedWindowsTestApp {
      * Set up event handlers for UI buttons
      */
     setupEventHandlers() {
+        this.logger.init('Setting up event handlers...');
         // Open example window
-        this.elements.openExampleWindow?.addEventListener('click', () => {
+        this.elements.openExampleWindow?.addEventListener('click', (event) => {
+            this.logger.ui('Button clicked: openExampleWindow', {
+                disabled: event.target?.disabled,
+                timestamp: Date.now()
+            });
             this.openExampleWindow();
         });
         // Close example window
@@ -1410,12 +1423,15 @@ class AdvancedWindowsTestApp {
      * Open an example window with custom content
      */
     openExampleWindow() {
+        this.logger.window('openExampleWindow() called');
         if (!this.windowManager) {
+            this.logger.error('openExampleWindow failed: Window manager not available');
             alert('Window manager not available. Please run in Alt1.');
             return;
         }
         if (this.exampleWindow) {
             // Window already exists, just focus it
+            this.logger.window('Example window already exists, focusing:', this.exampleWindow.id);
             this.windowManager.focusWindow(this.exampleWindow.id);
             return;
         }
@@ -1617,6 +1633,115 @@ if (typeof window !== 'undefined') {
     window.testApp = testApp;
 }
 console.log('📦 Advanced Windows Test Plugin loaded successfully');
+
+
+/***/ }),
+
+/***/ "./logger.ts":
+/*!*******************!*\
+  !*** ./logger.ts ***!
+  \*******************/
+/***/ ((__unused_webpack_module, __webpack_exports__, __webpack_require__) => {
+
+"use strict";
+__webpack_require__.r(__webpack_exports__);
+/* harmony export */ __webpack_require__.d(__webpack_exports__, {
+/* harmony export */   Alt1Logger: () => (/* binding */ Alt1Logger),
+/* harmony export */   LogLevel: () => (/* binding */ LogLevel)
+/* harmony export */ });
+/**
+ * Standard logger implementation for TMG Alt1 Toolset applications
+ * Provides consistent, categorized logging with visual indicators
+ */
+var LogLevel;
+(function (LogLevel) {
+    LogLevel[LogLevel["DEBUG"] = 0] = "DEBUG";
+    LogLevel[LogLevel["INFO"] = 1] = "INFO";
+    LogLevel[LogLevel["WARN"] = 2] = "WARN";
+    LogLevel[LogLevel["ERROR"] = 3] = "ERROR";
+})(LogLevel || (LogLevel = {}));
+class Alt1Logger {
+    constructor(appName, logLevel = LogLevel.INFO) {
+        this.appName = appName;
+        this.logLevel = logLevel;
+    }
+    // Lifecycle logging
+    init(message, ...args) {
+        if (this.logLevel <= LogLevel.INFO) {
+            console.log(`🚀 [${this.appName}] ${message}`, ...args);
+        }
+    }
+    success(message, ...args) {
+        if (this.logLevel <= LogLevel.INFO) {
+            console.log(`✅ [${this.appName}] ${message}`, ...args);
+        }
+    }
+    error(message, error, ...args) {
+        if (this.logLevel <= LogLevel.ERROR) {
+            console.error(`❌ [${this.appName}] ${message}`, error, ...args);
+        }
+    }
+    warn(message, ...args) {
+        if (this.logLevel <= LogLevel.WARN) {
+            console.warn(`⚠️ [${this.appName}] ${message}`, ...args);
+        }
+    }
+    debug(message, ...args) {
+        if (this.logLevel <= LogLevel.DEBUG) {
+            console.log(`🐛 [${this.appName}] ${message}`, ...args);
+        }
+    }
+    // Category-specific methods
+    alt1(message, ...args) {
+        if (this.logLevel <= LogLevel.INFO) {
+            console.log(`🔧 [Alt1] ${message}`, ...args);
+        }
+    }
+    window(message, ...args) {
+        if (this.logLevel <= LogLevel.INFO) {
+            console.log(`🪟 [Windows] ${message}`, ...args);
+        }
+    }
+    ui(message, ...args) {
+        if (this.logLevel <= LogLevel.INFO) {
+            console.log(`🎮 [UI] ${message}`, ...args);
+        }
+    }
+    perf(message, ...args) {
+        if (this.logLevel <= LogLevel.DEBUG) {
+            console.log(`📊 [Perf] ${message}`, ...args);
+        }
+    }
+    ocr(message, ...args) {
+        if (this.logLevel <= LogLevel.INFO) {
+            console.log(`🔍 [OCR] ${message}`, ...args);
+        }
+    }
+    data(message, ...args) {
+        if (this.logLevel <= LogLevel.INFO) {
+            console.log(`💾 [Data] ${message}`, ...args);
+        }
+    }
+    network(message, ...args) {
+        if (this.logLevel <= LogLevel.INFO) {
+            console.log(`🌐 [Network] ${message}`, ...args);
+        }
+    }
+    // Performance timing helpers
+    time(operation) {
+        console.time(`⏱️ [Perf] ${operation}`);
+    }
+    timeEnd(operation) {
+        console.timeEnd(`⏱️ [Perf] ${operation}`);
+    }
+    // Group logging for complex operations
+    group(label) {
+        console.group(`📁 [${this.appName}] ${label}`);
+    }
+    groupEnd() {
+        console.groupEnd();
+    }
+}
 
 
 /***/ }),
