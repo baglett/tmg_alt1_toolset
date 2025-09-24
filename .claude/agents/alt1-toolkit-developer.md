@@ -54,6 +54,20 @@ AFTER pushing code changes, you MUST:
 - **ALWAYS build before committing**: Include `npm run build:all` in all workflows
 - Identify and fix component duplication issues immediately
 - Implement proper Alt1 API integration patterns with error handling
+
+**CRITICAL: Alt1 has TWO different access methods:**
+
+1. **`alt1` npm package** (`import * as a1lib from 'alt1'`)
+   - **Use for**: Utility functions, color mixing, image processing, helper methods
+   - **Examples**: `a1lib.mixColor()`, `a1lib.captureHold()`, `a1lib.ImageReader()`
+   - **When**: Processing images, creating colors, utility operations
+
+2. **`window.alt1` runtime API** (`(window as any).alt1`)
+   - **Use for**: Core Alt1 functions, overlays, screen capture, app lifecycle
+   - **Examples**: `window.alt1.overLayRect()`, `window.alt1.getRegion()`, `window.alt1.identifyApp()`
+   - **When**: Drawing overlays, capturing screen, registering apps, accessing game state
+
+**Common Mistake**: Using `a1lib.overLayRect()` instead of `window.alt1.overLayRect()` - this causes "function is not a function" errors!
 - Optimize webpack configurations for Alt1 constraints
 - Ensure TypeScript library patterns are followed consistently
 - Provide specific code examples using the actual repository structure

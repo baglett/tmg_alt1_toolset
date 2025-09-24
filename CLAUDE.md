@@ -47,6 +47,10 @@ tmg_alt1_toolset/
 - Alt1 API v0.1.0+ (official npm package from skillbert/alt1)
 - Tesseract.js 4.1.1 (OCR engine)
 
+**Alt1 Integration Methods**
+- **`alt1` npm package** (`import * as a1lib from 'alt1'`): Utility functions, color mixing, image processing
+- **`window.alt1` runtime API** (`(window as any).alt1`): Core overlay functions, screen capture, app registration
+
 **Build & Development**
 - Webpack Dev Server (hot reload on port 9000)
 - Copy Webpack Plugin (asset management)
@@ -189,11 +193,42 @@ component-name/
 - ✅ Fixed dimensions via `appconfig.json`
 - ✅ CSS-based modals for additional UI
 
+### Alt1 API Access Methods
+
+**Two Ways to Access Alt1 Functions:**
+
+1. **`alt1` npm package** - Utility Functions
+   ```typescript
+   import * as a1lib from 'alt1';
+
+   // Use for utility functions
+   const color = a1lib.mixColor(255, 0, 0, 255);  // Color mixing
+   const region = a1lib.captureHold();            // Image capture helpers
+   const reader = new a1lib.ImageReader();        // Image processing
+   ```
+
+2. **`window.alt1` runtime API** - Core Alt1 Functions
+   ```typescript
+   // Global API injected by Alt1 Toolkit at runtime
+   (window as any).alt1.overLayRect(...);         // Overlay rendering
+   (window as any).alt1.getRegion(...);           // Screen capture
+   (window as any).alt1.identifyApp(...);         // App registration
+
+   // Also available as window.alt1 with proper types in Alt1 environment
+   window.alt1.rsActive;                          // Game state
+   window.alt1.permissionPixel;                   // Permission checking
+   ```
+
+**When to Use Which:**
+- **`a1lib`**: Helper functions, utilities, color manipulation, image processing
+- **`window.alt1`**: Direct Alt1 API calls (overlays, screen capture, app lifecycle)
+- **Overlays are visual-only**: Cannot receive mouse events, interaction must be handled in main app window
+
 ### Available APIs
-- Screen capture: `getRegion()`, `captureHoldFullRs()`
-- Overlays: `overLayRect()`, `overLayText()`
-- OCR: Text recognition capabilities
-- Game state: `rsActive`, `mousePosition`
+- **Screen capture**: `window.alt1.getRegion()`, `a1lib.captureHoldFullRs()`
+- **Overlays**: `window.alt1.overLayRect()`, `window.alt1.overLayText()`
+- **OCR**: `a1lib` text recognition capabilities
+- **Game state**: `window.alt1.rsActive`, `window.alt1.mousePosition`
 
 ## Common Commands
 
