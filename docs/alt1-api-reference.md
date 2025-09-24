@@ -111,6 +111,20 @@ import * as a1lib from 'alt1';
 const color = a1lib.mixColor(255, 0, 0, 255);
 ```
 
+### ❌ **Wrong**: Using window.alt1 for app identification
+```typescript
+// This will fail with "identifyApp is not a function"
+(window as any).alt1.identifyApp('./appconfig.json');
+```
+
+### ✅ **Correct**: Using a1lib for app identification
+```typescript
+import * as a1lib from 'alt1';
+
+// This is the proper way
+a1lib.identifyApp('./appconfig.json');
+```
+
 ## Quick Reference
 
 | Function | Use | Import Method |
@@ -119,7 +133,7 @@ const color = a1lib.mixColor(255, 0, 0, 255);
 | `overLayRect()` | Draw overlay | `window.alt1.overLayRect()` |
 | `overLayText()` | Draw text overlay | `window.alt1.overLayText()` |
 | `getRegion()` | Screen capture | `window.alt1.getRegion()` |
-| `identifyApp()` | Register app | `window.alt1.identifyApp()` |
+| `identifyApp()` | Register app | `a1lib.identifyApp()` |
 | `captureHold()` | Image utilities | `a1lib.captureHold()` |
 | `rsActive` | Game state | `window.alt1.rsActive` |
 | `ImageReader` | OCR processing | `new a1lib.ImageReader()` |

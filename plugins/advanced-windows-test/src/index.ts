@@ -123,7 +123,7 @@ class AdvancedWindowsTestApp {
 
             // Tell Alt1 about our app
             this.logger.alt1('Identifying app to Alt1...');
-            (window as any).alt1.identifyApp('./appconfig.json');
+            a1lib.identifyApp('./appconfig.json');
 
             // Check permissions
             if (window.alt1.permissionPixel && window.alt1.permissionOverlay) {

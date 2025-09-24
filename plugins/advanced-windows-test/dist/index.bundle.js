@@ -1256,11 +1256,14 @@ const WindowThemes = {
 
 "use strict";
 __webpack_require__.r(__webpack_exports__);
-/* harmony import */ var _components_advanced_overlay_windows_dist_index__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ../../../components/advanced-overlay-windows/dist/index */ "../../../components/advanced-overlay-windows/dist/index.js");
-/* harmony import */ var _components_advanced_overlay_windows_dist_index__WEBPACK_IMPORTED_MODULE_0___default = /*#__PURE__*/__webpack_require__.n(_components_advanced_overlay_windows_dist_index__WEBPACK_IMPORTED_MODULE_0__);
-/* harmony import */ var _logger__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ./logger */ "./logger.ts");
+/* harmony import */ var alt1__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! alt1 */ "../../../node_modules/alt1/dist/base/index.js");
+/* harmony import */ var alt1__WEBPACK_IMPORTED_MODULE_0___default = /*#__PURE__*/__webpack_require__.n(alt1__WEBPACK_IMPORTED_MODULE_0__);
+/* harmony import */ var _components_advanced_overlay_windows_dist_index__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ../../../components/advanced-overlay-windows/dist/index */ "../../../components/advanced-overlay-windows/dist/index.js");
+/* harmony import */ var _components_advanced_overlay_windows_dist_index__WEBPACK_IMPORTED_MODULE_1___default = /*#__PURE__*/__webpack_require__.n(_components_advanced_overlay_windows_dist_index__WEBPACK_IMPORTED_MODULE_1__);
+/* harmony import */ var _logger__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ./logger */ "./logger.ts");
 // Advanced Windows Test Plugin
 // Demonstrates the capabilities of the @tmg-alt1/advanced-overlay-windows component
+
 
 
 /**
@@ -1297,7 +1300,7 @@ class AdvancedWindowsTestApp {
             decreaseHeight: null
         };
         // Initialize logger first
-        this.logger = new _logger__WEBPACK_IMPORTED_MODULE_1__.Alt1Logger('AdvancedWindowsTest', _logger__WEBPACK_IMPORTED_MODULE_1__.LogLevel.DEBUG);
+        this.logger = new _logger__WEBPACK_IMPORTED_MODULE_2__.Alt1Logger('AdvancedWindowsTest', _logger__WEBPACK_IMPORTED_MODULE_2__.LogLevel.DEBUG);
         this.logger.init('Initializing Advanced Windows Test App...');
         this.initialize();
     }
@@ -1367,7 +1370,7 @@ class AdvancedWindowsTestApp {
             }
             // Tell Alt1 about our app
             this.logger.alt1('Identifying app to Alt1...');
-            window.alt1.identifyApp('./appconfig.json');
+            alt1__WEBPACK_IMPORTED_MODULE_0__.identifyApp('./appconfig.json');
             // Check permissions
             if (window.alt1.permissionPixel && window.alt1.permissionOverlay) {
                 if (this.elements.alt1StatusText) {
@@ -1393,7 +1396,7 @@ class AdvancedWindowsTestApp {
      */
     initializeWindowManager() {
         try {
-            this.windowManager = new _components_advanced_overlay_windows_dist_index__WEBPACK_IMPORTED_MODULE_0__.OverlayWindowManager();
+            this.windowManager = new _components_advanced_overlay_windows_dist_index__WEBPACK_IMPORTED_MODULE_1__.OverlayWindowManager();
             // Set up global event handlers
             this.windowManager.on('window-created', (data) => {
                 console.log('🪟 Window created:', data.windowId);
@@ -1541,7 +1544,7 @@ class AdvancedWindowsTestApp {
                 draggable: true,
                 closable: true,
                 contentType: 'custom',
-                theme: _components_advanced_overlay_windows_dist_index__WEBPACK_IMPORTED_MODULE_0__.WindowThemes.DISCORD
+                theme: _components_advanced_overlay_windows_dist_index__WEBPACK_IMPORTED_MODULE_1__.WindowThemes.DISCORD
             });
             // Set custom content renderer
             this.exampleWindow.setContentRenderer((window) => {
@@ -1633,19 +1636,19 @@ class AdvancedWindowsTestApp {
             {
                 title: '🎨 Theme Demo - RuneScape',
                 x: 100, y: 200, width: 300, height: 200,
-                theme: _components_advanced_overlay_windows_dist_index__WEBPACK_IMPORTED_MODULE_0__.WindowThemes.RUNESCAPE,
+                theme: _components_advanced_overlay_windows_dist_index__WEBPACK_IMPORTED_MODULE_1__.WindowThemes.RUNESCAPE,
                 contentType: 'custom'
             },
             {
                 title: '🌙 Theme Demo - Dark',
                 x: 450, y: 200, width: 300, height: 200,
-                theme: _components_advanced_overlay_windows_dist_index__WEBPACK_IMPORTED_MODULE_0__.WindowThemes.DARK,
+                theme: _components_advanced_overlay_windows_dist_index__WEBPACK_IMPORTED_MODULE_1__.WindowThemes.DARK,
                 contentType: 'custom'
             },
             {
                 title: '☀️ Theme Demo - Light',
                 x: 800, y: 200, width: 300, height: 200,
-                theme: _components_advanced_overlay_windows_dist_index__WEBPACK_IMPORTED_MODULE_0__.WindowThemes.LIGHT,
+                theme: _components_advanced_overlay_windows_dist_index__WEBPACK_IMPORTED_MODULE_1__.WindowThemes.LIGHT,
                 contentType: 'custom'
             }
         ];
