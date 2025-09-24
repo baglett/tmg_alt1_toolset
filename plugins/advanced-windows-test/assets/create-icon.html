@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Create Icon</title>
+</head>
+<body>
+    <canvas id="canvas" width="64" height="64"></canvas>
+    <script>
+        // Create a simple icon for the Advanced Windows Test plugin
+        const canvas = document.getElementById('canvas');
+        const ctx = canvas.getContext('2d');
+
+        // Background gradient
+        const gradient = ctx.createLinearGradient(0, 0, 64, 64);
+        gradient.addColorStop(0, '#4A9EFF');
+        gradient.addColorStop(1, '#2E7DD9');
+        ctx.fillStyle = gradient;
+        ctx.fillRect(0, 0, 64, 64);
+
+        // Window frame icon
+        ctx.strokeStyle = '#FFFFFF';
+        ctx.lineWidth = 3;
+
+        // Outer window
+        ctx.strokeRect(8, 12, 48, 40);
+
+        // Title bar
+        ctx.fillStyle = '#FFFFFF';
+        ctx.fillRect(8, 12, 48, 8);
+
+        // Inner windows (overlapping)
+        ctx.strokeStyle = '#FFFFFF';
+        ctx.lineWidth = 2;
+        ctx.strokeRect(16, 24, 24, 20);
+        ctx.strokeRect(24, 32, 24, 20);
+
+        // Window controls (dots)
+        ctx.fillStyle = '#4A9EFF';
+        ctx.beginPath();
+        ctx.arc(46, 16, 1.5, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.beginPath();
+        ctx.arc(51, 16, 1.5, 0, Math.PI * 2);
+        ctx.fill();
+
+        // Convert to data URL
+        const dataURL = canvas.toDataURL('image/png');
+        console.log('Icon Data URL:', dataURL);
+
+        // Display the data URL for copying
+        const pre = document.createElement('pre');
+        pre.style.wordWrap = 'break-word';
+        pre.textContent = dataURL;
+        document.body.appendChild(pre);
+    </script>
+</body>
+</html>

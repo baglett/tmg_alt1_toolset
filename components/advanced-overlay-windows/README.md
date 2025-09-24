@@ -14,6 +14,10 @@ An innovative window management component for Alt1 applications that creates vir
 ## Quick Start
 
 ```typescript
+// For plugins within the TMG Alt1 Toolset monorepo:
+import { OverlayWindowManager, WindowThemes } from '../../../components/advanced-overlay-windows/dist/index';
+
+// For external packages (if published to npm):
 import { OverlayWindowManager, WindowThemes } from '@tmg-alt1/advanced-overlay-windows';
 
 // Create window manager
@@ -131,6 +135,10 @@ Built-in content types for common Alt1 use cases:
 ### Built-in Themes
 
 ```typescript
+// For plugins within the TMG Alt1 Toolset monorepo:
+import { WindowThemes } from '../../../components/advanced-overlay-windows/dist/index';
+
+// For external packages (if published to npm):
 import { WindowThemes } from '@tmg-alt1/advanced-overlay-windows';
 
 // Discord-style theme
@@ -216,8 +224,12 @@ window.on('closed', () => {
 ### Example: Dungeoneering Plugin Integration
 
 ```typescript
-import { OverlayWindowManager } from '@tmg-alt1/advanced-overlay-windows';
-import { DoorTextReader } from '@tmg-alt1/mouse-text-tool';
+// For plugins within the TMG Alt1 Toolset monorepo:
+import { OverlayWindowManager } from '../../../components/advanced-overlay-windows/dist/index';
+
+// For external packages:
+// import { OverlayWindowManager } from '@tmg-alt1/advanced-overlay-windows';
+// import { DoorTextReader } from '@tmg-alt1/mouse-text-tool';
 
 class DungeoneeringApp {
     private windowManager: OverlayWindowManager;
@@ -265,6 +277,58 @@ class DungeoneeringApp {
 - **Overlay Rendering**: Uses Alt1's efficient overlay grouping and z-indexing
 - **Memory Management**: Automatic cleanup of interaction regions and event handlers
 - **Smooth Animations**: Frame-based updates for smooth dragging and resizing
+
+## Alt1 API Integration
+
+### Import Patterns
+
+When using Alt1 APIs in your custom content renderers, use the correct import pattern:
+
+```typescript
+// Import both namespace and named exports for Alt1 API
+import * as alt1lib from 'alt1';           // For mixColor, etc.
+import { identifyApp } from 'alt1';        // For app registration
+
+// Example usage in content renderer
+window.setContentRenderer((window) => {
+    // Use alt1lib for color utilities
+    const backgroundColor = alt1lib.mixColor(47, 49, 54, 240);
+
+    // Use window.alt1 for overlay operations
+    window.alt1.overLayRect(
+        backgroundColor,
+        window.position.x,
+        window.position.y,
+        window.size.width,
+        window.size.height,
+        60000,
+        0
+    );
+});
+
+// App identification (typically in main app file)
+if (window.alt1) {
+    identifyApp('./appconfig.json');
+}
+```
+
+### Runtime Initialization
+
+⚠️ **Important**: When using `alt1lib` functions in static properties or class initialization, use lazy initialization to avoid import timing issues:
+
+```typescript
+// ❌ Don't do this (may cause "Cannot read properties of undefined"):
+private static readonly THEME = {
+    color: alt1lib.mixColor(255, 255, 255, 255)
+};
+
+// ✅ Do this instead (lazy initialization):
+private static getTheme() {
+    return {
+        color: alt1lib.mixColor(255, 255, 255, 255)
+    };
+}
+```
 
 ## Browser Compatibility
 

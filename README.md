@@ -41,7 +41,18 @@ npm run build:all
 ### 🏰 Dungeoneering Optimizer
 Advanced gate engine and optimization tools for RuneScape Dungeoneering.
 
-**Install:** `alt1://addapp/https://baglett.github.io/tmg_alt1_toolset/feature/claude_setup/dungeoneering-optimizer/appconfig.json`
+#### Install Links by Branch:
+- **Main (Production):** `alt1://addapp/https://baglett.github.io/tmg_alt1_toolset/dungeoneering-optimizer/appconfig.json`
+- **Development:** `alt1://addapp/https://baglett.github.io/tmg_alt1_toolset/development/dungeoneering-optimizer/appconfig.json`
+- **Current Feature:** `alt1://addapp/https://baglett.github.io/tmg_alt1_toolset/feature/claude_setup/dungeoneering-optimizer/appconfig.json`
+
+### 🪟 Advanced Windows Test
+Test plugin demonstrating advanced overlay window management capabilities.
+
+#### Install Links by Branch:
+- **Main (Production):** `alt1://addapp/https://baglett.github.io/tmg_alt1_toolset/advanced-windows-test/appconfig.json`
+- **Development:** `alt1://addapp/https://baglett.github.io/tmg_alt1_toolset/development/advanced-windows-test/appconfig.json`
+- **Current Feature:** `alt1://addapp/https://baglett.github.io/tmg_alt1_toolset/feature/claude_setup/advanced-windows-test/appconfig.json`
 
 ## 🔧 Development Workflow
 
@@ -94,10 +105,27 @@ class DoorTextReader { /* embedded copy */ }
 
 ## 🌐 Deployment
 
-- **Automatic**: GitHub Actions deploys on every push
-- **Branch-specific URLs**: Feature branches get their own deployment paths
-- **Main Branch**: `https://baglett.github.io/tmg_alt1_toolset/`
-- **Feature Branches**: `https://baglett.github.io/tmg_alt1_toolset/{branch-name}/`
+### Branch-Specific Deployment System
+GitHub Actions automatically deploys different branches to isolated URLs:
+
+#### Deployment URLs:
+- **Main Branch (Production):** `https://baglett.github.io/tmg_alt1_toolset/`
+- **Development Branch:** `https://baglett.github.io/tmg_alt1_toolset/development/`
+- **Feature Branches:** `https://baglett.github.io/tmg_alt1_toolset/{branch-name}/`
+
+#### Alt1 Install URL Pattern:
+```
+# Main branch (clean URLs)
+alt1://addapp/https://baglett.github.io/tmg_alt1_toolset/{plugin-name}/appconfig.json
+
+# Other branches (prefixed URLs)
+alt1://addapp/https://baglett.github.io/tmg_alt1_toolset/{branch-name}/{plugin-name}/appconfig.json
+```
+
+#### Automatic Features:
+- **Branch Isolation**: Each branch gets its own deployment path for safe testing
+- **Auto-Generated Index**: Each deployment includes an index page with install buttons
+- **Dynamic URLs**: GitHub Actions template automatically generates correct Alt1 links
 
 ## 📖 Documentation
 

@@ -5,8 +5,16 @@ A tool for RuneScape 3 Dungeoneering that helps optimize gate and key placement.
 ## Installation
 
 ### Quick Install (Online)
-Click this link to install directly in Alt1:
-[Install in Alt1](alt1://addapp/https://raw.githubusercontent.com/baglett/tmg_alt1_toolset/main/dungeoneering-optimization-gate-engine/dist/index.html)
+Choose the appropriate branch for installation:
+
+#### Production (Main Branch)
+`alt1://addapp/https://baglett.github.io/tmg_alt1_toolset/dungeoneering-optimizer/appconfig.json`
+
+#### Development Branch
+`alt1://addapp/https://baglett.github.io/tmg_alt1_toolset/development/dungeoneering-optimizer/appconfig.json`
+
+#### Current Feature Branch
+`alt1://addapp/https://baglett.github.io/tmg_alt1_toolset/feature/claude_setup/dungeoneering-optimizer/appconfig.json`
 
 ### Development
 1. Install dependencies:
@@ -26,13 +34,13 @@ npm run build
 ```
 
 2. Install in Alt1:
-- **Online (Recommended)**: 
-  - Click the Quick Install link above, or
-  - Open [Raw GitHub Link](https://raw.githubusercontent.com/baglett/tmg_alt1_toolset/main/dungeoneering-optimization-gate-engine/dist/index.html) in Alt1 Browser
-  - Click "Add App" in Alt1
+- **Online (Recommended)**:
+  - Use one of the Quick Install links above based on your preferred branch
+  - Main branch for stable releases, development for latest features, feature branches for testing
 
-- **Local Install**:
-  - Click this link if running locally: [Install Local Build](alt1://addapp/file:///L:/Projects/Repos/tmg_alt1_toolset/dungeoneering-optimization-gate-engine/dist/index.html)
+- **Local Development Install**:
+  - Start dev server: `npm run dev`
+  - Install locally: `alt1://addapp/http://localhost:9000/appconfig.json`
   - Or manually add via Alt1 Browser: Open Alt1 Toolkit -> Add App -> Select `dist/index.html`
 
 ## Features

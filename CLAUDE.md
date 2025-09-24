@@ -211,10 +211,32 @@ npm run typecheck  # TypeScript checking
 ```
 
 ### Deployment & Monitoring
-- Commit triggers GitHub Actions automatically
+- Commit triggers GitHub Actions automatically for `main`, `development`, and `feature/*` branches
 - **CRITICAL**: Always monitor deployment status after pushing
-- Updates deployed to: `https://baglett.github.io/tmg_alt1_toolset/`
-- Alt1 install URLs: `alt1://addapp/https://baglett.github.io/tmg_alt1_toolset/[component]/dist/appconfig.json`
+- Branch-specific deployment URLs and Alt1 install links generated automatically
+
+#### Branch Deployment Structure
+```bash
+# Main Branch (Production)
+https://baglett.github.io/tmg_alt1_toolset/
+alt1://addapp/https://baglett.github.io/tmg_alt1_toolset/dungeoneering-optimizer/appconfig.json
+
+# Development Branch
+https://baglett.github.io/tmg_alt1_toolset/development/
+alt1://addapp/https://baglett.github.io/tmg_alt1_toolset/development/dungeoneering-optimizer/appconfig.json
+
+# Feature Branches (e.g., feature/claude_setup)
+https://baglett.github.io/tmg_alt1_toolset/feature/claude_setup/
+alt1://addapp/https://baglett.github.io/tmg_alt1_toolset/feature/claude_setup/dungeoneering-optimizer/appconfig.json
+```
+
+#### GitHub Actions Template Logic
+```yaml
+# Auto-generates branch-specific URLs using:
+${{ github.ref_name == 'main' && '' || github.ref_name }}${{ github.ref_name == 'main' && '' || '/' }}
+# Main branch: "" (empty) → clean URLs
+# Other branches: "branch-name/" → prefixed URLs
+```
 
 #### Required Post-Push Protocol
 ```bash
@@ -222,7 +244,8 @@ npm run typecheck  # TypeScript checking
 1. Check GitHub Actions tab: https://github.com/baglett/tmg_alt1_toolset/actions
 2. Monitor latest workflow run for success/failure
 3. If failed, check logs and fix issues before next push
-4. Verify deployment URL is accessible after success
+4. Verify branch-specific deployment URL is accessible after success
+5. Test Alt1 install links for the appropriate branch
 ```
 
 ## Key Dependencies

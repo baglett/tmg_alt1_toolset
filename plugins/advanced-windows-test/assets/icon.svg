@@ -1,0 +1,27 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 64 64">
+    <!-- Background gradient -->
+    <defs>
+        <linearGradient id="bgGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%" style="stop-color:#4A9EFF;stop-opacity:1" />
+            <stop offset="100%" style="stop-color:#2E7DD9;stop-opacity:1" />
+        </linearGradient>
+    </defs>
+    <rect width="64" height="64" fill="url(#bgGradient)" rx="8" />
+
+    <!-- Main window -->
+    <rect x="8" y="12" width="48" height="40" fill="none" stroke="white" stroke-width="3" rx="2" />
+
+    <!-- Title bar -->
+    <rect x="8" y="12" width="48" height="8" fill="white" rx="2" />
+
+    <!-- Window controls -->
+    <circle cx="46" cy="16" r="1.5" fill="#4A9EFF" />
+    <circle cx="51" cy="16" r="1.5" fill="#4A9EFF" />
+
+    <!-- Overlapping windows to show the "advanced windows" concept -->
+    <rect x="16" y="24" width="24" height="20" fill="none" stroke="white" stroke-width="2" opacity="0.9" rx="1" />
+    <rect x="24" y="32" width="24" height="20" fill="none" stroke="white" stroke-width="2" opacity="0.9" rx="1" />
+
+    <!-- Small "AW" text for Advanced Windows -->
+    <text x="32" y="38" font-family="Arial, sans-serif" font-size="10" font-weight="bold" fill="white" text-anchor="middle">AW</text>
+</svg>
