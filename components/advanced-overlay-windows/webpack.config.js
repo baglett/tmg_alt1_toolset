@@ -15,8 +15,8 @@ module.exports = merge(baseConfig, {
         filename: "[name].js",
         library: {
             type: "umd",
-            name: "AdvancedOverlayWindows",
-            export: "default"
+            name: "AdvancedOverlayWindows"
+            // Removed 'export: "default"' to export ALL exports, not just default
         },
         clean: true,
         globalObject: 'this'

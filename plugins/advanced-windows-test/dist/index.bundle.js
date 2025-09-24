@@ -1219,7 +1219,6 @@ const WindowThemes = {
 
 })();
 
-__nested_webpack_exports__ = __nested_webpack_exports__["default"];
 /******/ 	return __nested_webpack_exports__;
 /******/ })()
 ;
