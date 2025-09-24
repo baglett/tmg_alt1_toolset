@@ -3,6 +3,7 @@
 
 import * as a1lib from 'alt1';
 import { OverlayWindowManager, WindowThemes, OverlayWindow } from '../../../components/advanced-overlay-windows/dist/index';
+import { InteractiveWindowManager, createSettingsTemplate } from '../../../components/interactive-windows/dist/index';
 import { Alt1Logger, LogLevel } from './logger';
 
 /**
@@ -10,6 +11,7 @@ import { Alt1Logger, LogLevel } from './logger';
  */
 class AdvancedWindowsTestApp {
     private windowManager: OverlayWindowManager | null = null;
+    private interactiveWindowManager: InteractiveWindowManager | null = null;
     private exampleWindow: OverlayWindow | null = null;
     private additionalWindows: OverlayWindow[] = [];
     private isInitialized = false;
@@ -37,7 +39,12 @@ class AdvancedWindowsTestApp {
         increaseWidth: null as HTMLButtonElement | null,
         decreaseWidth: null as HTMLButtonElement | null,
         increaseHeight: null as HTMLButtonElement | null,
-        decreaseHeight: null as HTMLButtonElement | null
+        decreaseHeight: null as HTMLButtonElement | null,
+        // Interactive windows controls
+        openInteractiveModal: null as HTMLButtonElement | null,
+        openSettingsModal: null as HTMLButtonElement | null,
+        showAlert: null as HTMLButtonElement | null,
+        showConfirm: null as HTMLButtonElement | null
     };
 
     constructor() {
@@ -150,6 +157,7 @@ class AdvancedWindowsTestApp {
     private initializeWindowManager(): void {
         try {
             this.windowManager = new OverlayWindowManager();
+            this.interactiveWindowManager = new InteractiveWindowManager();
 
             // Set up global event handlers
             this.windowManager.on('window-created', (data: any) => {
@@ -283,6 +291,39 @@ class AdvancedWindowsTestApp {
                 timestamp: Date.now()
             });
             this.resizeExampleWindow(0, -50);
+        });
+
+        // Interactive windows handlers
+        this.elements.openInteractiveModal?.addEventListener('click', (event) => {
+            this.logger.ui('Button clicked: openInteractiveModal', {
+                disabled: (event.target as HTMLButtonElement)?.disabled,
+                timestamp: Date.now()
+            });
+            this.openInteractiveModal();
+        });
+
+        this.elements.openSettingsModal?.addEventListener('click', (event) => {
+            this.logger.ui('Button clicked: openSettingsModal', {
+                disabled: (event.target as HTMLButtonElement)?.disabled,
+                timestamp: Date.now()
+            });
+            this.openSettingsModal();
+        });
+
+        this.elements.showAlert?.addEventListener('click', (event) => {
+            this.logger.ui('Button clicked: showAlert', {
+                disabled: (event.target as HTMLButtonElement)?.disabled,
+                timestamp: Date.now()
+            });
+            this.showAlert();
+        });
+
+        this.elements.showConfirm?.addEventListener('click', (event) => {
+            this.logger.ui('Button clicked: showConfirm', {
+                disabled: (event.target as HTMLButtonElement)?.disabled,
+                timestamp: Date.now()
+            });
+            this.showConfirm();
         });
     }
 
@@ -712,6 +753,166 @@ class AdvancedWindowsTestApp {
 
         // Update button states
         this.updateButtonStates();
+    }
+
+    /**
+     * Interactive Windows Methods
+     */
+
+    private openInteractiveModal(): void {
+        this.logger.window('openInteractiveModal() called');
+
+        if (!this.interactiveWindowManager) {
+            this.logger.error('openInteractiveModal failed: Interactive window manager not available');
+            alert('Interactive window manager not available.');
+            return;
+        }
+
+        try {
+            const modal = this.interactiveWindowManager.createModal({
+                title: '🎯 Interactive Modal Window',
+                width: 500,
+                height: 400,
+                content: `
+                    <div style="padding: 20px; font-family: Arial, sans-serif;">
+                        <h2>🎉 This is a Truly Interactive Window!</h2>
+                        <p>Unlike Alt1 overlays, this window can:</p>
+                        <ul>
+                            <li>✅ Be dragged by clicking and dragging the title bar</li>
+                            <li>✅ Be resized by dragging the edges and corners</li>
+                            <li>✅ Be closed by clicking the X button</li>
+                            <li>✅ Receive mouse clicks and keyboard input</li>
+                        </ul>
+                        <div style="margin: 20px 0; padding: 15px; background: #f0f8ff; border-radius: 5px;">
+                            <strong>Try these interactions:</strong>
+                            <br><button onclick="alert('Button clicked!')">Click me!</button>
+                            <input type="text" placeholder="Type something..." style="margin-left: 10px;">
+                        </div>
+                        <p style="color: #666; font-size: 12px;">
+                            This demonstrates the power of DOM-based windows vs. Alt1 overlays.
+                        </p>
+                    </div>
+                `,
+                resizable: true,
+                draggable: true,
+                closable: true
+            });
+
+            this.logger.success('Interactive modal created:', modal.id);
+        } catch (error) {
+            this.logger.error('Failed to create interactive modal:', error);
+        }
+    }
+
+    private openSettingsModal(): void {
+        this.logger.window('openSettingsModal() called');
+
+        if (!this.interactiveWindowManager) {
+            this.logger.error('openSettingsModal failed: Interactive window manager not available');
+            return;
+        }
+
+        try {
+            const settingsTemplate = createSettingsTemplate({
+                title: 'Plugin Settings',
+                sections: [
+                    {
+                        title: 'Display Settings',
+                        fields: [
+                            { label: 'Window Opacity', type: 'range', key: 'opacity', value: 90, min: 10, max: 100 },
+                            { label: 'Show Tooltips', type: 'checkbox', key: 'showTooltips', value: true },
+                            { label: 'Theme', type: 'select', key: 'theme', value: 'dark', options: [
+                                { label: 'Dark', value: 'dark' },
+                                { label: 'Light', value: 'light' },
+                                { label: 'RuneScape', value: 'runescape' }
+                            ]}
+                        ]
+                    },
+                    {
+                        title: 'Performance',
+                        fields: [
+                            { label: 'Update Interval (ms)', type: 'number', key: 'updateInterval', value: 100, min: 50, max: 1000 },
+                            { label: 'Debug Mode', type: 'checkbox', key: 'debugMode', value: false },
+                            { label: 'Log Level', type: 'select', key: 'logLevel', value: 'info', options: [
+                                { label: 'Error', value: 'error' },
+                                { label: 'Warning', value: 'warning' },
+                                { label: 'Info', value: 'info' },
+                                { label: 'Debug', value: 'debug' }
+                            ]}
+                        ]
+                    },
+                    {
+                        title: 'Advanced',
+                        fields: [
+                            { label: 'Custom CSS', type: 'textarea', key: 'customCss', value: '', placeholder: 'Enter custom CSS...' },
+                            { label: 'Max Windows', type: 'number', key: 'maxWindows', value: 5, min: 1, max: 20 }
+                        ]
+                    }
+                ],
+                onSave: (values) => {
+                    this.logger.success('Settings saved:', values);
+                    alert(`Settings saved!\n\n${JSON.stringify(values, null, 2)}`);
+                    // Here you would typically save to localStorage or send to server
+                },
+                onCancel: () => {
+                    this.logger.ui('Settings cancelled');
+                }
+            });
+
+            const modal = this.interactiveWindowManager.createSettingsModal(
+                '⚙️ Plugin Settings',
+                settingsTemplate
+            );
+
+            this.logger.success('Settings modal created:', modal.id);
+        } catch (error) {
+            this.logger.error('Failed to create settings modal:', error);
+        }
+    }
+
+    private async showAlert(): Promise<void> {
+        this.logger.ui('showAlert() called');
+
+        if (!this.interactiveWindowManager) {
+            this.logger.error('showAlert failed: Interactive window manager not available');
+            return;
+        }
+
+        try {
+            await this.interactiveWindowManager.alert(
+                '📢 Alert Dialog',
+                'This is an interactive alert dialog!\n\nIt can display multi-line messages and wait for user confirmation.'
+            );
+            this.logger.success('Alert dialog completed');
+        } catch (error) {
+            this.logger.error('Failed to show alert:', error);
+        }
+    }
+
+    private async showConfirm(): Promise<void> {
+        this.logger.ui('showConfirm() called');
+
+        if (!this.interactiveWindowManager) {
+            this.logger.error('showConfirm failed: Interactive window manager not available');
+            return;
+        }
+
+        try {
+            const result = await this.interactiveWindowManager.confirm(
+                '❓ Confirmation Dialog',
+                'This is an interactive confirmation dialog.\n\nDo you want to proceed with this action?'
+            );
+
+            if (result) {
+                this.logger.success('User confirmed the action');
+                alert('You clicked OK! ✅');
+            } else {
+                this.logger.ui('User cancelled the action');
+                alert('You clicked Cancel! ❌');
+            }
+        } catch (error) {
+            this.logger.error('Failed to show confirm dialog:', error);
+        }
     }
 }
 
