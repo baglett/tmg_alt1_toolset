@@ -7,6 +7,8 @@
 import { InteractiveWindowManager } from './InteractiveWindowManager';
 export { InteractiveWindowManager } from './InteractiveWindowManager';
 export { InteractiveWindow } from './InteractiveWindow';
+export { HybridWindowManager } from './HybridWindowManager';
+export { HybridWindow, type HybridWindowConfig } from './HybridWindow';
 export type { InteractiveWindowConfig, InteractiveWindowManagerInterface, InteractiveWindow as IInteractiveWindow, WindowState, WindowEvent, WindowEventType, WindowTheme, WindowContentConfig, Point, Size, Rect, DragState, ResizeState, ResizeHandle } from './types';
 export { WindowThemes } from './types';
 export default InteractiveWindowManager;

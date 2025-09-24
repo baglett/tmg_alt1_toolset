@@ -136,7 +136,9 @@ export interface WindowState {
     focused: boolean;
     minimized: boolean;
     maximized: boolean;
-    zIndex: number;
+    zIndex?: number;
+    dragging?: boolean;
+    resizing?: boolean;
 }
 
 /**
@@ -152,7 +154,14 @@ export type WindowEventType =
     | 'minimize'
     | 'restore'
     | 'maximize'
-    | 'beforeClose';
+    | 'beforeClose'
+    | 'window-shown'
+    | 'window-hidden'
+    | 'window-closed'
+    | 'window-focused'
+    | 'window-blurred'
+    | 'window-moved'
+    | 'window-resized';
 
 /**
  * Window event data

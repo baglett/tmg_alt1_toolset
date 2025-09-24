@@ -11,6 +11,10 @@ import { InteractiveWindowManager } from './InteractiveWindowManager';
 export { InteractiveWindowManager } from './InteractiveWindowManager';
 export { InteractiveWindow } from './InteractiveWindow';
 
+// Hybrid window exports (Alt1 full-screen positioning)
+export { HybridWindowManager } from './HybridWindowManager';
+export { HybridWindow, type HybridWindowConfig } from './HybridWindow';
+
 // Type exports
 export type {
     InteractiveWindowConfig,

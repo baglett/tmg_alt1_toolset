@@ -15,29 +15,560 @@ return /******/ (() => { // webpackBootstrap
 /*!*************************************************************!*\
   !*** ../../../components/interactive-windows/dist/index.js ***!
   \*************************************************************/
-/***/ ((module) => {
+/***/ ((module, __unused_webpack_exports, __webpack_require__) => {
 
 (function webpackUniversalModuleDefinition(root, factory) {
 	if(true)
-		module.exports = factory();
+		module.exports = factory(__webpack_require__(/*! alt1 */ "../../../node_modules/alt1/dist/base/index.js"));
 	else // removed by dead control flow
 {}
-})(self, () => {
+})(self, (__WEBPACK_EXTERNAL_MODULE_alt1__) => {
 return /******/ (() => { // webpackBootstrap
 /******/ 	"use strict";
 /******/ 	var __webpack_modules__ = ({
+
+/***/ "./src/HybridWindow.ts":
+/*!*****************************!*\
+  !*** ./src/HybridWindow.ts ***!
+  \*****************************/
+/***/ ((__unused_webpack_module, __nested_webpack_exports__, __nested_webpack_require_755__) => {
+
+__nested_webpack_require_755__.r(__nested_webpack_exports__);
+/* harmony export */ __nested_webpack_require_755__.d(__nested_webpack_exports__, {
+/* harmony export */   HybridWindow: () => (/* binding */ HybridWindow)
+/* harmony export */ });
+/* harmony import */ var alt1__WEBPACK_IMPORTED_MODULE_0__ = __nested_webpack_require_755__(/*! alt1 */ "alt1");
+/* harmony import */ var alt1__WEBPACK_IMPORTED_MODULE_0___default = /*#__PURE__*/__nested_webpack_require_755__.n(alt1__WEBPACK_IMPORTED_MODULE_0__);
+/**
+ * Hybrid Window System
+ *
+ * Combines Alt1 overlays for positioning with DOM elements for interactivity.
+ * This allows windows to be positioned anywhere on the RuneScape window while
+ * maintaining full interactive capabilities within content areas.
+ */
+
+class HybridWindow {
+    constructor(config) {
+        this._overlayUpdateInterval = null;
+        this._eventHandlers = new Map();
+        this._id = this.generateId();
+        this._config = {
+            useOverlayChrome: true,
+            overlayColor: alt1__WEBPACK_IMPORTED_MODULE_0__.mixColor(100, 100, 100, 255),
+            overlayLineWidth: 2,
+            overlayDuration: 100, // Short duration, updated frequently
+            ...config
+        };
+        // Initialize state with RS coordinates if provided
+        this._state = {
+            id: this._id,
+            position: {
+                x: config.rsX ?? 100,
+                y: config.rsY ?? 100
+            },
+            size: { width: config.width, height: config.height },
+            visible: false,
+            focused: false,
+            minimized: false,
+            maximized: false,
+            dragging: false,
+            resizing: false
+        };
+        this.createElement();
+        this.setupEventHandlers();
+    }
+    // Public API
+    get id() { return this._id; }
+    get state() { return { ...this._state }; }
+    get element() { return this._domElement; }
+    show() {
+        this._state.visible = true;
+        this._domElement.style.display = 'block';
+        this.updateDOMPosition();
+        this.startOverlayUpdates();
+        this.emit('window-shown');
+    }
+    hide() {
+        this._state.visible = false;
+        this._domElement.style.display = 'none';
+        this.stopOverlayUpdates();
+        this.emit('window-hidden');
+    }
+    close() {
+        this.hide();
+        this.cleanup();
+        this.emit('window-closed');
+    }
+    focus() {
+        this._state.focused = true;
+        this._domElement.style.zIndex = '10000';
+        this.emit('window-focused');
+    }
+    blur() {
+        this._state.focused = false;
+        this._domElement.style.zIndex = '9000';
+        this.emit('window-blurred');
+    }
+    // Position methods (using RS coordinates)
+    setRSPosition(rsX, rsY) {
+        this._state.position.x = rsX;
+        this._state.position.y = rsY;
+        this.updateDOMPosition();
+        this.emit('window-moved', { rsX, rsY });
+    }
+    setSize(width, height) {
+        this._state.size.width = width;
+        this._state.size.height = height;
+        this.updateDOMPosition();
+        this.emit('window-resized', { width, height });
+    }
+    setContent(content) {
+        if (typeof content === 'string') {
+            this._contentElement.innerHTML = content;
+        }
+        else {
+            this._contentElement.innerHTML = '';
+            this._contentElement.appendChild(content);
+        }
+    }
+    // Event handling
+    on(event, handler) {
+        if (!this._eventHandlers.has(event)) {
+            this._eventHandlers.set(event, []);
+        }
+        this._eventHandlers.get(event).push(handler);
+    }
+    off(event, handler) {
+        if (!this._eventHandlers.has(event))
+            return;
+        if (handler) {
+            const handlers = this._eventHandlers.get(event);
+            const index = handlers.indexOf(handler);
+            if (index > -1) {
+                handlers.splice(index, 1);
+            }
+        }
+        else {
+            this._eventHandlers.delete(event);
+        }
+    }
+    // Private methods
+    generateId() {
+        return `hybrid-window-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+    }
+    createElement() {
+        // Create main container (invisible DOM element for positioning)
+        this._domElement = document.createElement('div');
+        this._domElement.className = 'hybrid-window';
+        this._domElement.style.cssText = `
+            position: absolute;
+            display: none;
+            pointer-events: none;
+            z-index: 9000;
+        `;
+        // Create content area (interactive DOM element)
+        this._contentElement = document.createElement('div');
+        this._contentElement.className = 'hybrid-window-content';
+        this._contentElement.style.cssText = `
+            position: absolute;
+            left: ${this._config.overlayLineWidth || 2}px;
+            top: 30px; /* Account for title bar */
+            right: ${this._config.overlayLineWidth || 2}px;
+            bottom: ${this._config.overlayLineWidth || 2}px;
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 4px;
+            overflow: auto;
+            pointer-events: all;
+            box-shadow: inset 0 0 10px rgba(0, 0, 0, 0.1);
+        `;
+        this._domElement.appendChild(this._contentElement);
+        document.body.appendChild(this._domElement);
+        // Set initial content
+        if (this._config.content) {
+            if (typeof this._config.content === 'string' || this._config.content instanceof HTMLElement) {
+                this.setContent(this._config.content);
+            }
+            else {
+                // Handle WindowContentConfig case
+                this.setContent(this._config.content.source);
+            }
+        }
+    }
+    setupEventHandlers() {
+        // Handle content area interactions
+        this._contentElement.addEventListener('mousedown', (e) => {
+            e.stopPropagation();
+            this.focus();
+        });
+        // Handle close button (if implemented in overlay)
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape' && this._state.focused && this._config.closable) {
+                this.close();
+            }
+        });
+    }
+    updateDOMPosition() {
+        if (!this._state.visible || !window.alt1)
+            return;
+        // Convert RS coordinates to screen coordinates
+        const domPosition = this.convertRSToDOMCoordinates(this._state.position.x, this._state.position.y);
+        // Update DOM element position
+        this._domElement.style.left = `${domPosition.x}px`;
+        this._domElement.style.top = `${domPosition.y}px`;
+        this._domElement.style.width = `${this._state.size.width}px`;
+        this._domElement.style.height = `${this._state.size.height}px`;
+    }
+    convertRSToDOMCoordinates(rsX, rsY) {
+        // Get the Alt1 plugin's position relative to the RS window
+        // This is a simplification - in reality we'd need to account for:
+        // 1. RS window position on screen
+        // 2. Alt1 plugin position within RS window
+        // 3. Coordinate transformations
+        // For now, use the plugin window as the coordinate system
+        // In a full implementation, we'd need Alt1 APIs to get window positions
+        return { x: rsX, y: rsY };
+    }
+    startOverlayUpdates() {
+        if (!this._config.useOverlayChrome || !window.alt1)
+            return;
+        this.stopOverlayUpdates(); // Clear any existing interval
+        const updateOverlay = () => {
+            if (!this._state.visible)
+                return;
+            const { x, y } = this._state.position;
+            const { width, height } = this._state.size;
+            const color = this._config.overlayColor;
+            const lineWidth = this._config.overlayLineWidth;
+            const duration = this._config.overlayDuration;
+            // Draw window chrome using Alt1 overlays
+            if (window.alt1) {
+                // Main window border
+                window.alt1.overLayRect(color, x, y, width, height, duration, lineWidth);
+                // Title bar
+                const titleBarHeight = 30;
+                window.alt1.overLayRect(alt1__WEBPACK_IMPORTED_MODULE_0__.mixColor(80, 80, 80, 255), x, y, width, titleBarHeight, duration, 0);
+                // Title text
+                if (this._config.title) {
+                    window.alt1.overLayText(this._config.title, alt1__WEBPACK_IMPORTED_MODULE_0__.mixColor(255, 255, 255, 255), 14, x + 10, y + 8, duration);
+                }
+                // Close button (if closable)
+                if (this._config.closable) {
+                    const closeX = x + width - 25;
+                    const closeY = y + 5;
+                    window.alt1.overLayRect(alt1__WEBPACK_IMPORTED_MODULE_0__.mixColor(200, 50, 50, 255), closeX, closeY, 20, 20, duration, 1);
+                    window.alt1.overLayText('×', alt1__WEBPACK_IMPORTED_MODULE_0__.mixColor(255, 255, 255, 255), 16, closeX + 7, closeY + 2, duration);
+                }
+            }
+        };
+        // Update overlay regularly (slightly less than overlay duration)
+        updateOverlay(); // Initial update
+        this._overlayUpdateInterval = window.setInterval(updateOverlay, this._config.overlayDuration - 10);
+    }
+    stopOverlayUpdates() {
+        if (this._overlayUpdateInterval) {
+            clearInterval(this._overlayUpdateInterval);
+            this._overlayUpdateInterval = null;
+        }
+    }
+    emit(event, data) {
+        if (this._eventHandlers.has(event)) {
+            this._eventHandlers.get(event).forEach(handler => {
+                try {
+                    handler({ window: this, type: event, data });
+                }
+                catch (error) {
+                    console.error('Error in window event handler:', error);
+                }
+            });
+        }
+    }
+    cleanup() {
+        this.stopOverlayUpdates();
+        this._eventHandlers.clear();
+        if (this._domElement && this._domElement.parentNode) {
+            this._domElement.parentNode.removeChild(this._domElement);
+        }
+    }
+}
+
+
+/***/ }),
+
+/***/ "./src/HybridWindowManager.ts":
+/*!************************************!*\
+  !*** ./src/HybridWindowManager.ts ***!
+  \************************************/
+/***/ ((__unused_webpack_module, __nested_webpack_exports__, __nested_webpack_require_11095__) => {
+
+__nested_webpack_require_11095__.r(__nested_webpack_exports__);
+/* harmony export */ __nested_webpack_require_11095__.d(__nested_webpack_exports__, {
+/* harmony export */   HybridWindowManager: () => (/* binding */ HybridWindowManager)
+/* harmony export */ });
+/* harmony import */ var _HybridWindow__WEBPACK_IMPORTED_MODULE_0__ = __nested_webpack_require_11095__(/*! ./HybridWindow */ "./src/HybridWindow.ts");
+/* harmony import */ var _types__WEBPACK_IMPORTED_MODULE_1__ = __nested_webpack_require_11095__(/*! ./types */ "./src/types.ts");
+/**
+ * Hybrid Window Manager
+ *
+ * Manages multiple hybrid windows that can be positioned anywhere on the RuneScape
+ * window while maintaining interactive content areas using DOM elements.
+ */
+
+
+class HybridWindowManager {
+    constructor() {
+        this._windows = new Map();
+        this._activeWindow = null;
+        this._isInitialized = false;
+        this.initialize();
+    }
+    // Public API
+    createWindow(config) {
+        const window = new _HybridWindow__WEBPACK_IMPORTED_MODULE_0__.HybridWindow(config);
+        this._windows.set(window.id, window);
+        // Set up window event handlers
+        window.on('window-shown', () => this.handleWindowShown(window));
+        window.on('window-focused', () => this.handleWindowFocused(window));
+        window.on('window-closed', () => this.handleWindowClosed(window));
+        return window;
+    }
+    createModal(config) {
+        // Center the modal on the RuneScape window
+        const rsWidth = window.alt1?.rsWidth || 800;
+        const rsHeight = window.alt1?.rsHeight || 600;
+        const modalConfig = {
+            ...config,
+            rsX: config.rsX ?? Math.max(0, (rsWidth - config.width) / 2),
+            rsY: config.rsY ?? Math.max(0, (rsHeight - config.height) / 2),
+            draggable: config.draggable ?? true,
+            closable: config.closable ?? true,
+            resizable: config.resizable ?? false
+        };
+        const modal = this.createWindow(modalConfig);
+        modal.show();
+        modal.focus();
+        return modal;
+    }
+    createSettingsModal(title, settingsElement) {
+        return this.createModal({
+            title,
+            width: 500,
+            height: 400,
+            content: settingsElement,
+            theme: _types__WEBPACK_IMPORTED_MODULE_1__.WindowThemes.MODERN_DARK,
+            draggable: true,
+            resizable: true,
+            closable: true
+        });
+    }
+    // Dialog methods with Alt1 coordinate positioning
+    async alert(title, message, rsX, rsY) {
+        return new Promise((resolve) => {
+            const alertContent = `
+                <div style="padding: 20px; text-align: center; font-family: 'Segoe UI', sans-serif;">
+                    <h3 style="margin: 0 0 15px 0; color: #333;">${title}</h3>
+                    <p style="margin: 0 0 20px 0; line-height: 1.5; color: #666;">${message}</p>
+                    <button id="alert-ok-btn" style="background: #007ACC; color: white; border: none; padding: 10px 20px; border-radius: 4px; cursor: pointer; font-size: 14px;">
+                        OK
+                    </button>
+                </div>
+            `;
+            const modal = this.createModal({
+                title: '📢 Alert',
+                width: 400,
+                height: 200,
+                content: alertContent,
+                rsX,
+                rsY,
+                closable: true
+            });
+            // Handle OK button click
+            const handleOK = () => {
+                modal.close();
+                resolve();
+            };
+            // Set up event handlers after content is rendered
+            setTimeout(() => {
+                const okBtn = modal.element.querySelector('#alert-ok-btn');
+                if (okBtn) {
+                    okBtn.addEventListener('click', handleOK);
+                }
+            }, 10);
+            // Handle window close
+            modal.on('window-closed', () => resolve());
+        });
+    }
+    async confirm(title, message, rsX, rsY) {
+        return new Promise((resolve) => {
+            const confirmContent = `
+                <div style="padding: 20px; text-align: center; font-family: 'Segoe UI', sans-serif;">
+                    <h3 style="margin: 0 0 15px 0; color: #333;">${title}</h3>
+                    <p style="margin: 0 0 20px 0; line-height: 1.5; color: #666;">${message}</p>
+                    <div style="display: flex; gap: 10px; justify-content: center;">
+                        <button id="confirm-yes-btn" style="background: #28A745; color: white; border: none; padding: 10px 20px; border-radius: 4px; cursor: pointer; font-size: 14px;">
+                            Yes
+                        </button>
+                        <button id="confirm-no-btn" style="background: #DC3545; color: white; border: none; padding: 10px 20px; border-radius: 4px; cursor: pointer; font-size: 14px;">
+                            No
+                        </button>
+                    </div>
+                </div>
+            `;
+            const modal = this.createModal({
+                title: '❓ Confirm',
+                width: 400,
+                height: 200,
+                content: confirmContent,
+                rsX,
+                rsY,
+                closable: true
+            });
+            const handleYes = () => {
+                modal.close();
+                resolve(true);
+            };
+            const handleNo = () => {
+                modal.close();
+                resolve(false);
+            };
+            // Set up event handlers after content is rendered
+            setTimeout(() => {
+                const yesBtn = modal.element.querySelector('#confirm-yes-btn');
+                const noBtn = modal.element.querySelector('#confirm-no-btn');
+                if (yesBtn)
+                    yesBtn.addEventListener('click', handleYes);
+                if (noBtn)
+                    noBtn.addEventListener('click', handleNo);
+            }, 10);
+            // Handle window close (default to No)
+            modal.on('window-closed', () => resolve(false));
+        });
+    }
+    // Window management
+    getVisibleWindows() {
+        return Array.from(this._windows.values()).filter(w => w.state.visible);
+    }
+    closeAllWindows() {
+        this._windows.forEach(window => window.close());
+    }
+    // Layout management for full RS window
+    cascadeWindows() {
+        const visibleWindows = this.getVisibleWindows();
+        let offsetX = 50;
+        let offsetY = 50;
+        visibleWindows.forEach((window, index) => {
+            window.setRSPosition(offsetX + (index * 30), offsetY + (index * 30));
+        });
+    }
+    tileWindows() {
+        const visibleWindows = this.getVisibleWindows();
+        if (visibleWindows.length === 0)
+            return;
+        const rsWidth = window.alt1?.rsWidth || 800;
+        const rsHeight = window.alt1?.rsHeight || 600;
+        // Calculate grid dimensions
+        const cols = Math.ceil(Math.sqrt(visibleWindows.length));
+        const rows = Math.ceil(visibleWindows.length / cols);
+        const windowWidth = Math.floor(rsWidth / cols) - 20;
+        const windowHeight = Math.floor(rsHeight / rows) - 20;
+        visibleWindows.forEach((window, index) => {
+            const col = index % cols;
+            const row = Math.floor(index / cols);
+            const x = col * (windowWidth + 20) + 10;
+            const y = row * (windowHeight + 20) + 10;
+            window.setRSPosition(x, y);
+            window.setSize(windowWidth, windowHeight);
+        });
+    }
+    centerWindow(window) {
+        const rsWidth = globalThis.alt1?.rsWidth || 800;
+        const rsHeight = globalThis.alt1?.rsHeight || 600;
+        const centerX = Math.max(0, (rsWidth - window.state.size.width) / 2);
+        const centerY = Math.max(0, (rsHeight - window.state.size.height) / 2);
+        window.setRSPosition(centerX, centerY);
+    }
+    // Private methods
+    initialize() {
+        if (this._isInitialized)
+            return;
+        // Check Alt1 availability
+        if (!window.alt1) {
+            console.warn('HybridWindowManager: Alt1 not available, overlay features disabled');
+        }
+        // Set up global event handlers
+        this.setupGlobalEventHandlers();
+        this._isInitialized = true;
+    }
+    setupGlobalEventHandlers() {
+        // Handle clicking outside windows to blur focus
+        document.addEventListener('mousedown', (e) => {
+            let clickedInWindow = false;
+            for (const window of this._windows.values()) {
+                if (window.element.contains(e.target)) {
+                    clickedInWindow = true;
+                    break;
+                }
+            }
+            if (!clickedInWindow && this._activeWindow) {
+                this._activeWindow.blur();
+                this._activeWindow = null;
+            }
+        });
+        // Handle keyboard shortcuts
+        document.addEventListener('keydown', (e) => {
+            // Alt+Tab: cycle through windows
+            if (e.altKey && e.key === 'Tab') {
+                e.preventDefault();
+                this.cycleWindows();
+            }
+            // Ctrl+W: close active window
+            if (e.ctrlKey && e.key === 'w' && this._activeWindow) {
+                e.preventDefault();
+                this._activeWindow.close();
+            }
+        });
+    }
+    handleWindowShown(window) {
+        // Bring window to front when shown
+        window.focus();
+    }
+    handleWindowFocused(window) {
+        // Blur other windows
+        if (this._activeWindow && this._activeWindow !== window) {
+            this._activeWindow.blur();
+        }
+        this._activeWindow = window;
+    }
+    handleWindowClosed(window) {
+        this._windows.delete(window.id);
+        if (this._activeWindow === window) {
+            this._activeWindow = null;
+        }
+    }
+    cycleWindows() {
+        const visibleWindows = this.getVisibleWindows();
+        if (visibleWindows.length === 0)
+            return;
+        const currentIndex = this._activeWindow ?
+            visibleWindows.indexOf(this._activeWindow) : -1;
+        const nextIndex = (currentIndex + 1) % visibleWindows.length;
+        visibleWindows[nextIndex].focus();
+    }
+}
+
+
+/***/ }),
 
 /***/ "./src/InteractiveWindow.ts":
 /*!**********************************!*\
   !*** ./src/InteractiveWindow.ts ***!
   \**********************************/
-/***/ ((__unused_webpack_module, __nested_webpack_exports__, __nested_webpack_require_695__) => {
+/***/ ((__unused_webpack_module, __nested_webpack_exports__, __nested_webpack_require_21566__) => {
 
-__nested_webpack_require_695__.r(__nested_webpack_exports__);
-/* harmony export */ __nested_webpack_require_695__.d(__nested_webpack_exports__, {
+__nested_webpack_require_21566__.r(__nested_webpack_exports__);
+/* harmony export */ __nested_webpack_require_21566__.d(__nested_webpack_exports__, {
 /* harmony export */   InteractiveWindow: () => (/* binding */ InteractiveWindow)
 /* harmony export */ });
-/* harmony import */ var _types__WEBPACK_IMPORTED_MODULE_0__ = __nested_webpack_require_695__(/*! ./types */ "./src/types.ts");
+/* harmony import */ var _types__WEBPACK_IMPORTED_MODULE_0__ = __nested_webpack_require_21566__(/*! ./types */ "./src/types.ts");
 /**
  * Interactive Window Implementation
  *
@@ -606,13 +1137,13 @@ class InteractiveWindow {
 /*!*****************************************!*\
   !*** ./src/InteractiveWindowManager.ts ***!
   \*****************************************/
-/***/ ((__unused_webpack_module, __nested_webpack_exports__, __nested_webpack_require_23122__) => {
+/***/ ((__unused_webpack_module, __nested_webpack_exports__, __nested_webpack_require_43993__) => {
 
-__nested_webpack_require_23122__.r(__nested_webpack_exports__);
-/* harmony export */ __nested_webpack_require_23122__.d(__nested_webpack_exports__, {
+__nested_webpack_require_43993__.r(__nested_webpack_exports__);
+/* harmony export */ __nested_webpack_require_43993__.d(__nested_webpack_exports__, {
 /* harmony export */   InteractiveWindowManager: () => (/* binding */ InteractiveWindowManager)
 /* harmony export */ });
-/* harmony import */ var _InteractiveWindow__WEBPACK_IMPORTED_MODULE_0__ = __nested_webpack_require_23122__(/*! ./InteractiveWindow */ "./src/InteractiveWindow.ts");
+/* harmony import */ var _InteractiveWindow__WEBPACK_IMPORTED_MODULE_0__ = __nested_webpack_require_43993__(/*! ./InteractiveWindow */ "./src/InteractiveWindow.ts");
 /**
  * Interactive Window Manager
  *
@@ -958,8 +1489,9 @@ class InteractiveWindowManager {
         let topWindow = null;
         let maxZIndex = -1;
         this._windows.forEach(window => {
-            if (window.isVisible() && window.state.zIndex > maxZIndex) {
-                maxZIndex = window.state.zIndex;
+            const windowZIndex = window.state.zIndex || 0;
+            if (window.isVisible() && windowZIndex > maxZIndex) {
+                maxZIndex = windowZIndex;
                 topWindow = window;
             }
         });
@@ -974,10 +1506,10 @@ class InteractiveWindowManager {
 /*!**********************!*\
   !*** ./src/types.ts ***!
   \**********************/
-/***/ ((__unused_webpack_module, __nested_webpack_exports__, __nested_webpack_require_36382__) => {
+/***/ ((__unused_webpack_module, __nested_webpack_exports__, __nested_webpack_require_57298__) => {
 
-__nested_webpack_require_36382__.r(__nested_webpack_exports__);
-/* harmony export */ __nested_webpack_require_36382__.d(__nested_webpack_exports__, {
+__nested_webpack_require_57298__.r(__nested_webpack_exports__);
+/* harmony export */ __nested_webpack_require_57298__.d(__nested_webpack_exports__, {
 /* harmony export */   WindowThemes: () => (/* binding */ WindowThemes)
 /* harmony export */ });
 /**
@@ -1069,6 +1601,16 @@ const WindowThemes = {
 };
 
 
+/***/ }),
+
+/***/ "alt1":
+/*!***********************!*\
+  !*** external "alt1" ***!
+  \***********************/
+/***/ ((module) => {
+
+module.exports = __WEBPACK_EXTERNAL_MODULE_alt1__;
+
 /***/ })
 
 /******/ 	});
@@ -1077,7 +1619,7 @@ const WindowThemes = {
 /******/ 	var __webpack_module_cache__ = {};
 /******/ 	
 /******/ 	// The require function
-/******/ 	function __nested_webpack_require_39570__(moduleId) {
+/******/ 	function __nested_webpack_require_60671__(moduleId) {
 /******/ 		// Check if module is in cache
 /******/ 		var cachedModule = __webpack_module_cache__[moduleId];
 /******/ 		if (cachedModule !== undefined) {
@@ -1091,19 +1633,31 @@ const WindowThemes = {
 /******/ 		};
 /******/ 	
 /******/ 		// Execute the module function
-/******/ 		__webpack_modules__[moduleId](module, module.exports, __nested_webpack_require_39570__);
+/******/ 		__webpack_modules__[moduleId](module, module.exports, __nested_webpack_require_60671__);
 /******/ 	
 /******/ 		// Return the exports of the module
 /******/ 		return module.exports;
 /******/ 	}
 /******/ 	
 /************************************************************************/
+/******/ 	/* webpack/runtime/compat get default export */
+/******/ 	(() => {
+/******/ 		// getDefaultExport function for compatibility with non-harmony modules
+/******/ 		__nested_webpack_require_60671__.n = (module) => {
+/******/ 			var getter = module && module.__esModule ?
+/******/ 				() => (module['default']) :
+/******/ 				() => (module);
+/******/ 			__nested_webpack_require_60671__.d(getter, { a: getter });
+/******/ 			return getter;
+/******/ 		};
+/******/ 	})();
+/******/ 	
 /******/ 	/* webpack/runtime/define property getters */
 /******/ 	(() => {
 /******/ 		// define getter functions for harmony exports
-/******/ 		__nested_webpack_require_39570__.d = (exports, definition) => {
+/******/ 		__nested_webpack_require_60671__.d = (exports, definition) => {
 /******/ 			for(var key in definition) {
-/******/ 				if(__nested_webpack_require_39570__.o(definition, key) && !__nested_webpack_require_39570__.o(exports, key)) {
+/******/ 				if(__nested_webpack_require_60671__.o(definition, key) && !__nested_webpack_require_60671__.o(exports, key)) {
 /******/ 					Object.defineProperty(exports, key, { enumerable: true, get: definition[key] });
 /******/ 				}
 /******/ 			}
@@ -1112,13 +1666,13 @@ const WindowThemes = {
 /******/ 	
 /******/ 	/* webpack/runtime/hasOwnProperty shorthand */
 /******/ 	(() => {
-/******/ 		__nested_webpack_require_39570__.o = (obj, prop) => (Object.prototype.hasOwnProperty.call(obj, prop))
+/******/ 		__nested_webpack_require_60671__.o = (obj, prop) => (Object.prototype.hasOwnProperty.call(obj, prop))
 /******/ 	})();
 /******/ 	
 /******/ 	/* webpack/runtime/make namespace object */
 /******/ 	(() => {
 /******/ 		// define __esModule on exports
-/******/ 		__nested_webpack_require_39570__.r = (exports) => {
+/******/ 		__nested_webpack_require_60671__.r = (exports) => {
 /******/ 			if(typeof Symbol !== 'undefined' && Symbol.toStringTag) {
 /******/ 				Object.defineProperty(exports, Symbol.toStringTag, { value: 'Module' });
 /******/ 			}
@@ -1133,11 +1687,13 @@ var __nested_webpack_exports__ = {};
 /*!**********************!*\
   !*** ./src/index.ts ***!
   \**********************/
-__nested_webpack_require_39570__.r(__nested_webpack_exports__);
-/* harmony export */ __nested_webpack_require_39570__.d(__nested_webpack_exports__, {
+__nested_webpack_require_60671__.r(__nested_webpack_exports__);
+/* harmony export */ __nested_webpack_require_60671__.d(__nested_webpack_exports__, {
+/* harmony export */   HybridWindow: () => (/* reexport safe */ _HybridWindow__WEBPACK_IMPORTED_MODULE_3__.HybridWindow),
+/* harmony export */   HybridWindowManager: () => (/* reexport safe */ _HybridWindowManager__WEBPACK_IMPORTED_MODULE_2__.HybridWindowManager),
 /* harmony export */   InteractiveWindow: () => (/* reexport safe */ _InteractiveWindow__WEBPACK_IMPORTED_MODULE_1__.InteractiveWindow),
 /* harmony export */   InteractiveWindowManager: () => (/* reexport safe */ _InteractiveWindowManager__WEBPACK_IMPORTED_MODULE_0__.InteractiveWindowManager),
-/* harmony export */   WindowThemes: () => (/* reexport safe */ _types__WEBPACK_IMPORTED_MODULE_2__.WindowThemes),
+/* harmony export */   WindowThemes: () => (/* reexport safe */ _types__WEBPACK_IMPORTED_MODULE_4__.WindowThemes),
 /* harmony export */   alert: () => (/* binding */ alert),
 /* harmony export */   confirm: () => (/* binding */ confirm),
 /* harmony export */   createDialog: () => (/* binding */ createDialog),
@@ -1148,9 +1704,11 @@ __nested_webpack_require_39570__.r(__nested_webpack_exports__);
 /* harmony export */   "default": () => (__WEBPACK_DEFAULT_EXPORT__),
 /* harmony export */   getGlobalWindowManager: () => (/* binding */ getGlobalWindowManager)
 /* harmony export */ });
-/* harmony import */ var _InteractiveWindowManager__WEBPACK_IMPORTED_MODULE_0__ = __nested_webpack_require_39570__(/*! ./InteractiveWindowManager */ "./src/InteractiveWindowManager.ts");
-/* harmony import */ var _InteractiveWindow__WEBPACK_IMPORTED_MODULE_1__ = __nested_webpack_require_39570__(/*! ./InteractiveWindow */ "./src/InteractiveWindow.ts");
-/* harmony import */ var _types__WEBPACK_IMPORTED_MODULE_2__ = __nested_webpack_require_39570__(/*! ./types */ "./src/types.ts");
+/* harmony import */ var _InteractiveWindowManager__WEBPACK_IMPORTED_MODULE_0__ = __nested_webpack_require_60671__(/*! ./InteractiveWindowManager */ "./src/InteractiveWindowManager.ts");
+/* harmony import */ var _InteractiveWindow__WEBPACK_IMPORTED_MODULE_1__ = __nested_webpack_require_60671__(/*! ./InteractiveWindow */ "./src/InteractiveWindow.ts");
+/* harmony import */ var _HybridWindowManager__WEBPACK_IMPORTED_MODULE_2__ = __nested_webpack_require_60671__(/*! ./HybridWindowManager */ "./src/HybridWindowManager.ts");
+/* harmony import */ var _HybridWindow__WEBPACK_IMPORTED_MODULE_3__ = __nested_webpack_require_60671__(/*! ./HybridWindow */ "./src/HybridWindow.ts");
+/* harmony import */ var _types__WEBPACK_IMPORTED_MODULE_4__ = __nested_webpack_require_60671__(/*! ./types */ "./src/types.ts");
 /**
  * Interactive Windows Component - Main Export
  *
@@ -1159,6 +1717,9 @@ __nested_webpack_require_39570__.r(__nested_webpack_exports__);
  */
 
 // Main exports
+
+
+// Hybrid window exports (Alt1 full-screen positioning)
 
 
 // Theme exports
@@ -1424,6 +1985,7 @@ __webpack_require__.r(__webpack_exports__);
 class InteractiveWindowsTestApp {
     constructor() {
         this.windowManager = null;
+        this.hybridWindowManager = null;
         this.openWindows = [];
         this.isInitialized = false;
         // UI Elements
@@ -1434,6 +1996,7 @@ class InteractiveWindowsTestApp {
             openInteractiveModal: null,
             openSettingsModal: null,
             openMultipleWindows: null,
+            openHybridModal: null,
             showAlert: null,
             showConfirm: null,
             closeAllWindows: null,
@@ -1463,8 +2026,9 @@ class InteractiveWindowsTestApp {
         this.checkAlt1Status();
         // Set up event handlers
         this.setupEventHandlers();
-        // Initialize interactive window manager
+        // Initialize window managers
         this.initializeInteractiveWindowManager();
+        this.initializeHybridWindowManager();
         this.isInitialized = true;
         console.log('✅ Interactive Windows Test App initialized successfully');
     }
@@ -1478,6 +2042,7 @@ class InteractiveWindowsTestApp {
         this.elements.openInteractiveModal = document.getElementById('openInteractiveModal');
         this.elements.openSettingsModal = document.getElementById('openSettingsModal');
         this.elements.openMultipleWindows = document.getElementById('openMultipleWindows');
+        this.elements.openHybridModal = document.getElementById('openHybridModal');
         this.elements.showAlert = document.getElementById('showAlert');
         this.elements.showConfirm = document.getElementById('showConfirm');
         this.elements.closeAllWindows = document.getElementById('closeAllWindows');
@@ -1547,6 +2112,19 @@ class InteractiveWindowsTestApp {
         }
     }
     /**
+     * Initialize the hybrid window manager
+     */
+    initializeHybridWindowManager() {
+        try {
+            this.logger.init('Initializing HybridWindowManager...');
+            this.hybridWindowManager = new _components_interactive_windows_dist_index__WEBPACK_IMPORTED_MODULE_1__.HybridWindowManager();
+            this.logger.success('HybridWindowManager initialized successfully');
+        }
+        catch (error) {
+            this.logger.error('Failed to initialize HybridWindowManager:', error);
+        }
+    }
+    /**
      * Set up event listeners for window events
      */
     setupWindowEventListeners() {
@@ -1581,6 +2159,14 @@ class InteractiveWindowsTestApp {
                 timestamp: Date.now()
             });
             this.openMultipleWindows();
+        });
+        // Open hybrid modal (full screen positioning)
+        this.elements.openHybridModal?.addEventListener('click', (event) => {
+            this.logger.ui('Button clicked: openHybridModal', {
+                disabled: event.target?.disabled,
+                timestamp: Date.now()
+            });
+            this.openHybridModal();
         });
         // Show alert
         this.elements.showAlert?.addEventListener('click', (event) => {
@@ -1805,6 +2391,91 @@ class InteractiveWindowsTestApp {
             }
         }
         this.updateStatus();
+    }
+    /**
+     * Open hybrid modal with full RuneScape window positioning
+     */
+    openHybridModal() {
+        this.logger.window('openHybridModal() called');
+        if (!this.hybridWindowManager) {
+            this.logger.error('openHybridModal failed: Hybrid window manager not available');
+            return;
+        }
+        try {
+            // Position the modal at specific RS coordinates (not constrained to plugin window)
+            const rsX = 200; // RS coordinate X
+            const rsY = 150; // RS coordinate Y
+            const hybridConfig = {
+                title: '🌟 Hybrid Window - Full Screen Positioning!',
+                width: 500,
+                height: 400,
+                rsX,
+                rsY,
+                content: `
+                    <div style="padding: 20px; font-family: 'Segoe UI', sans-serif;">
+                        <h2 style="margin: 0 0 20px 0; color: #007ACC;">🚀 Breakthrough Achieved!</h2>
+
+                        <div style="padding: 15px; background: #e8f5e8; border-radius: 6px; border-left: 4px solid #28A745; margin-bottom: 20px;">
+                            <p style="margin: 0; color: #155724; font-weight: 500;">
+                                ✅ This window can be positioned anywhere on the RuneScape window!
+                            </p>
+                        </div>
+
+                        <div style="margin: 20px 0;">
+                            <h3 style="color: #333; margin-bottom: 10px;">🎯 Hybrid Window Features:</h3>
+                            <ul style="line-height: 1.8; color: #555;">
+                                <li><strong>🗺️ Full Screen Positioning:</strong> Uses Alt1 overlays for chrome</li>
+                                <li><strong>🎮 Interactive Content:</strong> DOM elements for full interactivity</li>
+                                <li><strong>📍 RS Coordinates:</strong> Positioned at RS coords (${rsX}, ${rsY})</li>
+                                <li><strong>🖱️ Click & Type:</strong> All interactions work normally</li>
+                                <li><strong>🎨 Overlay Chrome:</strong> Title bar drawn with Alt1 overlays</li>
+                            </ul>
+                        </div>
+
+                        <div style="margin: 20px 0;">
+                            <label style="display: block; margin-bottom: 10px; color: #333; font-weight: 500;">
+                                Test Interactive Input:
+                            </label>
+                            <input type="text" placeholder="Type to test keyboard input..."
+                                   style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 4px; font-size: 14px;">
+                        </div>
+
+                        <div style="margin: 20px 0;">
+                            <button onclick="alert('Interactive button works! 🎉')"
+                                    style="background: #28A745; color: white; border: none; padding: 12px 24px; border-radius: 4px; cursor: pointer; font-size: 14px; margin-right: 10px;">
+                                🎯 Test Interaction
+                            </button>
+                            <button onclick="console.log('Console output from hybrid window')"
+                                    style="background: #007ACC; color: white; border: none; padding: 12px 24px; border-radius: 4px; cursor: pointer; font-size: 14px;">
+                                📊 Console Log
+                            </button>
+                        </div>
+
+                        <div style="padding: 15px; background: #fff3cd; border-radius: 6px; border-left: 4px solid #ffc107;">
+                            <p style="margin: 0; color: #856404; font-size: 13px;">
+                                <strong>💡 Technical Note:</strong> The window chrome (title bar, border) is drawn using Alt1 overlays,
+                                while the content area uses DOM elements for full interactivity!
+                            </p>
+                        </div>
+                    </div>
+                `,
+                theme: _components_interactive_windows_dist_index__WEBPACK_IMPORTED_MODULE_1__.WindowThemes.DISCORD,
+                useOverlayChrome: true,
+                overlayColor: alt1__WEBPACK_IMPORTED_MODULE_0__.mixColor(100, 100, 150, 200),
+                overlayLineWidth: 3,
+                overlayDuration: 150,
+                draggable: true,
+                resizable: false,
+                closable: true
+            };
+            const modal = this.hybridWindowManager.createModal(hybridConfig);
+            this.openWindows.push(modal);
+            this.updateStatus();
+            this.logger.success('Hybrid modal created with RS positioning:', { rsX, rsY });
+        }
+        catch (error) {
+            this.logger.error('Failed to create hybrid modal:', error);
+        }
     }
     /**
      * Show alert dialog

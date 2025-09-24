@@ -424,8 +424,9 @@ export class InteractiveWindowManager implements InteractiveWindowManagerInterfa
         let maxZIndex = -1;
 
         this._windows.forEach(window => {
-            if (window.isVisible() && window.state.zIndex > maxZIndex) {
-                maxZIndex = window.state.zIndex;
+            const windowZIndex = window.state.zIndex || 0;
+            if (window.isVisible() && windowZIndex > maxZIndex) {
+                maxZIndex = windowZIndex;
                 topWindow = window;
             }
         });

@@ -51,7 +51,8 @@
       "Bash(python:*)",
       "Bash(echo:*)",
       "Bash(npm info:*)",
-      "Bash(npm search:*)"
+      "Bash(npm search:*)",
+      "Bash(npx webpack serve:*)"
     ],
     "deny": [],
     "ask": []

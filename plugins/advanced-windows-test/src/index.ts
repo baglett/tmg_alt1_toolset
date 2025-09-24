@@ -2,7 +2,13 @@
 // Demonstrates the capabilities of the @tmg-alt1/interactive-windows component
 
 import * as a1lib from 'alt1';
-import { InteractiveWindowManager, createSettingsTemplate, WindowThemes } from '../../../components/interactive-windows/dist/index';
+import {
+    InteractiveWindowManager,
+    HybridWindowManager,
+    createSettingsTemplate,
+    WindowThemes,
+    type HybridWindowConfig
+} from '../../../components/interactive-windows/dist/index';
 import { Alt1Logger, LogLevel } from './logger';
 
 /**
@@ -10,6 +16,7 @@ import { Alt1Logger, LogLevel } from './logger';
  */
 class InteractiveWindowsTestApp {
     private windowManager: InteractiveWindowManager | null = null;
+    private hybridWindowManager: HybridWindowManager | null = null;
     private openWindows: any[] = [];
     private isInitialized = false;
     private logger: Alt1Logger;
@@ -22,6 +29,7 @@ class InteractiveWindowsTestApp {
         openInteractiveModal: null as HTMLButtonElement | null,
         openSettingsModal: null as HTMLButtonElement | null,
         openMultipleWindows: null as HTMLButtonElement | null,
+        openHybridModal: null as HTMLButtonElement | null,
         showAlert: null as HTMLButtonElement | null,
         showConfirm: null as HTMLButtonElement | null,
         closeAllWindows: null as HTMLButtonElement | null,
@@ -59,8 +67,9 @@ class InteractiveWindowsTestApp {
         // Set up event handlers
         this.setupEventHandlers();
 
-        // Initialize interactive window manager
+        // Initialize window managers
         this.initializeInteractiveWindowManager();
+        this.initializeHybridWindowManager();
 
         this.isInitialized = true;
         console.log('✅ Interactive Windows Test App initialized successfully');
@@ -76,6 +85,7 @@ class InteractiveWindowsTestApp {
         this.elements.openInteractiveModal = document.getElementById('openInteractiveModal') as HTMLButtonElement;
         this.elements.openSettingsModal = document.getElementById('openSettingsModal') as HTMLButtonElement;
         this.elements.openMultipleWindows = document.getElementById('openMultipleWindows') as HTMLButtonElement;
+        this.elements.openHybridModal = document.getElementById('openHybridModal') as HTMLButtonElement;
         this.elements.showAlert = document.getElementById('showAlert') as HTMLButtonElement;
         this.elements.showConfirm = document.getElementById('showConfirm') as HTMLButtonElement;
         this.elements.closeAllWindows = document.getElementById('closeAllWindows') as HTMLButtonElement;
@@ -155,6 +165,21 @@ class InteractiveWindowsTestApp {
     }
 
     /**
+     * Initialize the hybrid window manager
+     */
+    private initializeHybridWindowManager(): void {
+        try {
+            this.logger.init('Initializing HybridWindowManager...');
+
+            this.hybridWindowManager = new HybridWindowManager();
+            this.logger.success('HybridWindowManager initialized successfully');
+
+        } catch (error) {
+            this.logger.error('Failed to initialize HybridWindowManager:', error);
+        }
+    }
+
+    /**
      * Set up event listeners for window events
      */
     private setupWindowEventListeners(): void {
@@ -193,6 +218,15 @@ class InteractiveWindowsTestApp {
                 timestamp: Date.now()
             });
             this.openMultipleWindows();
+        });
+
+        // Open hybrid modal (full screen positioning)
+        this.elements.openHybridModal?.addEventListener('click', (event) => {
+            this.logger.ui('Button clicked: openHybridModal', {
+                disabled: (event.target as HTMLButtonElement)?.disabled,
+                timestamp: Date.now()
+            });
+            this.openHybridModal();
         });
 
         // Show alert
@@ -435,6 +469,96 @@ class InteractiveWindowsTestApp {
         }
 
         this.updateStatus();
+    }
+
+    /**
+     * Open hybrid modal with full RuneScape window positioning
+     */
+    private openHybridModal(): void {
+        this.logger.window('openHybridModal() called');
+
+        if (!this.hybridWindowManager) {
+            this.logger.error('openHybridModal failed: Hybrid window manager not available');
+            return;
+        }
+
+        try {
+            // Position the modal at specific RS coordinates (not constrained to plugin window)
+            const rsX = 200; // RS coordinate X
+            const rsY = 150; // RS coordinate Y
+
+            const hybridConfig: HybridWindowConfig = {
+                title: '🌟 Hybrid Window - Full Screen Positioning!',
+                width: 500,
+                height: 400,
+                rsX,
+                rsY,
+                content: `
+                    <div style="padding: 20px; font-family: 'Segoe UI', sans-serif;">
+                        <h2 style="margin: 0 0 20px 0; color: #007ACC;">🚀 Breakthrough Achieved!</h2>
+
+                        <div style="padding: 15px; background: #e8f5e8; border-radius: 6px; border-left: 4px solid #28A745; margin-bottom: 20px;">
+                            <p style="margin: 0; color: #155724; font-weight: 500;">
+                                ✅ This window can be positioned anywhere on the RuneScape window!
+                            </p>
+                        </div>
+
+                        <div style="margin: 20px 0;">
+                            <h3 style="color: #333; margin-bottom: 10px;">🎯 Hybrid Window Features:</h3>
+                            <ul style="line-height: 1.8; color: #555;">
+                                <li><strong>🗺️ Full Screen Positioning:</strong> Uses Alt1 overlays for chrome</li>
+                                <li><strong>🎮 Interactive Content:</strong> DOM elements for full interactivity</li>
+                                <li><strong>📍 RS Coordinates:</strong> Positioned at RS coords (${rsX}, ${rsY})</li>
+                                <li><strong>🖱️ Click & Type:</strong> All interactions work normally</li>
+                                <li><strong>🎨 Overlay Chrome:</strong> Title bar drawn with Alt1 overlays</li>
+                            </ul>
+                        </div>
+
+                        <div style="margin: 20px 0;">
+                            <label style="display: block; margin-bottom: 10px; color: #333; font-weight: 500;">
+                                Test Interactive Input:
+                            </label>
+                            <input type="text" placeholder="Type to test keyboard input..."
+                                   style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 4px; font-size: 14px;">
+                        </div>
+
+                        <div style="margin: 20px 0;">
+                            <button onclick="alert('Interactive button works! 🎉')"
+                                    style="background: #28A745; color: white; border: none; padding: 12px 24px; border-radius: 4px; cursor: pointer; font-size: 14px; margin-right: 10px;">
+                                🎯 Test Interaction
+                            </button>
+                            <button onclick="console.log('Console output from hybrid window')"
+                                    style="background: #007ACC; color: white; border: none; padding: 12px 24px; border-radius: 4px; cursor: pointer; font-size: 14px;">
+                                📊 Console Log
+                            </button>
+                        </div>
+
+                        <div style="padding: 15px; background: #fff3cd; border-radius: 6px; border-left: 4px solid #ffc107;">
+                            <p style="margin: 0; color: #856404; font-size: 13px;">
+                                <strong>💡 Technical Note:</strong> The window chrome (title bar, border) is drawn using Alt1 overlays,
+                                while the content area uses DOM elements for full interactivity!
+                            </p>
+                        </div>
+                    </div>
+                `,
+                theme: WindowThemes.DISCORD,
+                useOverlayChrome: true,
+                overlayColor: a1lib.mixColor(100, 100, 150, 200),
+                overlayLineWidth: 3,
+                overlayDuration: 150,
+                draggable: true,
+                resizable: false,
+                closable: true
+            };
+
+            const modal = this.hybridWindowManager.createModal(hybridConfig);
+            this.openWindows.push(modal);
+            this.updateStatus();
+            this.logger.success('Hybrid modal created with RS positioning:', { rsX, rsY });
+
+        } catch (error) {
+            this.logger.error('Failed to create hybrid modal:', error);
+        }
     }
 
     /**
