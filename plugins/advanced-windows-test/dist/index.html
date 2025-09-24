@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Advanced Windows Test</title>
+    <title>Interactive Windows Test</title>
     <style>
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
@@ -188,8 +188,8 @@
 </head>
 <body>
     <div class="header">
-        <h1>🚀 Advanced Windows Test</h1>
-        <p>Demonstration of the Advanced Overlay Windows Component</p>
+        <h1>🎯 Interactive Windows Test</h1>
+        <p>Test the revolutionary @tmg-alt1/interactive-windows component</p>
     </div>
 
     <div class="main-content">
@@ -200,55 +200,24 @@
             <p><a href="#" id="alt1InstallLink" class="alt1-link">Click here to install this app in Alt1</a></p>
         </div>
 
-        <!-- Window Controls -->
+        <!-- Interactive Windows Test Panel -->
         <div class="control-panel">
-            <h3>🪟 Window Management</h3>
-            <div class="button-group">
-                <button id="openExampleWindow" class="btn success">Open Example Window</button>
-                <button id="closeExampleWindow" class="btn danger" disabled>Close Example Window</button>
-                <button id="openMultipleWindows" class="btn warning">Open Multiple Windows</button>
-                <button id="closeAllWindows" class="btn danger">Close All Windows</button>
-            </div>
-
-            <!-- Window Position Controls -->
-            <h4 style="margin-top: 15px; margin-bottom: 10px; font-size: 14px;">📍 Window Position (Example Window)</h4>
-            <div class="button-group">
-                <button id="moveWindowLeft" class="btn" disabled>← Move Left</button>
-                <button id="moveWindowRight" class="btn" disabled>Move Right →</button>
-                <button id="moveWindowUp" class="btn" disabled>↑ Move Up</button>
-                <button id="moveWindowDown" class="btn" disabled>Move Down ↓</button>
-            </div>
-
-            <!-- Window Size Controls -->
-            <h4 style="margin-top: 15px; margin-bottom: 10px; font-size: 14px;">📐 Window Size (Example Window)</h4>
-            <div class="button-group">
-                <button id="increaseWidth" class="btn" disabled>↔ Wider</button>
-                <button id="decreaseWidth" class="btn" disabled>↔ Narrower</button>
-                <button id="increaseHeight" class="btn" disabled>↕ Taller</button>
-                <button id="decreaseHeight" class="btn" disabled>↕ Shorter</button>
-            </div>
-
-            <!-- Interactive Windows Section -->
-            <h3 style="margin-top: 20px; margin-bottom: 15px; font-size: 16px; color: #007ACC;">🎯 Interactive Windows (NEW!)</h3>
-            <p style="font-size: 12px; color: #666; margin-bottom: 15px;">
-                Unlike Alt1 overlays, these windows can receive mouse clicks, be dragged, resized, and closed with full interactivity!
-            </p>
-
-            <!-- Interactive Window Controls -->
-            <h4 style="margin-top: 15px; margin-bottom: 10px; font-size: 14px;">🪟 Interactive Window Controls</h4>
+            <h3>🎯 Interactive Window Controls</h3>
             <div class="button-group">
                 <button id="openInteractiveModal" class="btn" style="background: #007ACC;">🎯 Open Interactive Modal</button>
-                <button id="openSettingsModal" class="btn" style="background: #28A745;">⚙️ Settings Modal</button>
+                <button id="openSettingsModal" class="btn" style="background: #28A745;">⚙️ Open Settings Modal</button>
+                <button id="openMultipleWindows" class="btn" style="background: #FF6B6B;">🪟 Multiple Windows Test</button>
             </div>
 
-            <h4 style="margin-top: 15px; margin-bottom: 10px; font-size: 14px;">💬 Dialog Controls</h4>
+            <h3>💬 Dialog System</h3>
             <div class="button-group">
                 <button id="showAlert" class="btn" style="background: #FFC107; color: black;">📢 Show Alert</button>
                 <button id="showConfirm" class="btn" style="background: #17A2B8;">❓ Show Confirm</button>
+                <button id="closeAllWindows" class="btn danger">❌ Close All Windows</button>
             </div>
 
             <div class="status">
-                <h4>📊 Window Status</h4>
+                <h4>📊 Interactive Windows Status</h4>
                 <div class="status-item">
                     <span>Windows Manager:</span>
                     <span id="managerStatus" class="status-value">Not Initialized</span>
@@ -261,25 +230,22 @@
                     <span>Focused Window:</span>
                     <span id="focusedWindow" class="status-value">None</span>
                 </div>
-                <div class="status-item">
-                    <span>Interaction Detection:</span>
-                    <span id="interactionStatus" class="status-value">Stopped</span>
-                </div>
             </div>
         </div>
 
-        <!-- Example Usage -->
+        <!-- Interactive Windows Features -->
         <div class="example-section">
-            <h3>💡 How to Use</h3>
-            <p>This test plugin demonstrates the advanced overlay windows component capabilities:</p>
+            <h3>🎯 Interactive Windows Features</h3>
+            <p>Unlike Alt1 overlays, these windows support full mouse and keyboard interaction:</p>
             <ul>
-                <li><strong>Create Windows:</strong> Click "Open Example Window" to create overlay windows</li>
-                <li><strong>Move Windows:</strong> Use the position control buttons to move windows</li>
-                <li><strong>Resize Windows:</strong> Use the size control buttons to resize windows</li>
-                <li><strong>Close Windows:</strong> Use the "Close" buttons in this control panel</li>
+                <li><strong>🖱️ Drag Windows:</strong> Click and drag the title bar to move windows</li>
+                <li><strong>↔️ Resize Windows:</strong> Drag corners and edges to resize</li>
+                <li><strong>❌ Close Windows:</strong> Click the X button to close</li>
+                <li><strong>⌨️ Form Interactions:</strong> Type in inputs, click buttons, use dropdowns</li>
+                <li><strong>🪟 Multiple Windows:</strong> Focus management and Z-index layering</li>
             </ul>
-            <p><strong>Important:</strong> Alt1 overlays are visual-only and cannot receive mouse clicks directly. Use the control buttons in this panel to interact with windows.</p>
-            <p>Windows are created using: <code>windowManager.createWindow(config)</code></p>
+            <p><strong>Test Instructions:</strong> Click buttons above to create windows, then interact directly with them!</p>
+            <p>Component: <code>@tmg-alt1/interactive-windows</code></p>
         </div>
     </div>
 

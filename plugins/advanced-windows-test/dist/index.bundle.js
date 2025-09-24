@@ -11,1243 +11,6 @@
 return /******/ (() => { // webpackBootstrap
 /******/ 	var __webpack_modules__ = ({
 
-/***/ "../../../components/advanced-overlay-windows/dist/index.js":
-/*!******************************************************************!*\
-  !*** ../../../components/advanced-overlay-windows/dist/index.js ***!
-  \******************************************************************/
-/***/ (function(module, __unused_webpack_exports, __webpack_require__) {
-
-(function webpackUniversalModuleDefinition(root, factory) {
-	if(true)
-		module.exports = factory(__webpack_require__(/*! alt1 */ "../../../node_modules/alt1/dist/base/index.js"));
-	else // removed by dead control flow
-{}
-})(this, (__WEBPACK_EXTERNAL_MODULE_alt1__) => {
-return /******/ (() => { // webpackBootstrap
-/******/ 	"use strict";
-/******/ 	var __webpack_modules__ = ({
-
-/***/ "./InteractionDetector.ts":
-/*!********************************!*\
-  !*** ./InteractionDetector.ts ***!
-  \********************************/
-/***/ ((__unused_webpack_module, __nested_webpack_exports__, __nested_webpack_require_775__) => {
-
-__nested_webpack_require_775__.r(__nested_webpack_exports__);
-/* harmony export */ __nested_webpack_require_775__.d(__nested_webpack_exports__, {
-/* harmony export */   InteractionDetector: () => (/* binding */ InteractionDetector)
-/* harmony export */ });
-/* harmony import */ var alt1__WEBPACK_IMPORTED_MODULE_0__ = __nested_webpack_require_775__(/*! alt1 */ "alt1");
-/* harmony import */ var alt1__WEBPACK_IMPORTED_MODULE_0___default = /*#__PURE__*/__nested_webpack_require_775__.n(alt1__WEBPACK_IMPORTED_MODULE_0__);
-
-/**
- * Advanced interaction detection system using computer vision and mouse tracking
- * for detecting user interactions with overlay windows
- */
-class InteractionDetector {
-    constructor() {
-        this.mouseTrackingInterval = null;
-        this.lastMousePosition = { x: 0, y: 0 };
-        this.clickDetectionRegions = new Map();
-        this.eventCallbacks = new Map();
-        this.isTracking = false;
-        // Click detection settings
-        this.clickDetectionSensitivity = 15; // pixels
-        this.doubleClickThreshold = 300; // milliseconds
-        this.lastClickTime = 0;
-        this.lastClickPosition = { x: 0, y: 0 };
-        this.setupMouseTracking();
-    }
-    /**
-     * Start tracking interactions
-     */
-    startTracking() {
-        if (this.isTracking)
-            return;
-        this.isTracking = true;
-        this.setupMouseTracking();
-        // Set up Alt1 event listeners for additional interaction detection
-        if (typeof alt1__WEBPACK_IMPORTED_MODULE_0__.on === 'function') {
-            alt1__WEBPACK_IMPORTED_MODULE_0__.on('alt1pressed', this.handleAlt1Pressed.bind(this));
-        }
-    }
-    /**
-     * Stop tracking interactions
-     */
-    stopTracking() {
-        if (!this.isTracking)
-            return;
-        this.isTracking = false;
-        if (this.mouseTrackingInterval) {
-            clearInterval(this.mouseTrackingInterval);
-            this.mouseTrackingInterval = null;
-        }
-    }
-    /**
-     * Register a window's interaction regions for click detection
-     */
-    registerWindow(windowId, regions) {
-        this.clickDetectionRegions.set(windowId, regions);
-    }
-    /**
-     * Unregister a window from interaction detection
-     */
-    unregisterWindow(windowId) {
-        this.clickDetectionRegions.delete(windowId);
-        this.eventCallbacks.delete(windowId);
-    }
-    /**
-     * Set callback for window interaction events
-     */
-    onInteraction(windowId, callback) {
-        this.eventCallbacks.set(windowId, callback);
-    }
-    /**
-     * Setup mouse position tracking
-     */
-    setupMouseTracking() {
-        if (this.mouseTrackingInterval) {
-            clearInterval(this.mouseTrackingInterval);
-        }
-        // Track mouse position at 60fps for smooth interaction detection
-        this.mouseTrackingInterval = window.setInterval(() => {
-            if (!this.isTracking)
-                return;
-            const mousePos = this.getMousePosition();
-            if (mousePos) {
-                this.handleMouseMovement(mousePos);
-            }
-        }, 16); // ~60fps
-    }
-    /**
-     * Get current mouse position from Alt1
-     */
-    getMousePosition() {
-        if (!window.alt1)
-            return null;
-        const pos = window.alt1.mousePosition;
-        if (!pos)
-            return null;
-        return {
-            x: pos.x,
-            y: pos.y
-        };
-    }
-    /**
-     * Handle mouse movement and detect interactions
-     */
-    handleMouseMovement(mousePos) {
-        const previousPos = this.lastMousePosition;
-        this.lastMousePosition = mousePos;
-        // Detect rapid mouse movement that might indicate a click
-        const movement = this.calculateDistance(previousPos, mousePos);
-        // If mouse moved significantly and then stopped, might be a click
-        if (movement > this.clickDetectionSensitivity) {
-            this.checkForClicks(mousePos);
-        }
-        // Check for hover events
-        this.checkForHovers(mousePos);
-    }
-    /**
-     * Calculate distance between two points
-     */
-    calculateDistance(p1, p2) {
-        const dx = p2.x - p1.x;
-        const dy = p2.y - p1.y;
-        return Math.sqrt(dx * dx + dy * dy);
-    }
-    /**
-     * Check if mouse position indicates a click on any registered window
-     */
-    checkForClicks(mousePos) {
-        for (const [windowId, regions] of this.clickDetectionRegions) {
-            for (const region of regions) {
-                if (this.isPointInRect(mousePos, region)) {
-                    this.handlePotentialClick(windowId, mousePos);
-                    break;
-                }
-            }
-        }
-    }
-    /**
-     * Check for hover events on registered windows
-     */
-    checkForHovers(mousePos) {
-        for (const [windowId, regions] of this.clickDetectionRegions) {
-            let isHovering = false;
-            for (const region of regions) {
-                if (this.isPointInRect(mousePos, region)) {
-                    isHovering = true;
-                    this.emitInteractionEvent(windowId, {
-                        type: 'hover',
-                        position: mousePos,
-                        windowId,
-                        timestamp: Date.now()
-                    });
-                    break;
-                }
-            }
-        }
-    }
-    /**
-     * Handle potential click detection with debouncing
-     */
-    handlePotentialClick(windowId, position) {
-        const now = Date.now();
-        const timeSinceLastClick = now - this.lastClickTime;
-        const distanceFromLastClick = this.calculateDistance(position, this.lastClickPosition);
-        // Detect if this is likely a click (quick movement followed by stillness)
-        if (timeSinceLastClick > 50 && distanceFromLastClick < this.clickDetectionSensitivity) {
-            this.emitInteractionEvent(windowId, {
-                type: 'click',
-                position,
-                windowId,
-                timestamp: now
-            });
-            this.lastClickTime = now;
-            this.lastClickPosition = position;
-        }
-    }
-    /**
-     * Handle Alt1 key press events
-     */
-    handleAlt1Pressed(event) {
-        if (event.mouseRs) {
-            const mousePos = { x: event.mouseRs.x, y: event.mouseRs.y };
-            // Check if Alt1 key was pressed over any of our windows
-            for (const [windowId, regions] of this.clickDetectionRegions) {
-                for (const region of regions) {
-                    if (this.isPointInRect(mousePos, region)) {
-                        this.emitInteractionEvent(windowId, {
-                            type: 'click',
-                            position: mousePos,
-                            windowId,
-                            timestamp: Date.now()
-                        });
-                        return;
-                    }
-                }
-            }
-        }
-    }
-    /**
-     * Check if a point is within a rectangle
-     */
-    isPointInRect(point, rect) {
-        return point.x >= rect.x &&
-            point.x <= rect.x + rect.width &&
-            point.y >= rect.y &&
-            point.y <= rect.y + rect.height;
-    }
-    /**
-     * Emit an interaction event to the appropriate window
-     */
-    emitInteractionEvent(windowId, event) {
-        const callback = this.eventCallbacks.get(windowId);
-        if (callback) {
-            callback(event);
-        }
-    }
-    /**
-     * Add interaction region for a specific window
-     */
-    addInteractionRegion(windowId, region) {
-        const existing = this.clickDetectionRegions.get(windowId) || [];
-        existing.push(region);
-        this.clickDetectionRegions.set(windowId, existing);
-    }
-    /**
-     * Remove interaction region for a specific window
-     */
-    removeInteractionRegion(windowId, region) {
-        const existing = this.clickDetectionRegions.get(windowId) || [];
-        const filtered = existing.filter(r => !(r.x === region.x && r.y === region.y &&
-            r.width === region.width && r.height === region.height));
-        this.clickDetectionRegions.set(windowId, filtered);
-    }
-    /**
-     * Get current mouse position (public interface)
-     */
-    getCurrentMousePosition() {
-        return this.getMousePosition();
-    }
-    /**
-     * Check if currently tracking
-     */
-    isCurrentlyTracking() {
-        return this.isTracking;
-    }
-}
-
-
-/***/ }),
-
-/***/ "./OverlayWindow.ts":
-/*!**************************!*\
-  !*** ./OverlayWindow.ts ***!
-  \**************************/
-/***/ ((__unused_webpack_module, __nested_webpack_exports__, __nested_webpack_require_9306__) => {
-
-__nested_webpack_require_9306__.r(__nested_webpack_exports__);
-/* harmony export */ __nested_webpack_require_9306__.d(__nested_webpack_exports__, {
-/* harmony export */   OverlayWindow: () => (/* binding */ OverlayWindow)
-/* harmony export */ });
-/* harmony import */ var alt1__WEBPACK_IMPORTED_MODULE_0__ = __nested_webpack_require_9306__(/*! alt1 */ "alt1");
-/* harmony import */ var alt1__WEBPACK_IMPORTED_MODULE_0___default = /*#__PURE__*/__nested_webpack_require_9306__.n(alt1__WEBPACK_IMPORTED_MODULE_0__);
-
-/**
- * Individual overlay window with advanced rendering and interaction capabilities
- *
- * IMPORTANT: Alt1 overlay limitations:
- * - Overlays are purely visual and cannot receive mouse events directly
- * - Interactions must be handled by the main Alt1 application window
- * - Drag, resize, and click functionality requires workarounds using:
- *   1. Main window buttons to control overlay windows
- *   2. Keyboard shortcuts for window management
- *   3. Context menus in the main Alt1 app window
- *
- * This implementation provides the visual rendering and state management,
- * but actual interaction must be triggered from the main application.
- */
-class OverlayWindow {
-    // Default theme - lazy initialization to avoid alt1lib import issues
-    static getDefaultTheme() {
-        return {
-            titleBarColor: alt1__WEBPACK_IMPORTED_MODULE_0__.mixColor(88, 101, 242, 255), // Discord purple (full opacity)
-            titleBarTextColor: alt1__WEBPACK_IMPORTED_MODULE_0__.mixColor(255, 255, 255, 255), // White text
-            borderColor: alt1__WEBPACK_IMPORTED_MODULE_0__.mixColor(88, 101, 242, 255), // Purple border
-            backgroundColor: alt1__WEBPACK_IMPORTED_MODULE_0__.mixColor(54, 57, 63, 255), // Dark background (full opacity for visibility)
-            shadowColor: alt1__WEBPACK_IMPORTED_MODULE_0__.mixColor(0, 0, 0, 128), // Dark shadow
-            accentColor: alt1__WEBPACK_IMPORTED_MODULE_0__.mixColor(114, 137, 218, 255) // Light purple accent
-        };
-    }
-    constructor(config) {
-        this.interactionRegions = [];
-        this.contentRenderer = null;
-        this.eventHandlers = new Map();
-        // Interaction state
-        this.dragStartPosition = null;
-        this.resizeStartPosition = null;
-        this.resizeStartSize = null;
-        // Rendering constants
-        this.titleBarHeight = 30;
-        this.borderWidth = 2;
-        this.shadowOffset = 3;
-        this.shadowBlur = 5;
-        this.state = {
-            id: config.id || this.generateId(),
-            config: { ...config },
-            position: { x: config.x, y: config.y },
-            size: { width: config.width, height: config.height },
-            isVisible: true,
-            isMinimized: false,
-            isMaximized: false,
-            isFocused: false,
-            isDragging: false,
-            isResizing: false,
-            zIndex: config.zIndex || 1000,
-            overlayGroup: `window_${config.id || this.generateId()}`,
-            lastInteraction: Date.now()
-        };
-        this.theme = config.theme || OverlayWindow.getDefaultTheme();
-        this.setupInteractionRegions();
-    }
-    /**
-     * Get window ID
-     */
-    get id() {
-        return this.state.id;
-    }
-    /**
-     * Get window position
-     */
-    get position() {
-        return { ...this.state.position };
-    }
-    /**
-     * Get window size
-     */
-    get size() {
-        return { ...this.state.size };
-    }
-    /**
-     * Get window visibility
-     */
-    get isVisible() {
-        return this.state.isVisible;
-    }
-    /**
-     * Get window overlay group
-     */
-    get overlayGroup() {
-        return this.state.overlayGroup;
-    }
-    /**
-     * Set window position
-     */
-    setPosition(x, y) {
-        this.state.position = { x: Math.round(x), y: Math.round(y) };
-        this.setupInteractionRegions();
-        this.emit('moved', this.state.position);
-    }
-    /**
-     * Set window size
-     */
-    setSize(width, height) {
-        this.state.size = { width: Math.round(width), height: Math.round(height) };
-        this.setupInteractionRegions();
-        this.emit('resized', this.state.size);
-    }
-    /**
-     * Show window
-     */
-    show() {
-        this.state.isVisible = true;
-        this.render();
-        this.emit('shown');
-    }
-    /**
-     * Hide window
-     */
-    hide() {
-        this.state.isVisible = false;
-        this.clearOverlays();
-        this.emit('hidden');
-    }
-    /**
-     * Focus window
-     */
-    focus() {
-        this.state.isFocused = true;
-        this.state.lastInteraction = Date.now();
-        this.render(); // Re-render with focus styling
-        this.emit('focused');
-    }
-    /**
-     * Blur window
-     */
-    blur() {
-        this.state.isFocused = false;
-        this.render(); // Re-render without focus styling
-        this.emit('blurred');
-    }
-    /**
-     * Minimize window
-     */
-    minimize() {
-        this.state.isMinimized = true;
-        this.state.isVisible = false;
-        this.clearOverlays();
-        this.emit('minimized');
-    }
-    /**
-     * Restore window from minimized state
-     */
-    restore() {
-        this.state.isMinimized = false;
-        this.state.isMaximized = false;
-        this.state.isVisible = true;
-        this.render();
-        this.emit('restored');
-    }
-    /**
-     * Close window
-     */
-    close() {
-        this.clearOverlays();
-        this.emit('closed');
-    }
-    /**
-     * Set content renderer function
-     */
-    setContentRenderer(renderer) {
-        this.contentRenderer = renderer;
-    }
-    /**
-     * Main render method
-     */
-    render() {
-        if (!this.state.isVisible || !window.alt1)
-            return;
-        try {
-            // Set overlay group
-            window.alt1.overLaySetGroup(this.state.overlayGroup);
-            // Clear previous overlays
-            window.alt1.overLayClearGroup(this.state.overlayGroup);
-            // Freeze group for smooth rendering
-            window.alt1.overLayFreezeGroup(this.state.overlayGroup);
-            // Render window components
-            this.renderShadow();
-            this.renderFrame();
-            this.renderTitleBar();
-            this.renderContent();
-            this.renderControlButtons();
-            // Unfreeze group to display overlays
-            window.alt1.overLayContinueGroup(this.state.overlayGroup);
-        }
-        catch (error) {
-            console.error('Error rendering overlay window:', error);
-        }
-    }
-    /**
-     * Handle interaction events
-     */
-    handleInteraction(event) {
-        this.state.lastInteraction = Date.now();
-        switch (event.type) {
-            case 'click':
-                this.handleClick(event.position);
-                break;
-            case 'drag':
-                this.handleDrag(event.position);
-                break;
-            case 'hover':
-                this.handleHover(event.position);
-                break;
-        }
-    }
-    /**
-     * Add event listener
-     */
-    on(event, handler) {
-        if (!this.eventHandlers.has(event)) {
-            this.eventHandlers.set(event, []);
-        }
-        this.eventHandlers.get(event).push(handler);
-    }
-    /**
-     * Remove event listener
-     */
-    off(event, handler) {
-        const handlers = this.eventHandlers.get(event);
-        if (handlers) {
-            const index = handlers.indexOf(handler);
-            if (index > -1) {
-                handlers.splice(index, 1);
-            }
-        }
-    }
-    /**
-     * Get interaction regions for this window
-     */
-    getInteractionRegions() {
-        return this.interactionRegions.map(region => region.rect);
-    }
-    // Private methods
-    generateId() {
-        return 'overlay_window_' + Math.random().toString(36).substr(2, 9);
-    }
-    setupInteractionRegions() {
-        const { x, y } = this.state.position;
-        const { width, height } = this.state.size;
-        this.interactionRegions = [
-            // Title bar (for dragging)
-            {
-                rect: { x, y, width, height: this.titleBarHeight },
-                type: 'titlebar',
-                cursor: 'move'
-            },
-            // Content area
-            {
-                rect: { x, y: y + this.titleBarHeight, width, height: height - this.titleBarHeight },
-                type: 'content',
-                cursor: 'default'
-            },
-            // Resize handle (bottom-right corner)
-            {
-                rect: { x: x + width - 15, y: y + height - 15, width: 15, height: 15 },
-                type: 'resize-handle',
-                cursor: 'nw-resize'
-            },
-            // Close button
-            {
-                rect: { x: x + width - 25, y: y + 5, width: 20, height: 20 },
-                type: 'close-button',
-                cursor: 'pointer'
-            }
-        ];
-    }
-    renderShadow() {
-        if (!window.alt1)
-            return;
-        const { x, y } = this.state.position;
-        const { width, height } = this.state.size;
-        // Multi-layer shadow for depth effect
-        for (let i = 1; i <= this.shadowBlur; i++) {
-            const alpha = Math.max(10, 40 - (i * 8));
-            const shadowColor = alt1__WEBPACK_IMPORTED_MODULE_0__.mixColor(0, 0, 0, alpha);
-            const offset = this.shadowOffset + i;
-            alt1.overLayRect(shadowColor, x + offset, y + offset, width, height, 60000, 0);
-        }
-    }
-    renderFrame() {
-        if (!window.alt1)
-            return;
-        const { x, y } = this.state.position;
-        const { width, height } = this.state.size;
-        // Main window background - render twice for better opacity
-        // First pass: solid background
-        window.alt1.overLayRect(this.theme.backgroundColor, x, y, width, height, 60000, 0 // filled rectangle
-        );
-        // Border with focus highlight
-        const borderColor = this.state.isFocused
-            ? this.theme.accentColor
-            : this.theme.borderColor;
-        // Draw border as four separate rectangles for better visibility
-        // Top border
-        window.alt1.overLayRect(borderColor, x - this.borderWidth, y - this.borderWidth, width + (this.borderWidth * 2), this.borderWidth, 60000, 0);
-        // Bottom border
-        window.alt1.overLayRect(borderColor, x - this.borderWidth, y + height, width + (this.borderWidth * 2), this.borderWidth, 60000, 0);
-        // Left border
-        window.alt1.overLayRect(borderColor, x - this.borderWidth, y, this.borderWidth, height, 60000, 0);
-        // Right border
-        window.alt1.overLayRect(borderColor, x + width, y, this.borderWidth, height, 60000, 0);
-    }
-    renderTitleBar() {
-        if (!window.alt1)
-            return;
-        const { x, y } = this.state.position;
-        const { width } = this.state.size;
-        // Title bar background
-        window.alt1.overLayRect(this.theme.titleBarColor, x, y, width, this.titleBarHeight, 60000, 0);
-        // Title text
-        window.alt1.overLayText(this.state.config.title, this.theme.titleBarTextColor, 14, x + 10, y + 20, 60000);
-    }
-    renderContent() {
-        if (this.contentRenderer) {
-            this.contentRenderer(this);
-        }
-        else {
-            this.renderDefaultContent();
-        }
-    }
-    renderDefaultContent() {
-        if (!window.alt1)
-            return;
-        const { x, y } = this.state.position;
-        // Default content message
-        window.alt1.overLayText(`Window Content (${this.state.config.contentType || 'default'})`, this.theme.titleBarTextColor, 12, x + 10, y + this.titleBarHeight + 20, 60000);
-    }
-    renderControlButtons() {
-        if (!window.alt1)
-            return;
-        const { x, y } = this.state.position;
-        const { width } = this.state.size;
-        // Close button
-        if (this.state.config.closable !== false) {
-            const closeX = x + width - 25;
-            const closeY = y + 5;
-            // Close button background - full opacity for visibility
-            window.alt1.overLayRect(alt1__WEBPACK_IMPORTED_MODULE_0__.mixColor(220, 53, 69, 255), // Red background with full opacity
-            closeX, closeY, 20, 20, 60000, 0);
-            // Close button X
-            window.alt1.overLayText('×', alt1__WEBPACK_IMPORTED_MODULE_0__.mixColor(255, 255, 255, 255), 16, closeX + 6, closeY + 15, 60000);
-        }
-    }
-    handleClick(position) {
-        const region = this.getRegionAtPosition(position);
-        switch (region?.type) {
-            case 'titlebar':
-                this.startDrag(position);
-                break;
-            case 'resize-handle':
-                this.startResize(position);
-                break;
-            case 'close-button':
-                this.close();
-                break;
-            case 'content':
-                this.focus();
-                break;
-        }
-    }
-    handleDrag(position) {
-        if (this.state.isDragging && this.dragStartPosition) {
-            const deltaX = position.x - this.dragStartPosition.x;
-            const deltaY = position.y - this.dragStartPosition.y;
-            this.setPosition(this.state.position.x + deltaX, this.state.position.y + deltaY);
-            this.dragStartPosition = position;
-            this.render();
-        }
-        if (this.state.isResizing && this.resizeStartPosition && this.resizeStartSize) {
-            const deltaX = position.x - this.resizeStartPosition.x;
-            const deltaY = position.y - this.resizeStartPosition.y;
-            const newWidth = Math.max(200, this.resizeStartSize.width + deltaX);
-            const newHeight = Math.max(100, this.resizeStartSize.height + deltaY);
-            this.setSize(newWidth, newHeight);
-            this.render();
-        }
-    }
-    handleHover(position) {
-        // Could implement hover effects here
-        // For now, just update last interaction time
-        this.state.lastInteraction = Date.now();
-    }
-    startDrag(position) {
-        if (!this.state.config.draggable)
-            return;
-        this.state.isDragging = true;
-        this.dragStartPosition = position;
-        this.focus();
-    }
-    startResize(position) {
-        if (!this.state.config.resizable)
-            return;
-        this.state.isResizing = true;
-        this.resizeStartPosition = position;
-        this.resizeStartSize = { ...this.state.size };
-        this.focus();
-    }
-    getRegionAtPosition(position) {
-        for (const region of this.interactionRegions) {
-            if (this.isPointInRect(position, region.rect)) {
-                return region;
-            }
-        }
-        return null;
-    }
-    isPointInRect(point, rect) {
-        return point.x >= rect.x &&
-            point.x <= rect.x + rect.width &&
-            point.y >= rect.y &&
-            point.y <= rect.y + rect.height;
-    }
-    clearOverlays() {
-        if (window.alt1) {
-            window.alt1.overLayClearGroup(this.state.overlayGroup);
-        }
-    }
-    emit(event, data) {
-        const handlers = this.eventHandlers.get(event);
-        if (handlers) {
-            handlers.forEach(handler => {
-                try {
-                    handler(data);
-                }
-                catch (error) {
-                    console.error(`Error in event handler for ${event}:`, error);
-                }
-            });
-        }
-    }
-}
-
-
-/***/ }),
-
-/***/ "./OverlayWindowManager.ts":
-/*!*********************************!*\
-  !*** ./OverlayWindowManager.ts ***!
-  \*********************************/
-/***/ ((__unused_webpack_module, __nested_webpack_exports__, __nested_webpack_require_24783__) => {
-
-__nested_webpack_require_24783__.r(__nested_webpack_exports__);
-/* harmony export */ __nested_webpack_require_24783__.d(__nested_webpack_exports__, {
-/* harmony export */   OverlayWindowManager: () => (/* binding */ OverlayWindowManager)
-/* harmony export */ });
-/* harmony import */ var alt1__WEBPACK_IMPORTED_MODULE_0__ = __nested_webpack_require_24783__(/*! alt1 */ "alt1");
-/* harmony import */ var alt1__WEBPACK_IMPORTED_MODULE_0___default = /*#__PURE__*/__nested_webpack_require_24783__.n(alt1__WEBPACK_IMPORTED_MODULE_0__);
-/* harmony import */ var _OverlayWindow__WEBPACK_IMPORTED_MODULE_1__ = __nested_webpack_require_24783__(/*! ./OverlayWindow */ "./OverlayWindow.ts");
-/* harmony import */ var _InteractionDetector__WEBPACK_IMPORTED_MODULE_2__ = __nested_webpack_require_24783__(/*! ./InteractionDetector */ "./InteractionDetector.ts");
-
-
-
-/**
- * Advanced overlay window manager with computer vision interaction detection
- * and sophisticated window management capabilities for Alt1 applications
- */
-class OverlayWindowManager {
-    constructor() {
-        this.windows = new Map();
-        this.focusedWindowId = null;
-        this.zIndexCounter = 1000;
-        this.eventHandlers = {};
-        this.globalEventHandlers = new Map();
-        // Manager state
-        this.isInitialized = false;
-        this.updateInterval = null;
-        this.updateFrequency = 16; // ~60fps updates
-        this.interactionDetector = new _InteractionDetector__WEBPACK_IMPORTED_MODULE_2__.InteractionDetector();
-        this.initialize();
-    }
-    /**
-     * Initialize the window manager
-     */
-    initialize() {
-        if (this.isInitialized)
-            return;
-        // Check Alt1 availability
-        if (!window.alt1) {
-            console.warn('Alt1 API not available - overlay windows will not function');
-            return;
-        }
-        // Start interaction detection
-        this.interactionDetector.startTracking();
-        // Start update loop for smooth interactions
-        this.startUpdateLoop();
-        // Set up Alt1 event listeners
-        this.setupAlt1Events();
-        this.isInitialized = true;
-        this.emit('manager-initialized');
-        console.log('Advanced Overlay Window Manager initialized successfully');
-    }
-    /**
-     * Create a new overlay window
-     */
-    createWindow(config) {
-        // Generate ID if not provided
-        if (!config.id) {
-            config.id = this.generateWindowId();
-        }
-        // Assign z-index if not provided
-        if (!config.zIndex) {
-            config.zIndex = ++this.zIndexCounter;
-        }
-        // Set default values
-        const windowConfig = {
-            resizable: true,
-            draggable: true,
-            closable: true,
-            ...config
-        };
-        // Create the window
-        const window = new _OverlayWindow__WEBPACK_IMPORTED_MODULE_1__.OverlayWindow(windowConfig);
-        // Register with manager
-        this.windows.set(window.id, window);
-        // Set up interaction detection for this window
-        this.interactionDetector.registerWindow(window.id, window.getInteractionRegions());
-        this.interactionDetector.onInteraction(window.id, (event) => {
-            this.handleWindowInteraction(window.id, event);
-        });
-        // Set up window event handlers
-        this.setupWindowEventHandlers(window);
-        // Focus the new window
-        this.focusWindow(window.id);
-        // Render the window
-        window.render();
-        this.emit('window-created', { windowId: window.id, config: windowConfig });
-        return window;
-    }
-    /**
-     * Get a window by ID
-     */
-    getWindow(windowId) {
-        return this.windows.get(windowId) || null;
-    }
-    /**
-     * Get all windows
-     */
-    getAllWindows() {
-        return Array.from(this.windows.values());
-    }
-    /**
-     * Get focused window
-     */
-    getFocusedWindow() {
-        return this.focusedWindowId ? this.getWindow(this.focusedWindowId) : null;
-    }
-    /**
-     * Focus a specific window
-     */
-    focusWindow(windowId) {
-        const window = this.getWindow(windowId);
-        if (!window)
-            return false;
-        // Blur previously focused window
-        if (this.focusedWindowId && this.focusedWindowId !== windowId) {
-            const previousWindow = this.getWindow(this.focusedWindowId);
-            if (previousWindow) {
-                previousWindow.blur();
-            }
-        }
-        // Focus the new window
-        this.focusedWindowId = windowId;
-        window.focus();
-        // Bring to front
-        this.bringToFront(windowId);
-        this.emit('window-focused', { windowId });
-        return true;
-    }
-    /**
-     * Bring a window to the front
-     */
-    bringToFront(windowId) {
-        const window = this.getWindow(windowId);
-        if (!window)
-            return false;
-        // Assign highest z-index
-        window['state'].zIndex = ++this.zIndexCounter;
-        // Re-render to apply new z-index
-        window.render();
-        return true;
-    }
-    /**
-     * Close a window
-     */
-    closeWindow(windowId) {
-        const window = this.getWindow(windowId);
-        if (!window)
-            return false;
-        // Clean up interaction detection
-        this.interactionDetector.unregisterWindow(windowId);
-        // Remove from manager
-        this.windows.delete(windowId);
-        // Clear focus if this was the focused window
-        if (this.focusedWindowId === windowId) {
-            this.focusedWindowId = null;
-            // Focus another window if available
-            const remainingWindows = Array.from(this.windows.values());
-            if (remainingWindows.length > 0) {
-                this.focusWindow(remainingWindows[0].id);
-            }
-        }
-        // Close the window
-        window.close();
-        this.emit('window-closed', { windowId });
-        return true;
-    }
-    /**
-     * Close all windows
-     */
-    closeAllWindows() {
-        const windowIds = Array.from(this.windows.keys());
-        windowIds.forEach(id => this.closeWindow(id));
-    }
-    /**
-     * Minimize a window
-     */
-    minimizeWindow(windowId) {
-        const window = this.getWindow(windowId);
-        if (!window)
-            return false;
-        window.minimize();
-        this.emit('window-minimized', { windowId });
-        return true;
-    }
-    /**
-     * Restore a window
-     */
-    restoreWindow(windowId) {
-        const window = this.getWindow(windowId);
-        if (!window)
-            return false;
-        window.restore();
-        this.focusWindow(windowId);
-        this.emit('window-restored', { windowId });
-        return true;
-    }
-    /**
-     * Set global event handlers
-     */
-    setEventHandlers(handlers) {
-        this.eventHandlers = { ...handlers };
-    }
-    /**
-     * Add global event listener
-     */
-    on(event, handler) {
-        if (!this.globalEventHandlers.has(event)) {
-            this.globalEventHandlers.set(event, []);
-        }
-        this.globalEventHandlers.get(event).push(handler);
-    }
-    /**
-     * Remove global event listener
-     */
-    off(event, handler) {
-        const handlers = this.globalEventHandlers.get(event);
-        if (handlers) {
-            const index = handlers.indexOf(handler);
-            if (index > -1) {
-                handlers.splice(index, 1);
-            }
-        }
-    }
-    /**
-     * Get current mouse position
-     */
-    getMousePosition() {
-        return this.interactionDetector.getCurrentMousePosition();
-    }
-    /**
-     * Destroy the window manager and clean up resources
-     */
-    destroy() {
-        // Close all windows
-        this.closeAllWindows();
-        // Stop interaction detection
-        this.interactionDetector.stopTracking();
-        // Stop update loop
-        if (this.updateInterval) {
-            clearInterval(this.updateInterval);
-            this.updateInterval = null;
-        }
-        this.isInitialized = false;
-        this.emit('manager-destroyed');
-        console.log('Advanced Overlay Window Manager destroyed');
-    }
-    // Private methods
-    generateWindowId() {
-        return 'window_' + Date.now().toString(36) + '_' + Math.random().toString(36).substr(2, 5);
-    }
-    setupWindowEventHandlers(window) {
-        // Set up event forwarding from window to manager
-        window.on('moved', (position) => {
-            // Update interaction regions when window moves
-            this.interactionDetector.registerWindow(window.id, window.getInteractionRegions());
-            if (this.eventHandlers.onMove) {
-                this.eventHandlers.onMove(window.id, position);
-            }
-            this.emit('window-moved', { windowId: window.id, position });
-        });
-        window.on('resized', (size) => {
-            // Update interaction regions when window resizes
-            this.interactionDetector.registerWindow(window.id, window.getInteractionRegions());
-            if (this.eventHandlers.onResize) {
-                this.eventHandlers.onResize(window.id, size);
-            }
-            this.emit('window-resized', { windowId: window.id, size });
-        });
-        window.on('focused', () => {
-            if (this.eventHandlers.onFocus) {
-                this.eventHandlers.onFocus(window.id);
-            }
-        });
-        window.on('blurred', () => {
-            if (this.eventHandlers.onBlur) {
-                this.eventHandlers.onBlur(window.id);
-            }
-        });
-        window.on('closed', () => {
-            if (this.eventHandlers.onClose) {
-                this.eventHandlers.onClose(window.id);
-            }
-        });
-        window.on('minimized', () => {
-            if (this.eventHandlers.onMinimize) {
-                this.eventHandlers.onMinimize(window.id);
-            }
-        });
-    }
-    handleWindowInteraction(windowId, event) {
-        const window = this.getWindow(windowId);
-        if (!window)
-            return;
-        // Focus window on any interaction
-        if (this.focusedWindowId !== windowId) {
-            this.focusWindow(windowId);
-        }
-        // Forward interaction to window
-        window.handleInteraction(event);
-    }
-    startUpdateLoop() {
-        if (this.updateInterval)
-            return;
-        this.updateInterval = window.setInterval(() => {
-            this.update();
-        }, this.updateFrequency);
-    }
-    update() {
-        // Update logic for smooth interactions
-        // Could include animations, state updates, etc.
-        // For now, just ensure all windows are properly rendered
-        for (const window of this.windows.values()) {
-            if (window.isVisible) {
-                // Could add smooth animations or state updates here
-            }
-        }
-    }
-    setupAlt1Events() {
-        // Set up Alt1-specific event handlers if available
-        if (typeof alt1__WEBPACK_IMPORTED_MODULE_0__.on === 'function') {
-            alt1__WEBPACK_IMPORTED_MODULE_0__.on('rslinked', () => {
-                this.emit('alt1-rs-linked');
-            });
-            alt1__WEBPACK_IMPORTED_MODULE_0__.on('rsunlinked', () => {
-                this.emit('alt1-rs-unlinked');
-            });
-            alt1__WEBPACK_IMPORTED_MODULE_0__.on('rsfocus', () => {
-                this.emit('alt1-rs-focus');
-            });
-            alt1__WEBPACK_IMPORTED_MODULE_0__.on('rsblur', () => {
-                this.emit('alt1-rs-blur');
-            });
-        }
-    }
-    emit(event, data) {
-        const handlers = this.globalEventHandlers.get(event);
-        if (handlers) {
-            handlers.forEach(handler => {
-                try {
-                    handler(data);
-                }
-                catch (error) {
-                    console.error(`Error in global event handler for ${event}:`, error);
-                }
-            });
-        }
-    }
-}
-
-
-/***/ }),
-
-/***/ "alt1":
-/*!***********************!*\
-  !*** external "alt1" ***!
-  \***********************/
-/***/ ((module) => {
-
-module.exports = __WEBPACK_EXTERNAL_MODULE_alt1__;
-
-/***/ })
-
-/******/ 	});
-/************************************************************************/
-/******/ 	// The module cache
-/******/ 	var __webpack_module_cache__ = {};
-/******/ 	
-/******/ 	// The require function
-/******/ 	function __nested_webpack_require_36969__(moduleId) {
-/******/ 		// Check if module is in cache
-/******/ 		var cachedModule = __webpack_module_cache__[moduleId];
-/******/ 		if (cachedModule !== undefined) {
-/******/ 			return cachedModule.exports;
-/******/ 		}
-/******/ 		// Create a new module (and put it into the cache)
-/******/ 		var module = __webpack_module_cache__[moduleId] = {
-/******/ 			// no module.id needed
-/******/ 			// no module.loaded needed
-/******/ 			exports: {}
-/******/ 		};
-/******/ 	
-/******/ 		// Execute the module function
-/******/ 		__webpack_modules__[moduleId](module, module.exports, __nested_webpack_require_36969__);
-/******/ 	
-/******/ 		// Return the exports of the module
-/******/ 		return module.exports;
-/******/ 	}
-/******/ 	
-/************************************************************************/
-/******/ 	/* webpack/runtime/compat get default export */
-/******/ 	(() => {
-/******/ 		// getDefaultExport function for compatibility with non-harmony modules
-/******/ 		__nested_webpack_require_36969__.n = (module) => {
-/******/ 			var getter = module && module.__esModule ?
-/******/ 				() => (module['default']) :
-/******/ 				() => (module);
-/******/ 			__nested_webpack_require_36969__.d(getter, { a: getter });
-/******/ 			return getter;
-/******/ 		};
-/******/ 	})();
-/******/ 	
-/******/ 	/* webpack/runtime/define property getters */
-/******/ 	(() => {
-/******/ 		// define getter functions for harmony exports
-/******/ 		__nested_webpack_require_36969__.d = (exports, definition) => {
-/******/ 			for(var key in definition) {
-/******/ 				if(__nested_webpack_require_36969__.o(definition, key) && !__nested_webpack_require_36969__.o(exports, key)) {
-/******/ 					Object.defineProperty(exports, key, { enumerable: true, get: definition[key] });
-/******/ 				}
-/******/ 			}
-/******/ 		};
-/******/ 	})();
-/******/ 	
-/******/ 	/* webpack/runtime/hasOwnProperty shorthand */
-/******/ 	(() => {
-/******/ 		__nested_webpack_require_36969__.o = (obj, prop) => (Object.prototype.hasOwnProperty.call(obj, prop))
-/******/ 	})();
-/******/ 	
-/******/ 	/* webpack/runtime/make namespace object */
-/******/ 	(() => {
-/******/ 		// define __esModule on exports
-/******/ 		__nested_webpack_require_36969__.r = (exports) => {
-/******/ 			if(typeof Symbol !== 'undefined' && Symbol.toStringTag) {
-/******/ 				Object.defineProperty(exports, Symbol.toStringTag, { value: 'Module' });
-/******/ 			}
-/******/ 			Object.defineProperty(exports, '__esModule', { value: true });
-/******/ 		};
-/******/ 	})();
-/******/ 	
-/************************************************************************/
-var __nested_webpack_exports__ = {};
-// This entry needs to be wrapped in an IIFE because it needs to be isolated against other modules in the chunk.
-(() => {
-/*!******************!*\
-  !*** ./index.ts ***!
-  \******************/
-__nested_webpack_require_36969__.r(__nested_webpack_exports__);
-/* harmony export */ __nested_webpack_require_36969__.d(__nested_webpack_exports__, {
-/* harmony export */   InteractionDetector: () => (/* reexport safe */ _InteractionDetector__WEBPACK_IMPORTED_MODULE_2__.InteractionDetector),
-/* harmony export */   OverlayWindow: () => (/* reexport safe */ _OverlayWindow__WEBPACK_IMPORTED_MODULE_1__.OverlayWindow),
-/* harmony export */   OverlayWindowManager: () => (/* reexport safe */ _OverlayWindowManager__WEBPACK_IMPORTED_MODULE_0__.OverlayWindowManager),
-/* harmony export */   WindowThemes: () => (/* binding */ WindowThemes),
-/* harmony export */   createWindowManager: () => (/* binding */ createWindowManager),
-/* harmony export */   "default": () => (__WEBPACK_DEFAULT_EXPORT__)
-/* harmony export */ });
-/* harmony import */ var _OverlayWindowManager__WEBPACK_IMPORTED_MODULE_0__ = __nested_webpack_require_36969__(/*! ./OverlayWindowManager */ "./OverlayWindowManager.ts");
-/* harmony import */ var _OverlayWindow__WEBPACK_IMPORTED_MODULE_1__ = __nested_webpack_require_36969__(/*! ./OverlayWindow */ "./OverlayWindow.ts");
-/* harmony import */ var _InteractionDetector__WEBPACK_IMPORTED_MODULE_2__ = __nested_webpack_require_36969__(/*! ./InteractionDetector */ "./InteractionDetector.ts");
-// Advanced Overlay Windows - Main Export
-//
-// This component provides sophisticated window management for Alt1 applications
-// using overlay-based virtual windows with computer vision interaction detection.
-
-
-
-
-// Default export for easier consumption
-/* harmony default export */ const __WEBPACK_DEFAULT_EXPORT__ = (_OverlayWindowManager__WEBPACK_IMPORTED_MODULE_0__.OverlayWindowManager);
-// Convenience factory function
-function createWindowManager() {
-    return new _OverlayWindowManager__WEBPACK_IMPORTED_MODULE_0__.OverlayWindowManager();
-}
-// Pre-configured themes
-const WindowThemes = {
-    DISCORD: {
-        titleBarColor: 0x5865F2F0, // Discord purple with transparency
-        titleBarTextColor: 0xFFFFFFFF, // White text
-        borderColor: 0x5865F2FF, // Purple border
-        backgroundColor: 0x2F3136F0, // Dark background with transparency
-        shadowColor: 0x00000050, // Dark shadow
-        accentColor: 0x7289DAFF // Light purple accent
-    },
-    RUNESCAPE: {
-        titleBarColor: 0x5A4B2AF0, // RuneScape brown
-        titleBarTextColor: 0xFFD700FF, // Gold text
-        borderColor: 0x8B7355FF, // Light brown border
-        backgroundColor: 0x3E3424F0, // Dark brown background
-        shadowColor: 0x00000060, // Darker shadow
-        accentColor: 0xFFD700FF // Gold accent
-    },
-    DARK: {
-        titleBarColor: 0x1E1E1EF0, // Dark gray
-        titleBarTextColor: 0xFFFFFFFF, // White text
-        borderColor: 0x404040FF, // Medium gray border
-        backgroundColor: 0x2D2D30F0, // Dark background
-        shadowColor: 0x00000080, // Strong shadow
-        accentColor: 0x007ACCFF // Blue accent
-    },
-    LIGHT: {
-        titleBarColor: 0xF0F0F0F0, // Light gray
-        titleBarTextColor: 0x000000FF, // Black text
-        borderColor: 0xCCCCCCFF, // Light border
-        backgroundColor: 0xFFFFFFE0, // White background with slight transparency
-        shadowColor: 0x00000040, // Light shadow
-        accentColor: 0x0078D4FF // Blue accent
-    }
-};
-
-})();
-
-/******/ 	return __nested_webpack_exports__;
-/******/ })()
-;
-});
-//# sourceMappingURL=index.js.map
-
-/***/ }),
-
 /***/ "../../../components/interactive-windows/dist/index.js":
 /*!*************************************************************!*\
   !*** ../../../components/interactive-windows/dist/index.js ***!
@@ -2644,59 +1407,40 @@ function createSettingsTemplate(settings) {
 __webpack_require__.r(__webpack_exports__);
 /* harmony import */ var alt1__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! alt1 */ "../../../node_modules/alt1/dist/base/index.js");
 /* harmony import */ var alt1__WEBPACK_IMPORTED_MODULE_0___default = /*#__PURE__*/__webpack_require__.n(alt1__WEBPACK_IMPORTED_MODULE_0__);
-/* harmony import */ var _components_advanced_overlay_windows_dist_index__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ../../../components/advanced-overlay-windows/dist/index */ "../../../components/advanced-overlay-windows/dist/index.js");
-/* harmony import */ var _components_advanced_overlay_windows_dist_index__WEBPACK_IMPORTED_MODULE_1___default = /*#__PURE__*/__webpack_require__.n(_components_advanced_overlay_windows_dist_index__WEBPACK_IMPORTED_MODULE_1__);
-/* harmony import */ var _components_interactive_windows_dist_index__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ../../../components/interactive-windows/dist/index */ "../../../components/interactive-windows/dist/index.js");
-/* harmony import */ var _components_interactive_windows_dist_index__WEBPACK_IMPORTED_MODULE_2___default = /*#__PURE__*/__webpack_require__.n(_components_interactive_windows_dist_index__WEBPACK_IMPORTED_MODULE_2__);
-/* harmony import */ var _logger__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(/*! ./logger */ "./logger.ts");
-// Advanced Windows Test Plugin
-// Demonstrates the capabilities of the @tmg-alt1/advanced-overlay-windows component
-
+/* harmony import */ var _components_interactive_windows_dist_index__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ../../../components/interactive-windows/dist/index */ "../../../components/interactive-windows/dist/index.js");
+/* harmony import */ var _components_interactive_windows_dist_index__WEBPACK_IMPORTED_MODULE_1___default = /*#__PURE__*/__webpack_require__.n(_components_interactive_windows_dist_index__WEBPACK_IMPORTED_MODULE_1__);
+/* harmony import */ var _logger__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ./logger */ "./logger.ts");
+// Interactive Windows Test Plugin
+// Demonstrates the capabilities of the @tmg-alt1/interactive-windows component
 
 
 
 /**
- * Main test application class demonstrating advanced overlay windows
+ * Main test application class demonstrating interactive windows
  */
-class AdvancedWindowsTestApp {
+class InteractiveWindowsTestApp {
     constructor() {
         this.windowManager = null;
-        this.interactiveWindowManager = null;
-        this.exampleWindow = null;
-        this.additionalWindows = [];
+        this.openWindows = [];
         this.isInitialized = false;
         // UI Elements
         this.elements = {
             alt1Status: null,
             alt1StatusText: null,
             alt1InstallLink: null,
-            openExampleWindow: null,
-            closeExampleWindow: null,
+            openInteractiveModal: null,
+            openSettingsModal: null,
             openMultipleWindows: null,
+            showAlert: null,
+            showConfirm: null,
             closeAllWindows: null,
             managerStatus: null,
             windowCount: null,
-            focusedWindow: null,
-            interactionStatus: null,
-            // Position controls
-            moveWindowLeft: null,
-            moveWindowRight: null,
-            moveWindowUp: null,
-            moveWindowDown: null,
-            // Size controls
-            increaseWidth: null,
-            decreaseWidth: null,
-            increaseHeight: null,
-            decreaseHeight: null,
-            // Interactive windows controls
-            openInteractiveModal: null,
-            openSettingsModal: null,
-            showAlert: null,
-            showConfirm: null
+            focusedWindow: null
         };
         // Initialize logger first
-        this.logger = new _logger__WEBPACK_IMPORTED_MODULE_3__.Alt1Logger('AdvancedWindowsTest', _logger__WEBPACK_IMPORTED_MODULE_3__.LogLevel.DEBUG);
-        this.logger.init('Initializing Advanced Windows Test App...');
+        this.logger = new _logger__WEBPACK_IMPORTED_MODULE_2__.Alt1Logger('InteractiveWindowsTest', _logger__WEBPACK_IMPORTED_MODULE_2__.LogLevel.DEBUG);
+        this.logger.init('Initializing Interactive Windows Test App...');
         this.initialize();
     }
     /**
@@ -2716,12 +1460,10 @@ class AdvancedWindowsTestApp {
         this.checkAlt1Status();
         // Set up event handlers
         this.setupEventHandlers();
-        // Initialize window manager if Alt1 is available
-        if (window.alt1) {
-            this.initializeWindowManager();
-        }
+        // Initialize interactive window manager
+        this.initializeInteractiveWindowManager();
         this.isInitialized = true;
-        console.log('✅ Advanced Windows Test App initialized successfully');
+        console.log('✅ Interactive Windows Test App initialized successfully');
     }
     /**
      * Get references to UI elements
@@ -2730,24 +1472,15 @@ class AdvancedWindowsTestApp {
         this.elements.alt1Status = document.getElementById('alt1Status');
         this.elements.alt1StatusText = document.getElementById('alt1StatusText');
         this.elements.alt1InstallLink = document.getElementById('alt1InstallLink');
-        this.elements.openExampleWindow = document.getElementById('openExampleWindow');
-        this.elements.closeExampleWindow = document.getElementById('closeExampleWindow');
+        this.elements.openInteractiveModal = document.getElementById('openInteractiveModal');
+        this.elements.openSettingsModal = document.getElementById('openSettingsModal');
         this.elements.openMultipleWindows = document.getElementById('openMultipleWindows');
+        this.elements.showAlert = document.getElementById('showAlert');
+        this.elements.showConfirm = document.getElementById('showConfirm');
         this.elements.closeAllWindows = document.getElementById('closeAllWindows');
         this.elements.managerStatus = document.getElementById('managerStatus');
         this.elements.windowCount = document.getElementById('windowCount');
         this.elements.focusedWindow = document.getElementById('focusedWindow');
-        this.elements.interactionStatus = document.getElementById('interactionStatus');
-        // Position controls
-        this.elements.moveWindowLeft = document.getElementById('moveWindowLeft');
-        this.elements.moveWindowRight = document.getElementById('moveWindowRight');
-        this.elements.moveWindowUp = document.getElementById('moveWindowUp');
-        this.elements.moveWindowDown = document.getElementById('moveWindowDown');
-        // Size controls
-        this.elements.increaseWidth = document.getElementById('increaseWidth');
-        this.elements.decreaseWidth = document.getElementById('decreaseWidth');
-        this.elements.increaseHeight = document.getElementById('increaseHeight');
-        this.elements.decreaseHeight = document.getElementById('decreaseHeight');
     }
     /**
      * Check Alt1 status and update UI accordingly
@@ -2761,21 +1494,13 @@ class AdvancedWindowsTestApp {
                 this.elements.alt1Status.className = 'alt1-status detected';
             }
             if (this.elements.alt1StatusText) {
-                this.elements.alt1StatusText.textContent = '✅ Alt1 detected! Advanced overlay windows are available.';
+                this.elements.alt1StatusText.textContent = '✅ Alt1 detected! Interactive windows are available.';
             }
             // Tell Alt1 about our app
             this.logger.alt1('Identifying app to Alt1...');
             alt1__WEBPACK_IMPORTED_MODULE_0__.identifyApp('./appconfig.json');
-            // Check permissions
-            if (window.alt1.permissionPixel && window.alt1.permissionOverlay) {
-                if (this.elements.alt1StatusText) {
-                    this.elements.alt1StatusText.textContent = '🎉 Alt1 detected with full permissions! Ready to test advanced windows.';
-                }
-            }
-            else {
-                if (this.elements.alt1StatusText) {
-                    this.elements.alt1StatusText.textContent = '⚠️ Alt1 detected but missing permissions. Please enable pixel and overlay permissions.';
-                }
+            if (this.elements.alt1StatusText) {
+                this.elements.alt1StatusText.textContent = '🎉 Alt1 detected! Ready to test interactive windows.';
             }
         }
         else {
@@ -2787,42 +1512,20 @@ class AdvancedWindowsTestApp {
         }
     }
     /**
-     * Initialize the window manager
+     * Initialize the interactive window manager
      */
-    initializeWindowManager() {
+    initializeInteractiveWindowManager() {
         try {
-            this.windowManager = new _components_advanced_overlay_windows_dist_index__WEBPACK_IMPORTED_MODULE_1__.OverlayWindowManager();
-            this.interactiveWindowManager = new _components_interactive_windows_dist_index__WEBPACK_IMPORTED_MODULE_2__.InteractiveWindowManager();
-            // Set up global event handlers
-            this.windowManager.on('window-created', (data) => {
-                console.log('🪟 Window created:', data.windowId);
-                this.updateStatus();
-            });
-            this.windowManager.on('window-closed', (data) => {
-                console.log('❌ Window closed:', data.windowId);
-                this.updateStatus();
-                // Clean up references
-                if (this.exampleWindow && this.exampleWindow.id === data.windowId) {
-                    this.exampleWindow = null;
-                }
-                this.additionalWindows = this.additionalWindows.filter(w => w.id !== data.windowId);
-            });
-            this.windowManager.on('window-focused', (data) => {
-                console.log('👁️ Window focused:', data.windowId);
-                this.updateStatus();
-            });
-            this.windowManager.on('window-moved', (data) => {
-                console.log('📍 Window moved:', data.windowId, data.position);
-            });
-            this.windowManager.on('window-resized', (data) => {
-                console.log('📏 Window resized:', data.windowId, data.size);
-            });
+            this.logger.init('Initializing InteractiveWindowManager...');
+            this.windowManager = new _components_interactive_windows_dist_index__WEBPACK_IMPORTED_MODULE_1__.InteractiveWindowManager();
+            this.logger.success('InteractiveWindowManager initialized successfully');
+            // Set up event listeners for window events
+            this.setupWindowEventListeners();
             // Update status
             this.updateStatus();
-            console.log('✅ Window manager initialized successfully');
         }
         catch (error) {
-            console.error('❌ Failed to initialize window manager:', error);
+            this.logger.error('Failed to initialize InteractiveWindowManager:', error);
             if (this.elements.managerStatus) {
                 this.elements.managerStatus.textContent = 'Error';
                 this.elements.managerStatus.style.color = '#ff6b6b';
@@ -2830,89 +1533,18 @@ class AdvancedWindowsTestApp {
         }
     }
     /**
+     * Set up event listeners for window events
+     */
+    setupWindowEventListeners() {
+        // Window event handling would be implemented here
+        // The InteractiveWindowManager handles its own events internally
+    }
+    /**
      * Set up event handlers for UI buttons
      */
     setupEventHandlers() {
         this.logger.init('Setting up event handlers...');
-        // Open example window
-        this.elements.openExampleWindow?.addEventListener('click', (event) => {
-            this.logger.ui('Button clicked: openExampleWindow', {
-                disabled: event.target?.disabled,
-                timestamp: Date.now()
-            });
-            this.openExampleWindow();
-        });
-        // Close example window
-        this.elements.closeExampleWindow?.addEventListener('click', () => {
-            this.closeExampleWindow();
-        });
-        // Open multiple windows
-        this.elements.openMultipleWindows?.addEventListener('click', () => {
-            this.openMultipleWindows();
-        });
-        // Close all windows
-        this.elements.closeAllWindows?.addEventListener('click', () => {
-            this.closeAllWindows();
-        });
-        // Position control handlers
-        this.elements.moveWindowLeft?.addEventListener('click', (event) => {
-            this.logger.ui('Button clicked: moveWindowLeft', {
-                disabled: event.target?.disabled,
-                timestamp: Date.now()
-            });
-            this.moveExampleWindow(-50, 0);
-        });
-        this.elements.moveWindowRight?.addEventListener('click', (event) => {
-            this.logger.ui('Button clicked: moveWindowRight', {
-                disabled: event.target?.disabled,
-                timestamp: Date.now()
-            });
-            this.moveExampleWindow(50, 0);
-        });
-        this.elements.moveWindowUp?.addEventListener('click', (event) => {
-            this.logger.ui('Button clicked: moveWindowUp', {
-                disabled: event.target?.disabled,
-                timestamp: Date.now()
-            });
-            this.moveExampleWindow(0, -50);
-        });
-        this.elements.moveWindowDown?.addEventListener('click', (event) => {
-            this.logger.ui('Button clicked: moveWindowDown', {
-                disabled: event.target?.disabled,
-                timestamp: Date.now()
-            });
-            this.moveExampleWindow(0, 50);
-        });
-        // Size control handlers
-        this.elements.increaseWidth?.addEventListener('click', (event) => {
-            this.logger.ui('Button clicked: increaseWidth', {
-                disabled: event.target?.disabled,
-                timestamp: Date.now()
-            });
-            this.resizeExampleWindow(50, 0);
-        });
-        this.elements.decreaseWidth?.addEventListener('click', (event) => {
-            this.logger.ui('Button clicked: decreaseWidth', {
-                disabled: event.target?.disabled,
-                timestamp: Date.now()
-            });
-            this.resizeExampleWindow(-50, 0);
-        });
-        this.elements.increaseHeight?.addEventListener('click', (event) => {
-            this.logger.ui('Button clicked: increaseHeight', {
-                disabled: event.target?.disabled,
-                timestamp: Date.now()
-            });
-            this.resizeExampleWindow(0, 50);
-        });
-        this.elements.decreaseHeight?.addEventListener('click', (event) => {
-            this.logger.ui('Button clicked: decreaseHeight', {
-                disabled: event.target?.disabled,
-                timestamp: Date.now()
-            });
-            this.resizeExampleWindow(0, -50);
-        });
-        // Interactive windows handlers
+        // Open interactive modal
         this.elements.openInteractiveModal?.addEventListener('click', (event) => {
             this.logger.ui('Button clicked: openInteractiveModal', {
                 disabled: event.target?.disabled,
@@ -2920,6 +1552,7 @@ class AdvancedWindowsTestApp {
             });
             this.openInteractiveModal();
         });
+        // Open settings modal
         this.elements.openSettingsModal?.addEventListener('click', (event) => {
             this.logger.ui('Button clicked: openSettingsModal', {
                 disabled: event.target?.disabled,
@@ -2927,6 +1560,15 @@ class AdvancedWindowsTestApp {
             });
             this.openSettingsModal();
         });
+        // Open multiple windows
+        this.elements.openMultipleWindows?.addEventListener('click', (event) => {
+            this.logger.ui('Button clicked: openMultipleWindows', {
+                disabled: event.target?.disabled,
+                timestamp: Date.now()
+            });
+            this.openMultipleWindows();
+        });
+        // Show alert
         this.elements.showAlert?.addEventListener('click', (event) => {
             this.logger.ui('Button clicked: showAlert', {
                 disabled: event.target?.disabled,
@@ -2934,6 +1576,7 @@ class AdvancedWindowsTestApp {
             });
             this.showAlert();
         });
+        // Show confirm dialog
         this.elements.showConfirm?.addEventListener('click', (event) => {
             this.logger.ui('Button clicked: showConfirm', {
                 disabled: event.target?.disabled,
@@ -2941,436 +1584,295 @@ class AdvancedWindowsTestApp {
             });
             this.showConfirm();
         });
-    }
-    /**
-     * Open an example window with custom content
-     */
-    openExampleWindow() {
-        this.logger.window('openExampleWindow() called');
-        if (!this.windowManager) {
-            this.logger.error('openExampleWindow failed: Window manager not available');
-            alert('Window manager not available. Please run in Alt1.');
-            return;
-        }
-        if (this.exampleWindow) {
-            // Window already exists, just focus it
-            this.logger.window('Example window already exists, focusing:', this.exampleWindow.id);
-            this.windowManager.focusWindow(this.exampleWindow.id);
-            return;
-        }
-        try {
-            this.exampleWindow = this.windowManager.createWindow({
-                title: '🎯 Example Overlay Window',
-                x: 200,
-                y: 150,
-                width: 350,
-                height: 250,
-                resizable: true,
-                draggable: true,
-                closable: true,
-                contentType: 'custom',
-                theme: _components_advanced_overlay_windows_dist_index__WEBPACK_IMPORTED_MODULE_1__.WindowThemes.DISCORD
+        // Close all windows
+        this.elements.closeAllWindows?.addEventListener('click', (event) => {
+            this.logger.ui('Button clicked: closeAllWindows', {
+                disabled: event.target?.disabled,
+                timestamp: Date.now()
             });
-            // Set custom content renderer
-            this.exampleWindow.setContentRenderer((window) => {
-                this.renderExampleWindowContent(window);
-            });
-            // Set up window-specific event handlers
-            this.exampleWindow.on('closed', () => {
-                this.logger.window('Example window closed event received');
-                this.exampleWindow = null;
-                this.updateButtonStates();
-            });
-            this.exampleWindow.on('focused', () => {
-                this.logger.window('Example window gained focus');
-            });
-            this.updateButtonStates();
-            this.logger.success('Example window created successfully:', this.exampleWindow.id);
-        }
-        catch (error) {
-            this.logger.error('Failed to create example window:', error);
-            alert('Failed to create window: ' + error);
-        }
+            this.closeAllWindows();
+        });
     }
     /**
-     * Close the example window
-     */
-    closeExampleWindow() {
-        this.logger.window('closeExampleWindow() called');
-        if (!this.exampleWindow) {
-            this.logger.error('closeExampleWindow failed: Example window not available');
-            return;
-        }
-        if (!this.windowManager) {
-            this.logger.error('closeExampleWindow failed: Window manager not available');
-            return;
-        }
-        const windowId = this.exampleWindow.id;
-        this.logger.window(`Closing window: ${windowId}`);
-        try {
-            this.windowManager.closeWindow(windowId);
-            this.exampleWindow = null;
-            this.updateButtonStates();
-            this.logger.success(`Example window closed: ${windowId}`);
-        }
-        catch (error) {
-            this.logger.error('Failed to close example window:', error);
-        }
-    }
-    /**
-     * Move the example window by delta x and y
-     */
-    moveExampleWindow(deltaX, deltaY) {
-        this.logger.window(`moveExampleWindow(${deltaX}, ${deltaY}) called`);
-        if (!this.exampleWindow) {
-            this.logger.error('moveExampleWindow failed: Example window not available');
-            return;
-        }
-        const currentPos = this.exampleWindow.position;
-        const newX = Math.max(0, currentPos.x + deltaX);
-        const newY = Math.max(0, currentPos.y + deltaY);
-        this.exampleWindow.setPosition(newX, newY);
-        this.exampleWindow.render();
-        this.logger.success(`Example window moved to (${newX}, ${newY})`);
-    }
-    /**
-     * Resize the example window by delta width and height
-     */
-    resizeExampleWindow(deltaWidth, deltaHeight) {
-        this.logger.window(`resizeExampleWindow(${deltaWidth}, ${deltaHeight}) called`);
-        if (!this.exampleWindow) {
-            this.logger.error('resizeExampleWindow failed: Example window not available');
-            return;
-        }
-        const currentSize = this.exampleWindow.size;
-        const newWidth = Math.max(200, currentSize.width + deltaWidth);
-        const newHeight = Math.max(100, currentSize.height + deltaHeight);
-        this.exampleWindow.setSize(newWidth, newHeight);
-        this.exampleWindow.render();
-        this.logger.success(`Example window resized to ${newWidth}x${newHeight}`);
-    }
-    /**
-     * Open multiple windows for testing
-     */
-    openMultipleWindows() {
-        if (!this.windowManager) {
-            alert('Window manager not available. Please run in Alt1.');
-            return;
-        }
-        const windowConfigs = [
-            {
-                title: '🎨 Theme Demo - RuneScape',
-                x: 100, y: 200, width: 300, height: 200,
-                theme: _components_advanced_overlay_windows_dist_index__WEBPACK_IMPORTED_MODULE_1__.WindowThemes.RUNESCAPE,
-                contentType: 'custom'
-            },
-            {
-                title: '🌙 Theme Demo - Dark',
-                x: 450, y: 200, width: 300, height: 200,
-                theme: _components_advanced_overlay_windows_dist_index__WEBPACK_IMPORTED_MODULE_1__.WindowThemes.DARK,
-                contentType: 'custom'
-            },
-            {
-                title: '☀️ Theme Demo - Light',
-                x: 800, y: 200, width: 300, height: 200,
-                theme: _components_advanced_overlay_windows_dist_index__WEBPACK_IMPORTED_MODULE_1__.WindowThemes.LIGHT,
-                contentType: 'custom'
-            }
-        ];
-        try {
-            windowConfigs.forEach((config, index) => {
-                const window = this.windowManager.createWindow(config);
-                // Set custom content for each window
-                window.setContentRenderer((win) => {
-                    this.renderThemeWindowContent(win, index + 1);
-                });
-                // Handle window close
-                window.on('closed', () => {
-                    this.additionalWindows = this.additionalWindows.filter(w => w.id !== window.id);
-                    this.updateStatus();
-                });
-                this.additionalWindows.push(window);
-            });
-            console.log(`✅ Created ${windowConfigs.length} demo windows`);
-        }
-        catch (error) {
-            console.error('❌ Failed to create demo windows:', error);
-            alert('Failed to create demo windows: ' + error);
-        }
-    }
-    /**
-     * Close all windows
-     */
-    closeAllWindows() {
-        if (!this.windowManager)
-            return;
-        try {
-            this.windowManager.closeAllWindows();
-            this.exampleWindow = null;
-            this.additionalWindows = [];
-            console.log('✅ All windows closed');
-        }
-        catch (error) {
-            console.error('❌ Failed to close all windows:', error);
-        }
-    }
-    /**
-     * Render content for the example window
-     */
-    renderExampleWindowContent(window) {
-        if (!window.alt1)
-            return;
-        const { x, y } = window.position;
-        const contentY = y + 40; // Below title bar
-        // Background for content area
-        window.alt1.overLayRect(0x36393FE0, // Slightly transparent dark background
-        x + 5, contentY, window.size.width - 10, window.size.height - 50, 60000, 0);
-        // Title
-        window.alt1.overLayText('Interactive Example Window', 0xFFFFFFFF, 16, x + 15, contentY + 25, 60000);
-        // Instructions
-        window.alt1.overLayText('• Note: Alt1 overlays are visual only', 0xDCDDDEFF, 12, x + 15, contentY + 50, 60000);
-        window.alt1.overLayText('• Use main window buttons to control', 0xDCDDDEFF, 12, x + 15, contentY + 70, 60000);
-        window.alt1.overLayText('• Click to focus, use × to close', 0xDCDDDEFF, 12, x + 15, contentY + 90, 60000);
-        // Current position display
-        window.alt1.overLayText(`Position: (${window.position.x}, ${window.position.y})`, 0x74C0FCFF, 11, x + 15, contentY + 120, 60000);
-        window.alt1.overLayText(`Size: ${window.size.width}×${window.size.height}`, 0x74C0FCFF, 11, x + 15, contentY + 140, 60000);
-        // Interaction indicator
-        const mousePos = this.windowManager?.getMousePosition();
-        if (mousePos) {
-            window.alt1.overLayText(`Mouse: (${mousePos.x}, ${mousePos.y})`, 0x51CF66FF, 11, x + 15, contentY + 160, 60000);
-        }
-    }
-    /**
-     * Render content for theme demo windows
-     */
-    renderThemeWindowContent(window, windowNumber) {
-        if (!window.alt1)
-            return;
-        const { x, y } = window.position;
-        const contentY = y + 40;
-        // Theme info
-        const themes = ['RuneScape', 'Dark', 'Light'];
-        const themeName = themes[windowNumber - 1] || 'Custom';
-        window.alt1.overLayText(`${themeName} Theme Demo`, 0xFFFFFFFF, 14, x + 15, contentY + 25, 60000);
-        window.alt1.overLayText('This window demonstrates', 0xDCDDDEFF, 11, x + 15, contentY + 50, 60000);
-        window.alt1.overLayText(`the ${themeName.toLowerCase()} theme styling`, 0xDCDDDEFF, 11, x + 15, contentY + 70, 60000);
-        window.alt1.overLayText('with custom colors and effects.', 0xDCDDDEFF, 11, x + 15, contentY + 90, 60000);
-        // Window number indicator
-        window.alt1.overLayText(`Window #${windowNumber}`, 0x74C0FCFF, 12, x + 15, contentY + 120, 60000);
-    }
-    /**
-     * Update button states based on current window state
-     */
-    updateButtonStates() {
-        const hasExampleWindow = !!this.exampleWindow;
-        if (this.elements.closeExampleWindow) {
-            this.elements.closeExampleWindow.disabled = !hasExampleWindow;
-        }
-        // Enable/disable position controls
-        if (this.elements.moveWindowLeft) {
-            this.elements.moveWindowLeft.disabled = !hasExampleWindow;
-        }
-        if (this.elements.moveWindowRight) {
-            this.elements.moveWindowRight.disabled = !hasExampleWindow;
-        }
-        if (this.elements.moveWindowUp) {
-            this.elements.moveWindowUp.disabled = !hasExampleWindow;
-        }
-        if (this.elements.moveWindowDown) {
-            this.elements.moveWindowDown.disabled = !hasExampleWindow;
-        }
-        // Enable/disable size controls
-        if (this.elements.increaseWidth) {
-            this.elements.increaseWidth.disabled = !hasExampleWindow;
-        }
-        if (this.elements.decreaseWidth) {
-            this.elements.decreaseWidth.disabled = !hasExampleWindow;
-        }
-        if (this.elements.increaseHeight) {
-            this.elements.increaseHeight.disabled = !hasExampleWindow;
-        }
-        if (this.elements.decreaseHeight) {
-            this.elements.decreaseHeight.disabled = !hasExampleWindow;
-        }
-    }
-    /**
-     * Update status display
-     */
-    updateStatus() {
-        if (!this.windowManager)
-            return;
-        // Manager status
-        if (this.elements.managerStatus) {
-            this.elements.managerStatus.textContent = 'Initialized';
-            this.elements.managerStatus.style.color = '#51cf66';
-        }
-        // Window count
-        const totalWindows = this.windowManager.getAllWindows().length;
-        if (this.elements.windowCount) {
-            this.elements.windowCount.textContent = totalWindows.toString();
-        }
-        // Focused window
-        const focusedWindow = this.windowManager.getFocusedWindow();
-        if (this.elements.focusedWindow) {
-            this.elements.focusedWindow.textContent = focusedWindow
-                ? focusedWindow['state'].config.title
-                : 'None';
-        }
-        // Interaction status
-        if (this.elements.interactionStatus) {
-            this.elements.interactionStatus.textContent = 'Active';
-            this.elements.interactionStatus.style.color = '#51cf66';
-        }
-        // Update button states
-        this.updateButtonStates();
-    }
-    /**
-     * Interactive Windows Methods
+     * Open an interactive modal window
      */
     openInteractiveModal() {
         this.logger.window('openInteractiveModal() called');
-        if (!this.interactiveWindowManager) {
-            this.logger.error('openInteractiveModal failed: Interactive window manager not available');
-            alert('Interactive window manager not available.');
+        if (!this.windowManager) {
+            this.logger.error('openInteractiveModal failed: Window manager not available');
             return;
         }
         try {
-            const modal = this.interactiveWindowManager.createModal({
-                title: '🎯 Interactive Modal Window',
+            const modal = this.windowManager.createModal({
+                title: '🎯 Interactive Modal Test',
                 width: 500,
                 height: 400,
                 content: `
-                    <div style="padding: 20px; font-family: Arial, sans-serif;">
-                        <h2>🎉 This is a Truly Interactive Window!</h2>
-                        <p>Unlike Alt1 overlays, this window can:</p>
-                        <ul>
-                            <li>✅ Be dragged by clicking and dragging the title bar</li>
-                            <li>✅ Be resized by dragging the edges and corners</li>
-                            <li>✅ Be closed by clicking the X button</li>
-                            <li>✅ Receive mouse clicks and keyboard input</li>
-                        </ul>
-                        <div style="margin: 20px 0; padding: 15px; background: #f0f8ff; border-radius: 5px;">
-                            <strong>Try these interactions:</strong>
-                            <br><button onclick="alert('Button clicked!')">Click me!</button>
-                            <input type="text" placeholder="Type something..." style="margin-left: 10px;">
+                    <div style="padding: 20px; font-family: 'Segoe UI', sans-serif;">
+                        <h2 style="margin: 0 0 20px 0; color: #333;">🎉 This window is fully interactive!</h2>
+
+                        <div style="margin: 20px 0;">
+                            <h3 style="color: #007ACC;">✨ Try these interactions:</h3>
+                            <ul style="line-height: 1.6;">
+                                <li><strong>🖱️ Drag:</strong> Click and drag the title bar</li>
+                                <li><strong>📏 Resize:</strong> Drag the corners or edges</li>
+                                <li><strong>❌ Close:</strong> Click the X button</li>
+                                <li><strong>⌨️ Type:</strong> Use the input field below</li>
+                            </ul>
                         </div>
-                        <p style="color: #666; font-size: 12px;">
-                            This demonstrates the power of DOM-based windows vs. Alt1 overlays.
-                        </p>
+
+                        <div style="margin: 20px 0;">
+                            <label style="display: block; margin-bottom: 10px; color: #555;">
+                                <strong>Test Input Field:</strong>
+                            </label>
+                            <input type="text" placeholder="Type something here..."
+                                   style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 4px; font-size: 14px;">
+                        </div>
+
+                        <div style="margin: 20px 0;">
+                            <button onclick="alert('Button clicked! This proves mouse events work!')"
+                                    style="background: #007ACC; color: white; border: none; padding: 10px 20px; border-radius: 4px; cursor: pointer; font-size: 14px;">
+                                🎯 Click Me!
+                            </button>
+                            <button onclick="this.closest('.interactive-window').querySelector('.close-button').click()"
+                                    style="background: #ff6b6b; color: white; border: none; padding: 10px 20px; border-radius: 4px; cursor: pointer; font-size: 14px; margin-left: 10px;">
+                                🔴 Close Window
+                            </button>
+                        </div>
+
+                        <div style="padding: 15px; background: #f0f8ff; border-radius: 6px; border-left: 4px solid #007ACC;">
+                            <p style="margin: 0; color: #0066cc; font-size: 13px;">
+                                <strong>💡 Notice:</strong> Unlike Alt1 overlays, this window responds to all mouse and keyboard events!
+                            </p>
+                        </div>
                     </div>
                 `,
+                theme: _components_interactive_windows_dist_index__WEBPACK_IMPORTED_MODULE_1__.WindowThemes.DISCORD,
                 resizable: true,
                 draggable: true,
                 closable: true
             });
+            this.openWindows.push(modal);
+            this.updateStatus();
             this.logger.success('Interactive modal created:', modal.id);
         }
         catch (error) {
             this.logger.error('Failed to create interactive modal:', error);
         }
     }
+    /**
+     * Open settings modal
+     */
     openSettingsModal() {
         this.logger.window('openSettingsModal() called');
-        if (!this.interactiveWindowManager) {
-            this.logger.error('openSettingsModal failed: Interactive window manager not available');
+        if (!this.windowManager) {
+            this.logger.error('openSettingsModal failed: Window manager not available');
             return;
         }
         try {
-            const settingsTemplate = (0,_components_interactive_windows_dist_index__WEBPACK_IMPORTED_MODULE_2__.createSettingsTemplate)({
-                title: 'Plugin Settings',
+            const settingsTemplate = (0,_components_interactive_windows_dist_index__WEBPACK_IMPORTED_MODULE_1__.createSettingsTemplate)({
+                title: 'Interactive Windows Settings',
                 sections: [
                     {
-                        title: 'Display Settings',
+                        title: 'Display Options',
                         fields: [
-                            { label: 'Window Opacity', type: 'range', key: 'opacity', value: 90, min: 10, max: 100 },
-                            { label: 'Show Tooltips', type: 'checkbox', key: 'showTooltips', value: true },
-                            { label: 'Theme', type: 'select', key: 'theme', value: 'dark', options: [
-                                    { label: 'Dark', value: 'dark' },
-                                    { label: 'Light', value: 'light' },
-                                    { label: 'RuneScape', value: 'runescape' }
-                                ] }
+                            {
+                                label: 'Window Opacity',
+                                type: 'range',
+                                key: 'opacity',
+                                value: 90,
+                                min: 10,
+                                max: 100
+                            },
+                            {
+                                label: 'Show Window Animations',
+                                type: 'checkbox',
+                                key: 'showAnimations',
+                                value: true
+                            },
+                            {
+                                label: 'Default Theme',
+                                type: 'select',
+                                key: 'theme',
+                                value: 'discord',
+                                options: [
+                                    { label: 'Discord', value: 'discord' },
+                                    { label: 'RuneScape', value: 'runescape' },
+                                    { label: 'Modern Dark', value: 'modern-dark' },
+                                    { label: 'Modern Light', value: 'modern-light' }
+                                ]
+                            }
                         ]
                     },
                     {
-                        title: 'Performance',
+                        title: 'Interaction Settings',
                         fields: [
-                            { label: 'Update Interval (ms)', type: 'number', key: 'updateInterval', value: 100, min: 50, max: 1000 },
-                            { label: 'Debug Mode', type: 'checkbox', key: 'debugMode', value: false },
-                            { label: 'Log Level', type: 'select', key: 'logLevel', value: 'info', options: [
-                                    { label: 'Error', value: 'error' },
-                                    { label: 'Warning', value: 'warning' },
-                                    { label: 'Info', value: 'info' },
-                                    { label: 'Debug', value: 'debug' }
-                                ] }
-                        ]
-                    },
-                    {
-                        title: 'Advanced',
-                        fields: [
-                            { label: 'Custom CSS', type: 'textarea', key: 'customCss', value: '', placeholder: 'Enter custom CSS...' },
-                            { label: 'Max Windows', type: 'number', key: 'maxWindows', value: 5, min: 1, max: 20 }
+                            {
+                                label: 'Enable Drag and Drop',
+                                type: 'checkbox',
+                                key: 'enableDragDrop',
+                                value: true
+                            },
+                            {
+                                label: 'Enable Resize Handles',
+                                type: 'checkbox',
+                                key: 'enableResize',
+                                value: true
+                            },
+                            {
+                                label: 'Max Open Windows',
+                                type: 'number',
+                                key: 'maxWindows',
+                                value: 5,
+                                min: 1,
+                                max: 20
+                            }
                         ]
                     }
                 ],
                 onSave: (values) => {
-                    this.logger.success('Settings saved:', values);
-                    alert(`Settings saved!\n\n${JSON.stringify(values, null, 2)}`);
-                    // Here you would typically save to localStorage or send to server
+                    this.logger.data('Settings saved:', values);
+                    alert(`Settings saved! Values: ${JSON.stringify(values, null, 2)}`);
                 },
                 onCancel: () => {
                     this.logger.ui('Settings cancelled');
+                    console.log('Settings cancelled');
                 }
             });
-            const modal = this.interactiveWindowManager.createSettingsModal('⚙️ Plugin Settings', settingsTemplate);
-            this.logger.success('Settings modal created:', modal.id);
+            const settingsModal = this.windowManager.createSettingsModal('⚙️ Settings', settingsTemplate);
+            this.openWindows.push(settingsModal);
+            this.updateStatus();
+            this.logger.success('Settings modal created:', settingsModal.id);
         }
         catch (error) {
             this.logger.error('Failed to create settings modal:', error);
         }
     }
+    /**
+     * Open multiple test windows
+     */
+    openMultipleWindows() {
+        this.logger.window('openMultipleWindows() called');
+        if (!this.windowManager) {
+            this.logger.error('openMultipleWindows failed: Window manager not available');
+            return;
+        }
+        const themes = [_components_interactive_windows_dist_index__WEBPACK_IMPORTED_MODULE_1__.WindowThemes.DISCORD, _components_interactive_windows_dist_index__WEBPACK_IMPORTED_MODULE_1__.WindowThemes.RUNESCAPE, _components_interactive_windows_dist_index__WEBPACK_IMPORTED_MODULE_1__.WindowThemes.MODERN_DARK];
+        const colors = ['#007ACC', '#28A745', '#FF6B6B'];
+        for (let i = 0; i < 3; i++) {
+            try {
+                const window = this.windowManager.createModal({
+                    title: `🪟 Test Window ${i + 1}`,
+                    width: 300,
+                    height: 250,
+                    content: `
+                        <div style="padding: 20px; text-align: center;">
+                            <h3 style="color: ${colors[i]};">Window ${i + 1}</h3>
+                            <p>This is test window number ${i + 1}.</p>
+                            <p>Try dragging this window around!</p>
+                            <button onclick="alert('Window ${i + 1} button clicked!')"
+                                    style="background: ${colors[i]}; color: white; border: none; padding: 8px 16px; border-radius: 4px; cursor: pointer;">
+                                Click Me!
+                            </button>
+                        </div>
+                    `,
+                    theme: themes[i],
+                    resizable: true,
+                    draggable: true,
+                    closable: true
+                });
+                // Position windows in a cascade
+                window.setPosition(100 + (i * 50), 100 + (i * 50));
+                this.openWindows.push(window);
+                this.logger.success(`Test window ${i + 1} created:`, window.id);
+            }
+            catch (error) {
+                this.logger.error(`Failed to create test window ${i + 1}:`, error);
+            }
+        }
+        this.updateStatus();
+    }
+    /**
+     * Show alert dialog
+     */
     async showAlert() {
-        this.logger.ui('showAlert() called');
-        if (!this.interactiveWindowManager) {
-            this.logger.error('showAlert failed: Interactive window manager not available');
+        this.logger.window('showAlert() called');
+        if (!this.windowManager) {
+            this.logger.error('showAlert failed: Window manager not available');
             return;
         }
         try {
-            await this.interactiveWindowManager.alert('📢 Alert Dialog', 'This is an interactive alert dialog!\n\nIt can display multi-line messages and wait for user confirmation.');
+            await this.windowManager.alert('📢 Alert Dialog Test', 'This is an interactive alert dialog! Unlike Alt1 overlays, this dialog can be clicked, dragged, and properly focused.');
             this.logger.success('Alert dialog completed');
         }
         catch (error) {
             this.logger.error('Failed to show alert:', error);
         }
     }
+    /**
+     * Show confirmation dialog
+     */
     async showConfirm() {
-        this.logger.ui('showConfirm() called');
-        if (!this.interactiveWindowManager) {
-            this.logger.error('showConfirm failed: Interactive window manager not available');
+        this.logger.window('showConfirm() called');
+        if (!this.windowManager) {
+            this.logger.error('showConfirm failed: Window manager not available');
             return;
         }
         try {
-            const result = await this.interactiveWindowManager.confirm('❓ Confirmation Dialog', 'This is an interactive confirmation dialog.\n\nDo you want to proceed with this action?');
-            if (result) {
-                this.logger.success('User confirmed the action');
-                alert('You clicked OK! ✅');
+            const confirmed = await this.windowManager.confirm('❓ Confirmation Dialog Test', 'Do you want to test the confirmation dialog? This demonstrates async/await support with interactive buttons.');
+            if (confirmed) {
+                this.logger.success('User confirmed dialog');
+                alert('You clicked Yes! ✅');
             }
             else {
-                this.logger.ui('User cancelled the action');
-                alert('You clicked Cancel! ❌');
+                this.logger.ui('User cancelled dialog');
+                alert('You clicked No! ❌');
             }
         }
         catch (error) {
-            this.logger.error('Failed to show confirm dialog:', error);
+            this.logger.error('Failed to show confirmation:', error);
+        }
+    }
+    /**
+     * Close all open windows
+     */
+    closeAllWindows() {
+        this.logger.window('closeAllWindows() called');
+        if (!this.windowManager) {
+            this.logger.error('closeAllWindows failed: Window manager not available');
+            return;
+        }
+        try {
+            this.windowManager.closeAllWindows();
+            this.openWindows = [];
+            this.updateStatus();
+            this.logger.success('All windows closed');
+        }
+        catch (error) {
+            this.logger.error('Failed to close all windows:', error);
+        }
+    }
+    /**
+     * Update status display
+     */
+    updateStatus() {
+        if (this.elements.managerStatus) {
+            this.elements.managerStatus.textContent = this.windowManager ? 'Ready' : 'Not Available';
+            this.elements.managerStatus.style.color = this.windowManager ? '#51cf66' : '#ff6b6b';
+        }
+        if (this.elements.windowCount) {
+            const count = this.windowManager ? this.windowManager.getVisibleWindows().length : 0;
+            this.elements.windowCount.textContent = count.toString();
+        }
+        if (this.elements.focusedWindow) {
+            const visibleWindows = this.windowManager ? this.windowManager.getVisibleWindows() : [];
+            const focusedWindow = visibleWindows.length > 0 ? visibleWindows[visibleWindows.length - 1] : null;
+            this.elements.focusedWindow.textContent = focusedWindow ? focusedWindow.id : 'None';
         }
     }
 }
-// Initialize the app when the script loads
-const testApp = new AdvancedWindowsTestApp();
-// Export for global access (useful for debugging)
-if (typeof window !== 'undefined') {
-    window.testApp = testApp;
-}
-console.log('📦 Advanced Windows Test Plugin loaded successfully');
+// Initialize the app when the page loads
+const app = new InteractiveWindowsTestApp();
 
 
 /***/ }),
@@ -3543,7 +2045,7 @@ module.exports = __WEBPACK_EXTERNAL_MODULE_sharp__;
 /******/ 		};
 /******/ 	
 /******/ 		// Execute the module function
-/******/ 		__webpack_modules__[moduleId].call(module.exports, module, module.exports, __webpack_require__);
+/******/ 		__webpack_modules__[moduleId](module, module.exports, __webpack_require__);
 /******/ 	
 /******/ 		// Return the exports of the module
 /******/ 		return module.exports;
