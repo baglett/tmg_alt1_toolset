@@ -123,7 +123,7 @@ class AdvancedWindowsTestApp {
 
             // Tell Alt1 about our app
             this.logger.alt1('Identifying app to Alt1...');
-            a1lib.identifyApp('./appconfig.json');
+            (window as any).alt1.identifyApp('./appconfig.json');
 
             // Check permissions
             if (window.alt1.permissionPixel && window.alt1.permissionOverlay) {
@@ -348,8 +348,28 @@ class AdvancedWindowsTestApp {
      * Close the example window
      */
     private closeExampleWindow(): void {
-        if (this.exampleWindow && this.windowManager) {
-            this.windowManager.closeWindow(this.exampleWindow.id);
+        this.logger.window('closeExampleWindow() called');
+
+        if (!this.exampleWindow) {
+            this.logger.error('closeExampleWindow failed: Example window not available');
+            return;
+        }
+
+        if (!this.windowManager) {
+            this.logger.error('closeExampleWindow failed: Window manager not available');
+            return;
+        }
+
+        const windowId = this.exampleWindow.id;
+        this.logger.window(`Closing window: ${windowId}`);
+
+        try {
+            this.windowManager.closeWindow(windowId);
+            this.exampleWindow = null;
+            this.updateButtonStates();
+            this.logger.success(`Example window closed: ${windowId}`);
+        } catch (error) {
+            this.logger.error('Failed to close example window:', error);
         }
     }
 
@@ -472,13 +492,13 @@ class AdvancedWindowsTestApp {
      * Render content for the example window
      */
     private renderExampleWindowContent(window: OverlayWindow): void {
-        if (!a1lib) return;
+        if (!(window as any).alt1) return;
 
         const { x, y } = window.position;
         const contentY = y + 40; // Below title bar
 
         // Background for content area
-        a1lib.overLayRect(
+        (window as any).alt1.overLayRect(
             0x36393FE0, // Slightly transparent dark background
             x + 5,
             contentY,
@@ -489,7 +509,7 @@ class AdvancedWindowsTestApp {
         );
 
         // Title
-        a1lib.overLayText(
+        (window as any).alt1.overLayText(
             'Interactive Example Window',
             0xFFFFFFFF,
             16,
@@ -499,8 +519,8 @@ class AdvancedWindowsTestApp {
         );
 
         // Instructions
-        a1lib.overLayText(
-            '• Try dragging this window around',
+        (window as any).alt1.overLayText(
+            '• Note: Alt1 overlays are visual only',
             0xDCDDDEFF,
             12,
             x + 15,
@@ -508,8 +528,8 @@ class AdvancedWindowsTestApp {
             60000
         );
 
-        a1lib.overLayText(
-            '• Resize using the corner handle',
+        (window as any).alt1.overLayText(
+            '• Use main window buttons to control',
             0xDCDDDEFF,
             12,
             x + 15,
@@ -517,7 +537,7 @@ class AdvancedWindowsTestApp {
             60000
         );
 
-        a1lib.overLayText(
+        (window as any).alt1.overLayText(
             '• Click to focus, use × to close',
             0xDCDDDEFF,
             12,
@@ -527,7 +547,7 @@ class AdvancedWindowsTestApp {
         );
 
         // Current position display
-        a1lib.overLayText(
+        (window as any).alt1.overLayText(
             `Position: (${window.position.x}, ${window.position.y})`,
             0x74C0FCFF,
             11,
@@ -536,7 +556,7 @@ class AdvancedWindowsTestApp {
             60000
         );
 
-        a1lib.overLayText(
+        (window as any).alt1.overLayText(
             `Size: ${window.size.width}×${window.size.height}`,
             0x74C0FCFF,
             11,
@@ -548,7 +568,7 @@ class AdvancedWindowsTestApp {
         // Interaction indicator
         const mousePos = this.windowManager?.getMousePosition();
         if (mousePos) {
-            a1lib.overLayText(
+            (window as any).alt1.overLayText(
                 `Mouse: (${mousePos.x}, ${mousePos.y})`,
                 0x51CF66FF,
                 11,
@@ -563,7 +583,7 @@ class AdvancedWindowsTestApp {
      * Render content for theme demo windows
      */
     private renderThemeWindowContent(window: OverlayWindow, windowNumber: number): void {
-        if (!a1lib) return;
+        if (!(window as any).alt1) return;
 
         const { x, y } = window.position;
         const contentY = y + 40;
@@ -572,7 +592,7 @@ class AdvancedWindowsTestApp {
         const themes = ['RuneScape', 'Dark', 'Light'];
         const themeName = themes[windowNumber - 1] || 'Custom';
 
-        a1lib.overLayText(
+        (window as any).alt1.overLayText(
             `${themeName} Theme Demo`,
             0xFFFFFFFF,
             14,
@@ -581,7 +601,7 @@ class AdvancedWindowsTestApp {
             60000
         );
 
-        a1lib.overLayText(
+        (window as any).alt1.overLayText(
             'This window demonstrates',
             0xDCDDDEFF,
             11,
@@ -590,7 +610,7 @@ class AdvancedWindowsTestApp {
             60000
         );
 
-        a1lib.overLayText(
+        (window as any).alt1.overLayText(
             `the ${themeName.toLowerCase()} theme styling`,
             0xDCDDDEFF,
             11,
@@ -599,7 +619,7 @@ class AdvancedWindowsTestApp {
             60000
         );
 
-        a1lib.overLayText(
+        (window as any).alt1.overLayText(
             'with custom colors and effects.',
             0xDCDDDEFF,
             11,
@@ -609,7 +629,7 @@ class AdvancedWindowsTestApp {
         );
 
         // Window number indicator
-        a1lib.overLayText(
+        (window as any).alt1.overLayText(
             `Window #${windowNumber}`,
             0x74C0FCFF,
             12,

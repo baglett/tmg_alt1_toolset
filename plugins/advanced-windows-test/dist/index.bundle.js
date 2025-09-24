@@ -1256,14 +1256,11 @@ const WindowThemes = {
 
 "use strict";
 __webpack_require__.r(__webpack_exports__);
-/* harmony import */ var alt1__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! alt1 */ "../../../node_modules/alt1/dist/base/index.js");
-/* harmony import */ var alt1__WEBPACK_IMPORTED_MODULE_0___default = /*#__PURE__*/__webpack_require__.n(alt1__WEBPACK_IMPORTED_MODULE_0__);
-/* harmony import */ var _components_advanced_overlay_windows_dist_index__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ../../../components/advanced-overlay-windows/dist/index */ "../../../components/advanced-overlay-windows/dist/index.js");
-/* harmony import */ var _components_advanced_overlay_windows_dist_index__WEBPACK_IMPORTED_MODULE_1___default = /*#__PURE__*/__webpack_require__.n(_components_advanced_overlay_windows_dist_index__WEBPACK_IMPORTED_MODULE_1__);
-/* harmony import */ var _logger__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ./logger */ "./logger.ts");
+/* harmony import */ var _components_advanced_overlay_windows_dist_index__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ../../../components/advanced-overlay-windows/dist/index */ "../../../components/advanced-overlay-windows/dist/index.js");
+/* harmony import */ var _components_advanced_overlay_windows_dist_index__WEBPACK_IMPORTED_MODULE_0___default = /*#__PURE__*/__webpack_require__.n(_components_advanced_overlay_windows_dist_index__WEBPACK_IMPORTED_MODULE_0__);
+/* harmony import */ var _logger__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ./logger */ "./logger.ts");
 // Advanced Windows Test Plugin
 // Demonstrates the capabilities of the @tmg-alt1/advanced-overlay-windows component
-
 
 
 /**
@@ -1300,7 +1297,7 @@ class AdvancedWindowsTestApp {
             decreaseHeight: null
         };
         // Initialize logger first
-        this.logger = new _logger__WEBPACK_IMPORTED_MODULE_2__.Alt1Logger('AdvancedWindowsTest', _logger__WEBPACK_IMPORTED_MODULE_2__.LogLevel.DEBUG);
+        this.logger = new _logger__WEBPACK_IMPORTED_MODULE_1__.Alt1Logger('AdvancedWindowsTest', _logger__WEBPACK_IMPORTED_MODULE_1__.LogLevel.DEBUG);
         this.logger.init('Initializing Advanced Windows Test App...');
         this.initialize();
     }
@@ -1370,7 +1367,7 @@ class AdvancedWindowsTestApp {
             }
             // Tell Alt1 about our app
             this.logger.alt1('Identifying app to Alt1...');
-            alt1__WEBPACK_IMPORTED_MODULE_0__.identifyApp('./appconfig.json');
+            window.alt1.identifyApp('./appconfig.json');
             // Check permissions
             if (window.alt1.permissionPixel && window.alt1.permissionOverlay) {
                 if (this.elements.alt1StatusText) {
@@ -1396,7 +1393,7 @@ class AdvancedWindowsTestApp {
      */
     initializeWindowManager() {
         try {
-            this.windowManager = new _components_advanced_overlay_windows_dist_index__WEBPACK_IMPORTED_MODULE_1__.OverlayWindowManager();
+            this.windowManager = new _components_advanced_overlay_windows_dist_index__WEBPACK_IMPORTED_MODULE_0__.OverlayWindowManager();
             // Set up global event handlers
             this.windowManager.on('window-created', (data) => {
                 console.log('🪟 Window created:', data.windowId);
@@ -1544,7 +1541,7 @@ class AdvancedWindowsTestApp {
                 draggable: true,
                 closable: true,
                 contentType: 'custom',
-                theme: _components_advanced_overlay_windows_dist_index__WEBPACK_IMPORTED_MODULE_1__.WindowThemes.DISCORD
+                theme: _components_advanced_overlay_windows_dist_index__WEBPACK_IMPORTED_MODULE_0__.WindowThemes.DISCORD
             });
             // Set custom content renderer
             this.exampleWindow.setContentRenderer((window) => {
@@ -1571,8 +1568,25 @@ class AdvancedWindowsTestApp {
      * Close the example window
      */
     closeExampleWindow() {
-        if (this.exampleWindow && this.windowManager) {
-            this.windowManager.closeWindow(this.exampleWindow.id);
+        this.logger.window('closeExampleWindow() called');
+        if (!this.exampleWindow) {
+            this.logger.error('closeExampleWindow failed: Example window not available');
+            return;
+        }
+        if (!this.windowManager) {
+            this.logger.error('closeExampleWindow failed: Window manager not available');
+            return;
+        }
+        const windowId = this.exampleWindow.id;
+        this.logger.window(`Closing window: ${windowId}`);
+        try {
+            this.windowManager.closeWindow(windowId);
+            this.exampleWindow = null;
+            this.updateButtonStates();
+            this.logger.success(`Example window closed: ${windowId}`);
+        }
+        catch (error) {
+            this.logger.error('Failed to close example window:', error);
         }
     }
     /**
@@ -1619,19 +1633,19 @@ class AdvancedWindowsTestApp {
             {
                 title: '🎨 Theme Demo - RuneScape',
                 x: 100, y: 200, width: 300, height: 200,
-                theme: _components_advanced_overlay_windows_dist_index__WEBPACK_IMPORTED_MODULE_1__.WindowThemes.RUNESCAPE,
+                theme: _components_advanced_overlay_windows_dist_index__WEBPACK_IMPORTED_MODULE_0__.WindowThemes.RUNESCAPE,
                 contentType: 'custom'
             },
             {
                 title: '🌙 Theme Demo - Dark',
                 x: 450, y: 200, width: 300, height: 200,
-                theme: _components_advanced_overlay_windows_dist_index__WEBPACK_IMPORTED_MODULE_1__.WindowThemes.DARK,
+                theme: _components_advanced_overlay_windows_dist_index__WEBPACK_IMPORTED_MODULE_0__.WindowThemes.DARK,
                 contentType: 'custom'
             },
             {
                 title: '☀️ Theme Demo - Light',
                 x: 800, y: 200, width: 300, height: 200,
-                theme: _components_advanced_overlay_windows_dist_index__WEBPACK_IMPORTED_MODULE_1__.WindowThemes.LIGHT,
+                theme: _components_advanced_overlay_windows_dist_index__WEBPACK_IMPORTED_MODULE_0__.WindowThemes.LIGHT,
                 contentType: 'custom'
             }
         ];
@@ -1676,45 +1690,45 @@ class AdvancedWindowsTestApp {
      * Render content for the example window
      */
     renderExampleWindowContent(window) {
-        if (!alt1__WEBPACK_IMPORTED_MODULE_0__)
+        if (!window.alt1)
             return;
         const { x, y } = window.position;
         const contentY = y + 40; // Below title bar
         // Background for content area
-        alt1__WEBPACK_IMPORTED_MODULE_0__.overLayRect(0x36393FE0, // Slightly transparent dark background
+        window.alt1.overLayRect(0x36393FE0, // Slightly transparent dark background
         x + 5, contentY, window.size.width - 10, window.size.height - 50, 60000, 0);
         // Title
-        alt1__WEBPACK_IMPORTED_MODULE_0__.overLayText('Interactive Example Window', 0xFFFFFFFF, 16, x + 15, contentY + 25, 60000);
+        window.alt1.overLayText('Interactive Example Window', 0xFFFFFFFF, 16, x + 15, contentY + 25, 60000);
         // Instructions
-        alt1__WEBPACK_IMPORTED_MODULE_0__.overLayText('• Try dragging this window around', 0xDCDDDEFF, 12, x + 15, contentY + 50, 60000);
-        alt1__WEBPACK_IMPORTED_MODULE_0__.overLayText('• Resize using the corner handle', 0xDCDDDEFF, 12, x + 15, contentY + 70, 60000);
-        alt1__WEBPACK_IMPORTED_MODULE_0__.overLayText('• Click to focus, use × to close', 0xDCDDDEFF, 12, x + 15, contentY + 90, 60000);
+        window.alt1.overLayText('• Note: Alt1 overlays are visual only', 0xDCDDDEFF, 12, x + 15, contentY + 50, 60000);
+        window.alt1.overLayText('• Use main window buttons to control', 0xDCDDDEFF, 12, x + 15, contentY + 70, 60000);
+        window.alt1.overLayText('• Click to focus, use × to close', 0xDCDDDEFF, 12, x + 15, contentY + 90, 60000);
         // Current position display
-        alt1__WEBPACK_IMPORTED_MODULE_0__.overLayText(`Position: (${window.position.x}, ${window.position.y})`, 0x74C0FCFF, 11, x + 15, contentY + 120, 60000);
-        alt1__WEBPACK_IMPORTED_MODULE_0__.overLayText(`Size: ${window.size.width}×${window.size.height}`, 0x74C0FCFF, 11, x + 15, contentY + 140, 60000);
+        window.alt1.overLayText(`Position: (${window.position.x}, ${window.position.y})`, 0x74C0FCFF, 11, x + 15, contentY + 120, 60000);
+        window.alt1.overLayText(`Size: ${window.size.width}×${window.size.height}`, 0x74C0FCFF, 11, x + 15, contentY + 140, 60000);
         // Interaction indicator
         const mousePos = this.windowManager?.getMousePosition();
         if (mousePos) {
-            alt1__WEBPACK_IMPORTED_MODULE_0__.overLayText(`Mouse: (${mousePos.x}, ${mousePos.y})`, 0x51CF66FF, 11, x + 15, contentY + 160, 60000);
+            window.alt1.overLayText(`Mouse: (${mousePos.x}, ${mousePos.y})`, 0x51CF66FF, 11, x + 15, contentY + 160, 60000);
         }
     }
     /**
      * Render content for theme demo windows
      */
     renderThemeWindowContent(window, windowNumber) {
-        if (!alt1__WEBPACK_IMPORTED_MODULE_0__)
+        if (!window.alt1)
             return;
         const { x, y } = window.position;
         const contentY = y + 40;
         // Theme info
         const themes = ['RuneScape', 'Dark', 'Light'];
         const themeName = themes[windowNumber - 1] || 'Custom';
-        alt1__WEBPACK_IMPORTED_MODULE_0__.overLayText(`${themeName} Theme Demo`, 0xFFFFFFFF, 14, x + 15, contentY + 25, 60000);
-        alt1__WEBPACK_IMPORTED_MODULE_0__.overLayText('This window demonstrates', 0xDCDDDEFF, 11, x + 15, contentY + 50, 60000);
-        alt1__WEBPACK_IMPORTED_MODULE_0__.overLayText(`the ${themeName.toLowerCase()} theme styling`, 0xDCDDDEFF, 11, x + 15, contentY + 70, 60000);
-        alt1__WEBPACK_IMPORTED_MODULE_0__.overLayText('with custom colors and effects.', 0xDCDDDEFF, 11, x + 15, contentY + 90, 60000);
+        window.alt1.overLayText(`${themeName} Theme Demo`, 0xFFFFFFFF, 14, x + 15, contentY + 25, 60000);
+        window.alt1.overLayText('This window demonstrates', 0xDCDDDEFF, 11, x + 15, contentY + 50, 60000);
+        window.alt1.overLayText(`the ${themeName.toLowerCase()} theme styling`, 0xDCDDDEFF, 11, x + 15, contentY + 70, 60000);
+        window.alt1.overLayText('with custom colors and effects.', 0xDCDDDEFF, 11, x + 15, contentY + 90, 60000);
         // Window number indicator
-        alt1__WEBPACK_IMPORTED_MODULE_0__.overLayText(`Window #${windowNumber}`, 0x74C0FCFF, 12, x + 15, contentY + 120, 60000);
+        window.alt1.overLayText(`Window #${windowNumber}`, 0x74C0FCFF, 12, x + 15, contentY + 120, 60000);
     }
     /**
      * Update button states based on current window state

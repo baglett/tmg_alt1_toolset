@@ -48,7 +48,8 @@
       "Bash(npm run clean:*)",
       "Bash(chmod:*)",
       "Bash(npm run dev:*)",
-      "Bash(python:*)"
+      "Bash(python:*)",
+      "Bash(echo:*)"
     ],
     "deny": [],
     "ask": []
