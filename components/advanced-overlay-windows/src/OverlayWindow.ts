@@ -195,7 +195,7 @@ export class OverlayWindow {
             window.alt1.overLayClearGroup(this.state.overlayGroup);
 
             // Freeze group for smooth rendering
-            window.alt1.overLayFreezeGroup(this.state.overlayGroup, true);
+            (window.alt1 as any).overLayFreezeGroup(this.state.overlayGroup);
 
             // Render window components
             this.renderShadow();
@@ -205,7 +205,7 @@ export class OverlayWindow {
             this.renderControlButtons();
 
             // Unfreeze group to display overlays
-            window.alt1.overLayFreezeGroup(this.state.overlayGroup, false);
+            (window.alt1 as any).overLayContinueGroup(this.state.overlayGroup);
 
         } catch (error) {
             console.error('Error rendering overlay window:', error);
