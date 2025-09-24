@@ -46,7 +46,8 @@
       "Bash(npm run deploy:*)",
       "Bash(timeout:*)",
       "Bash(npm run clean:*)",
-      "Bash(chmod:*)"
+      "Bash(chmod:*)",
+      "Bash(npm run dev:*)"
     ],
     "deny": [],
     "ask": []

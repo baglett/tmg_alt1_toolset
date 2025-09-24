@@ -22,7 +22,6 @@ module.exports = merge(baseConfig, {
         globalObject: 'this'
     },
     externals: [
-        "alt1",
         "sharp",
         "canvas",
         "electron/common"
