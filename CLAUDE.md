@@ -204,6 +204,40 @@ npm run build   # Production build
 npm run start   # Build and serve
 ```
 
+### **CRITICAL: Build Before Commit Protocol**
+**⚠️ MANDATORY**: All plugins and components must be built locally before committing:
+
+```bash
+# For any component changes:
+cd components/[component-name]
+npm run build
+
+# For any plugin changes:
+cd plugins/[plugin-name]
+npm run build
+
+# Or build everything:
+npm run build:all
+```
+
+**Why this is required:**
+- `dist/` files are committed to git and deployed directly
+- GitHub Actions builds plugins but assumes components are pre-built
+- Source code changes won't appear in deployment without building first
+- Missing builds cause Alt1 API errors and broken functionality
+
+### **Optional: Automated Pre-Commit Hook**
+To automatically build before every commit:
+```bash
+# Install the pre-commit hook (one time setup)
+./scripts/setup-pre-commit-hook.sh
+
+# Now all commits will automatically:
+# 1. Run npm run build:all
+# 2. Stage newly built dist/ files
+# 3. Include them in the commit
+```
+
 ### Linting & Type Checking
 ```bash
 npm run lint       # ESLint (if configured)
@@ -238,14 +272,19 @@ ${{ github.ref_name == 'main' && '' || github.ref_name }}${{ github.ref_name == 
 # Other branches: "branch-name/" → prefixed URLs
 ```
 
-#### Required Post-Push Protocol
+#### Required Development Protocol
 ```bash
-# After pushing commits, ALWAYS check deployment status:
-1. Check GitHub Actions tab: https://github.com/baglett/tmg_alt1_toolset/actions
-2. Monitor latest workflow run for success/failure
-3. If failed, check logs and fix issues before next push
-4. Verify branch-specific deployment URL is accessible after success
-5. Test Alt1 install links for the appropriate branch
+# BEFORE committing any changes:
+1. Build affected components/plugins: npm run build:all
+2. Test locally: npm run dev:[plugin-name]
+3. Commit with built dist/ files: git add . && git commit -m "message"
+
+# AFTER pushing commits, ALWAYS check deployment status:
+4. Check GitHub Actions tab: https://github.com/baglett/tmg_alt1_toolset/actions
+5. Monitor latest workflow run for success/failure
+6. If failed, check logs and fix issues before next push
+7. Verify branch-specific deployment URL is accessible after success
+8. Test Alt1 install links for the appropriate branch
 ```
 
 ## Key Dependencies

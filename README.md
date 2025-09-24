@@ -58,20 +58,30 @@ Test plugin demonstrating advanced overlay window management capabilities.
 
 ### Standard Development Process
 ```bash
-# 1. Make your changes
+# 1. Make your changes to source files
 # 2. Test locally
 npm run dev:dungeoneering
 
-# 3. Build and commit
-npm run build:all
+# 3. CRITICAL: Build before committing
+npm run build:all  # Builds all components and plugins
+
+# 4. Commit with built files
 git add .
 git commit -m "Your changes description"
 git push
 
-# 4. CRITICAL: Monitor deployment
+# 5. CRITICAL: Monitor deployment
 # Check: https://github.com/baglett/tmg_alt1_toolset/actions
 # Verify latest workflow succeeds before considering work complete
 ```
+
+### **⚠️ Why Building is Mandatory**
+
+**Must build before committing because:**
+- `dist/` files are committed to git and deployed directly
+- GitHub Pages serves built files, not source code
+- Alt1 loads the `index.bundle.js` from the `dist/` folder
+- Source changes without building = broken deployments
 
 ### 🚨 **MANDATORY Post-Push Protocol**
 
