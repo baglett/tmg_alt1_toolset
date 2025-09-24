@@ -299,6 +299,123 @@ ${{ github.ref_name == 'main' && '' || github.ref_name }}${{ github.ref_name == 
 - `ts-loader: ^9.3.1` - TypeScript webpack loader
 - `copy-webpack-plugin: ^11.0.0` - Asset copying
 
+## Logging Standards
+
+### **MANDATORY: Alt1Logger Implementation**
+All Alt1 applications MUST implement standardized logging using the `Alt1Logger` class for consistent debugging and monitoring.
+
+### Standard Logger Usage Pattern
+```typescript
+import { Alt1Logger, LogLevel } from './logger';
+
+// Initialize logger for your app
+const logger = new Alt1Logger('YourAppName', LogLevel.DEBUG);
+
+// App lifecycle logging
+logger.init('Starting initialization...');
+logger.success('Initialization completed successfully');
+
+// Alt1 integration logging
+logger.alt1('Checking Alt1 availability...');
+logger.alt1('Alt1 detected with permissions:', permissions);
+
+// User interaction logging
+logger.ui('Button clicked: openExampleWindow', {
+    timestamp: Date.now(),
+    disabled: event.target?.disabled
+});
+
+// Window management logging
+logger.window('Creating window:', windowConfig);
+logger.window('Window focused:', windowId);
+
+// Error handling logging
+try {
+    // risky operation
+} catch (error) {
+    logger.error('Operation failed:', error);
+}
+```
+
+### Required Logging Categories
+- 🚀 **Initialization**: `logger.init()`, `logger.success()`
+- 🔧 **Alt1 Integration**: `logger.alt1()` - API availability, permissions
+- 🪟 **Window Management**: `logger.window()` - Create, focus, resize, close
+- 🎮 **User Interactions**: `logger.ui()` - Button clicks, form submissions
+- 📊 **Performance**: `logger.perf()` - Timing, memory usage
+- 🔍 **OCR Operations**: `logger.ocr()` - Text recognition, screen capture
+- 💾 **Data Operations**: `logger.data()` - Save/load operations
+- 🌐 **Network**: `logger.network()` - API calls, requests
+- ❌ **Errors**: `logger.error()` - All error conditions with context
+
+### Critical Logging Requirements
+1. **Method Entry**: Log entry to all public methods
+2. **Error Conditions**: Log all error conditions with full context
+3. **State Changes**: Log changes affecting user experience
+4. **Alt1 Permissions**: Log all Alt1 API availability checks
+5. **User Interactions**: Log all button clicks and form submissions
+6. **Performance Operations**: Log operations taking >16ms
+
+### Event Handler Logging Pattern
+```typescript
+private setupEventHandlers(): void {
+    this.elements.openExampleWindow?.addEventListener('click', (event) => {
+        this.logger.ui('Button clicked: openExampleWindow', {
+            disabled: (event.target as HTMLButtonElement)?.disabled,
+            timestamp: Date.now()
+        });
+        this.openExampleWindow();
+    });
+}
+
+private openExampleWindow(): void {
+    this.logger.window('openExampleWindow() called');
+
+    if (!this.windowManager) {
+        this.logger.error('openExampleWindow failed: Window manager not available');
+        return;
+    }
+
+    try {
+        const window = this.windowManager.createWindow(config);
+        this.logger.success('Example window created:', window.id);
+    } catch (error) {
+        this.logger.error('Failed to create example window:', error);
+    }
+}
+```
+
+### Alt1 Permission Logging Pattern
+```typescript
+private checkAlt1Status(): void {
+    this.logger.alt1('Checking Alt1 status...');
+
+    if (window.alt1) {
+        this.logger.alt1('Alt1 detected');
+
+        const permissions = {
+            pixel: window.alt1.permissionPixel,
+            overlay: window.alt1.permissionOverlay,
+            gameState: window.alt1.permissionGameState
+        };
+
+        this.logger.alt1('Alt1 permissions:', permissions);
+
+        if (permissions.pixel && permissions.overlay) {
+            this.logger.success('Alt1 ready with full permissions');
+        } else {
+            this.logger.warn('Alt1 missing required permissions:',
+                Object.entries(permissions)
+                    .filter(([key, value]) => !value)
+                    .map(([key]) => key)
+            );
+        }
+    } else {
+        this.logger.error('Alt1 not detected - running in browser mode');
+    }
+}
+```
+
 ## Project Context for Agents
 
 When working on this codebase:
@@ -309,6 +426,8 @@ When working on this codebase:
 4. **Test in Alt1** - Use development URLs for real-world testing
 5. **Maintain build consistency** - All components should follow webpack pattern
 6. **Version management** - Update `appconfig.json` version for releases
+7. **MANDATORY: Implement Alt1Logger** - All applications must use standardized logging
+8. **Log all user interactions** - Button clicks, method entries, errors with full context
 
 ## Documentation References
 
