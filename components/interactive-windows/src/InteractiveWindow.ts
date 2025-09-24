@@ -325,9 +325,13 @@ export class InteractiveWindow implements IInteractiveWindow {
     }
 
     private getCenterPosition(): Point {
+        // Use current state size if available, otherwise use config values
+        const width = this._state?.size?.width || this._config.width;
+        const height = this._state?.size?.height || this._config.height;
+
         return {
-            x: (window.innerWidth - this._state.size.width) / 2,
-            y: (window.innerHeight - this._state.size.height) / 2
+            x: Math.max(0, (window.innerWidth - width) / 2),
+            y: Math.max(0, (window.innerHeight - height) / 2)
         };
     }
 

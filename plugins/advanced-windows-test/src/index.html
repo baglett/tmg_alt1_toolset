@@ -21,17 +21,40 @@
             background: rgba(0, 0, 0, 0.2);
             padding: 15px 20px;
             border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
         }
 
-        .header h1 {
+        .header-left h1 {
             margin: 0;
             font-size: 20px;
             font-weight: 600;
         }
 
-        .header p {
+        .header-left p {
             margin: 5px 0 0 0;
             opacity: 0.8;
+            font-size: 14px;
+        }
+
+        .header-status {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 12px;
+            opacity: 0.9;
+        }
+
+        .header-status.detected {
+            color: #51cf66;
+        }
+
+        .header-status.not-detected {
+            color: #ff6b6b;
+        }
+
+        .header-status .status-icon {
             font-size: 14px;
         }
 
@@ -128,27 +151,11 @@
             color: #51cf66;
         }
 
-        .alt1-status {
-            background: rgba(255, 255, 255, 0.1);
-            border-radius: 10px;
-            padding: 15px;
-            border: 1px solid rgba(255, 255, 255, 0.2);
-        }
-
-        .alt1-status.not-detected {
-            border-color: #ff6b6b;
-            background: rgba(255, 107, 107, 0.1);
-        }
-
-        .alt1-status.detected {
-            border-color: #51cf66;
-            background: rgba(81, 207, 102, 0.1);
-        }
-
         .alt1-link {
             color: #74c0fc;
             text-decoration: none;
             font-weight: 500;
+            font-size: 11px;
         }
 
         .alt1-link:hover {
@@ -188,17 +195,18 @@
 </head>
 <body>
     <div class="header">
-        <h1>🎯 Interactive Windows Test</h1>
-        <p>Test the revolutionary @tmg-alt1/interactive-windows component</p>
+        <div class="header-left">
+            <h1>🎯 Interactive Windows Test</h1>
+            <p>Test the revolutionary @tmg-alt1/interactive-windows component</p>
+        </div>
+        <div id="alt1Status" class="header-status not-detected">
+            <span class="status-icon">⚪</span>
+            <span id="alt1StatusText">Alt1 not detected</span>
+            <a href="#" id="alt1InstallLink" class="alt1-link" style="display: none;">Install</a>
+        </div>
     </div>
 
     <div class="main-content">
-        <!-- Alt1 Status -->
-        <div id="alt1Status" class="alt1-status not-detected">
-            <h3>Alt1 Status</h3>
-            <p id="alt1StatusText">Alt1 not detected. This app requires Alt1 to function properly.</p>
-            <p><a href="#" id="alt1InstallLink" class="alt1-link">Click here to install this app in Alt1</a></p>
-        </div>
 
         <!-- Interactive Windows Test Panel -->
         <div class="control-panel">

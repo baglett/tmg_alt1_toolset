@@ -293,9 +293,12 @@ class InteractiveWindow {
         return `iwm-window-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
     }
     getCenterPosition() {
+        // Use current state size if available, otherwise use config values
+        const width = this._state?.size?.width || this._config.width;
+        const height = this._state?.size?.height || this._config.height;
         return {
-            x: (window.innerWidth - this._state.size.width) / 2,
-            y: (window.innerHeight - this._state.size.height) / 2
+            x: Math.max(0, (window.innerWidth - width) / 2),
+            y: Math.max(0, (window.innerHeight - height) / 2)
         };
     }
     createElement() {
@@ -603,13 +606,13 @@ class InteractiveWindow {
 /*!*****************************************!*\
   !*** ./src/InteractiveWindowManager.ts ***!
   \*****************************************/
-/***/ ((__unused_webpack_module, __nested_webpack_exports__, __nested_webpack_require_22911__) => {
+/***/ ((__unused_webpack_module, __nested_webpack_exports__, __nested_webpack_require_23122__) => {
 
-__nested_webpack_require_22911__.r(__nested_webpack_exports__);
-/* harmony export */ __nested_webpack_require_22911__.d(__nested_webpack_exports__, {
+__nested_webpack_require_23122__.r(__nested_webpack_exports__);
+/* harmony export */ __nested_webpack_require_23122__.d(__nested_webpack_exports__, {
 /* harmony export */   InteractiveWindowManager: () => (/* binding */ InteractiveWindowManager)
 /* harmony export */ });
-/* harmony import */ var _InteractiveWindow__WEBPACK_IMPORTED_MODULE_0__ = __nested_webpack_require_22911__(/*! ./InteractiveWindow */ "./src/InteractiveWindow.ts");
+/* harmony import */ var _InteractiveWindow__WEBPACK_IMPORTED_MODULE_0__ = __nested_webpack_require_23122__(/*! ./InteractiveWindow */ "./src/InteractiveWindow.ts");
 /**
  * Interactive Window Manager
  *
@@ -971,10 +974,10 @@ class InteractiveWindowManager {
 /*!**********************!*\
   !*** ./src/types.ts ***!
   \**********************/
-/***/ ((__unused_webpack_module, __nested_webpack_exports__, __nested_webpack_require_36171__) => {
+/***/ ((__unused_webpack_module, __nested_webpack_exports__, __nested_webpack_require_36382__) => {
 
-__nested_webpack_require_36171__.r(__nested_webpack_exports__);
-/* harmony export */ __nested_webpack_require_36171__.d(__nested_webpack_exports__, {
+__nested_webpack_require_36382__.r(__nested_webpack_exports__);
+/* harmony export */ __nested_webpack_require_36382__.d(__nested_webpack_exports__, {
 /* harmony export */   WindowThemes: () => (/* binding */ WindowThemes)
 /* harmony export */ });
 /**
@@ -1074,7 +1077,7 @@ const WindowThemes = {
 /******/ 	var __webpack_module_cache__ = {};
 /******/ 	
 /******/ 	// The require function
-/******/ 	function __nested_webpack_require_39359__(moduleId) {
+/******/ 	function __nested_webpack_require_39570__(moduleId) {
 /******/ 		// Check if module is in cache
 /******/ 		var cachedModule = __webpack_module_cache__[moduleId];
 /******/ 		if (cachedModule !== undefined) {
@@ -1088,7 +1091,7 @@ const WindowThemes = {
 /******/ 		};
 /******/ 	
 /******/ 		// Execute the module function
-/******/ 		__webpack_modules__[moduleId](module, module.exports, __nested_webpack_require_39359__);
+/******/ 		__webpack_modules__[moduleId](module, module.exports, __nested_webpack_require_39570__);
 /******/ 	
 /******/ 		// Return the exports of the module
 /******/ 		return module.exports;
@@ -1098,9 +1101,9 @@ const WindowThemes = {
 /******/ 	/* webpack/runtime/define property getters */
 /******/ 	(() => {
 /******/ 		// define getter functions for harmony exports
-/******/ 		__nested_webpack_require_39359__.d = (exports, definition) => {
+/******/ 		__nested_webpack_require_39570__.d = (exports, definition) => {
 /******/ 			for(var key in definition) {
-/******/ 				if(__nested_webpack_require_39359__.o(definition, key) && !__nested_webpack_require_39359__.o(exports, key)) {
+/******/ 				if(__nested_webpack_require_39570__.o(definition, key) && !__nested_webpack_require_39570__.o(exports, key)) {
 /******/ 					Object.defineProperty(exports, key, { enumerable: true, get: definition[key] });
 /******/ 				}
 /******/ 			}
@@ -1109,13 +1112,13 @@ const WindowThemes = {
 /******/ 	
 /******/ 	/* webpack/runtime/hasOwnProperty shorthand */
 /******/ 	(() => {
-/******/ 		__nested_webpack_require_39359__.o = (obj, prop) => (Object.prototype.hasOwnProperty.call(obj, prop))
+/******/ 		__nested_webpack_require_39570__.o = (obj, prop) => (Object.prototype.hasOwnProperty.call(obj, prop))
 /******/ 	})();
 /******/ 	
 /******/ 	/* webpack/runtime/make namespace object */
 /******/ 	(() => {
 /******/ 		// define __esModule on exports
-/******/ 		__nested_webpack_require_39359__.r = (exports) => {
+/******/ 		__nested_webpack_require_39570__.r = (exports) => {
 /******/ 			if(typeof Symbol !== 'undefined' && Symbol.toStringTag) {
 /******/ 				Object.defineProperty(exports, Symbol.toStringTag, { value: 'Module' });
 /******/ 			}
@@ -1130,8 +1133,8 @@ var __nested_webpack_exports__ = {};
 /*!**********************!*\
   !*** ./src/index.ts ***!
   \**********************/
-__nested_webpack_require_39359__.r(__nested_webpack_exports__);
-/* harmony export */ __nested_webpack_require_39359__.d(__nested_webpack_exports__, {
+__nested_webpack_require_39570__.r(__nested_webpack_exports__);
+/* harmony export */ __nested_webpack_require_39570__.d(__nested_webpack_exports__, {
 /* harmony export */   InteractiveWindow: () => (/* reexport safe */ _InteractiveWindow__WEBPACK_IMPORTED_MODULE_1__.InteractiveWindow),
 /* harmony export */   InteractiveWindowManager: () => (/* reexport safe */ _InteractiveWindowManager__WEBPACK_IMPORTED_MODULE_0__.InteractiveWindowManager),
 /* harmony export */   WindowThemes: () => (/* reexport safe */ _types__WEBPACK_IMPORTED_MODULE_2__.WindowThemes),
@@ -1145,9 +1148,9 @@ __nested_webpack_require_39359__.r(__nested_webpack_exports__);
 /* harmony export */   "default": () => (__WEBPACK_DEFAULT_EXPORT__),
 /* harmony export */   getGlobalWindowManager: () => (/* binding */ getGlobalWindowManager)
 /* harmony export */ });
-/* harmony import */ var _InteractiveWindowManager__WEBPACK_IMPORTED_MODULE_0__ = __nested_webpack_require_39359__(/*! ./InteractiveWindowManager */ "./src/InteractiveWindowManager.ts");
-/* harmony import */ var _InteractiveWindow__WEBPACK_IMPORTED_MODULE_1__ = __nested_webpack_require_39359__(/*! ./InteractiveWindow */ "./src/InteractiveWindow.ts");
-/* harmony import */ var _types__WEBPACK_IMPORTED_MODULE_2__ = __nested_webpack_require_39359__(/*! ./types */ "./src/types.ts");
+/* harmony import */ var _InteractiveWindowManager__WEBPACK_IMPORTED_MODULE_0__ = __nested_webpack_require_39570__(/*! ./InteractiveWindowManager */ "./src/InteractiveWindowManager.ts");
+/* harmony import */ var _InteractiveWindow__WEBPACK_IMPORTED_MODULE_1__ = __nested_webpack_require_39570__(/*! ./InteractiveWindow */ "./src/InteractiveWindow.ts");
+/* harmony import */ var _types__WEBPACK_IMPORTED_MODULE_2__ = __nested_webpack_require_39570__(/*! ./types */ "./src/types.ts");
 /**
  * Interactive Windows Component - Main Export
  *
@@ -1491,16 +1494,18 @@ class InteractiveWindowsTestApp {
             // Alt1 detected
             this.logger.alt1('Alt1 detected');
             if (this.elements.alt1Status) {
-                this.elements.alt1Status.className = 'alt1-status detected';
+                this.elements.alt1Status.className = 'header-status detected';
             }
             if (this.elements.alt1StatusText) {
-                this.elements.alt1StatusText.textContent = '✅ Alt1 detected! Interactive windows are available.';
+                this.elements.alt1StatusText.textContent = '✅ Alt1 Ready';
             }
             // Tell Alt1 about our app
             this.logger.alt1('Identifying app to Alt1...');
             alt1__WEBPACK_IMPORTED_MODULE_0__.identifyApp('./appconfig.json');
-            if (this.elements.alt1StatusText) {
-                this.elements.alt1StatusText.textContent = '🎉 Alt1 detected! Ready to test interactive windows.';
+            // Update status icon
+            const statusIcon = this.elements.alt1Status?.querySelector('.status-icon');
+            if (statusIcon) {
+                statusIcon.textContent = '✅';
             }
         }
         else {
@@ -1508,6 +1513,15 @@ class InteractiveWindowsTestApp {
             const addAppUrl = `alt1://addapp/${new URL('./appconfig.json', document.location.href).href}`;
             if (this.elements.alt1InstallLink) {
                 this.elements.alt1InstallLink.href = addAppUrl;
+                this.elements.alt1InstallLink.style.display = 'inline';
+            }
+            if (this.elements.alt1StatusText) {
+                this.elements.alt1StatusText.textContent = '❌ Alt1 not detected';
+            }
+            // Update status icon
+            const statusIcon = this.elements.alt1Status?.querySelector('.status-icon');
+            if (statusIcon) {
+                statusIcon.textContent = '❌';
             }
         }
     }

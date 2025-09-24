@@ -94,24 +94,37 @@ class InteractiveWindowsTestApp {
             // Alt1 detected
             this.logger.alt1('Alt1 detected');
             if (this.elements.alt1Status) {
-                this.elements.alt1Status.className = 'alt1-status detected';
+                this.elements.alt1Status.className = 'header-status detected';
             }
             if (this.elements.alt1StatusText) {
-                this.elements.alt1StatusText.textContent = '✅ Alt1 detected! Interactive windows are available.';
+                this.elements.alt1StatusText.textContent = '✅ Alt1 Ready';
             }
 
             // Tell Alt1 about our app
             this.logger.alt1('Identifying app to Alt1...');
             a1lib.identifyApp('./appconfig.json');
 
-            if (this.elements.alt1StatusText) {
-                this.elements.alt1StatusText.textContent = '🎉 Alt1 detected! Ready to test interactive windows.';
+            // Update status icon
+            const statusIcon = this.elements.alt1Status?.querySelector('.status-icon');
+            if (statusIcon) {
+                statusIcon.textContent = '✅';
             }
         } else {
             // Alt1 not detected
             const addAppUrl = `alt1://addapp/${new URL('./appconfig.json', document.location.href).href}`;
             if (this.elements.alt1InstallLink) {
                 this.elements.alt1InstallLink.href = addAppUrl;
+                this.elements.alt1InstallLink.style.display = 'inline';
+            }
+
+            if (this.elements.alt1StatusText) {
+                this.elements.alt1StatusText.textContent = '❌ Alt1 not detected';
+            }
+
+            // Update status icon
+            const statusIcon = this.elements.alt1Status?.querySelector('.status-icon');
+            if (statusIcon) {
+                statusIcon.textContent = '❌';
             }
         }
     }
