@@ -297,16 +297,27 @@ __nested_webpack_require_9306__.r(__nested_webpack_exports__);
 
 /**
  * Individual overlay window with advanced rendering and interaction capabilities
+ *
+ * IMPORTANT: Alt1 overlay limitations:
+ * - Overlays are purely visual and cannot receive mouse events directly
+ * - Interactions must be handled by the main Alt1 application window
+ * - Drag, resize, and click functionality requires workarounds using:
+ *   1. Main window buttons to control overlay windows
+ *   2. Keyboard shortcuts for window management
+ *   3. Context menus in the main Alt1 app window
+ *
+ * This implementation provides the visual rendering and state management,
+ * but actual interaction must be triggered from the main application.
  */
 class OverlayWindow {
     // Default theme - lazy initialization to avoid alt1lib import issues
     static getDefaultTheme() {
         return {
-            titleBarColor: alt1__WEBPACK_IMPORTED_MODULE_0__.mixColor(88, 101, 242, 240), // Discord purple
+            titleBarColor: alt1__WEBPACK_IMPORTED_MODULE_0__.mixColor(88, 101, 242, 255), // Discord purple (full opacity)
             titleBarTextColor: alt1__WEBPACK_IMPORTED_MODULE_0__.mixColor(255, 255, 255, 255), // White text
             borderColor: alt1__WEBPACK_IMPORTED_MODULE_0__.mixColor(88, 101, 242, 255), // Purple border
-            backgroundColor: alt1__WEBPACK_IMPORTED_MODULE_0__.mixColor(47, 49, 54, 240), // Dark background
-            shadowColor: alt1__WEBPACK_IMPORTED_MODULE_0__.mixColor(0, 0, 0, 80), // Dark shadow
+            backgroundColor: alt1__WEBPACK_IMPORTED_MODULE_0__.mixColor(54, 57, 63, 255), // Dark background (full opacity for visibility)
+            shadowColor: alt1__WEBPACK_IMPORTED_MODULE_0__.mixColor(0, 0, 0, 128), // Dark shadow
             accentColor: alt1__WEBPACK_IMPORTED_MODULE_0__.mixColor(114, 137, 218, 255) // Light purple accent
         };
     }
@@ -574,13 +585,23 @@ class OverlayWindow {
             return;
         const { x, y } = this.state.position;
         const { width, height } = this.state.size;
-        // Main window background
-        window.alt1.overLayRect(this.theme.backgroundColor, x, y, width, height, 60000, 0);
+        // Main window background - render twice for better opacity
+        // First pass: solid background
+        window.alt1.overLayRect(this.theme.backgroundColor, x, y, width, height, 60000, 0 // filled rectangle
+        );
         // Border with focus highlight
         const borderColor = this.state.isFocused
             ? this.theme.accentColor
             : this.theme.borderColor;
-        window.alt1.overLayRect(borderColor, x - this.borderWidth, y - this.borderWidth, width + (this.borderWidth * 2), height + (this.borderWidth * 2), 60000, this.borderWidth);
+        // Draw border as four separate rectangles for better visibility
+        // Top border
+        window.alt1.overLayRect(borderColor, x - this.borderWidth, y - this.borderWidth, width + (this.borderWidth * 2), this.borderWidth, 60000, 0);
+        // Bottom border
+        window.alt1.overLayRect(borderColor, x - this.borderWidth, y + height, width + (this.borderWidth * 2), this.borderWidth, 60000, 0);
+        // Left border
+        window.alt1.overLayRect(borderColor, x - this.borderWidth, y, this.borderWidth, height, 60000, 0);
+        // Right border
+        window.alt1.overLayRect(borderColor, x + width, y, this.borderWidth, height, 60000, 0);
     }
     renderTitleBar() {
         if (!window.alt1)
@@ -616,8 +637,8 @@ class OverlayWindow {
         if (this.state.config.closable !== false) {
             const closeX = x + width - 25;
             const closeY = y + 5;
-            // Close button background
-            window.alt1.overLayRect(alt1__WEBPACK_IMPORTED_MODULE_0__.mixColor(220, 53, 69, 200), // Red background
+            // Close button background - full opacity for visibility
+            window.alt1.overLayRect(alt1__WEBPACK_IMPORTED_MODULE_0__.mixColor(220, 53, 69, 255), // Red background with full opacity
             closeX, closeY, 20, 20, 60000, 0);
             // Close button X
             window.alt1.overLayText('×', alt1__WEBPACK_IMPORTED_MODULE_0__.mixColor(255, 255, 255, 255), 16, closeX + 6, closeY + 15, 60000);
@@ -718,16 +739,16 @@ class OverlayWindow {
 /*!*********************************!*\
   !*** ./OverlayWindowManager.ts ***!
   \*********************************/
-/***/ ((__unused_webpack_module, __nested_webpack_exports__, __nested_webpack_require_23546__) => {
+/***/ ((__unused_webpack_module, __nested_webpack_exports__, __nested_webpack_require_24783__) => {
 
-__nested_webpack_require_23546__.r(__nested_webpack_exports__);
-/* harmony export */ __nested_webpack_require_23546__.d(__nested_webpack_exports__, {
+__nested_webpack_require_24783__.r(__nested_webpack_exports__);
+/* harmony export */ __nested_webpack_require_24783__.d(__nested_webpack_exports__, {
 /* harmony export */   OverlayWindowManager: () => (/* binding */ OverlayWindowManager)
 /* harmony export */ });
-/* harmony import */ var alt1__WEBPACK_IMPORTED_MODULE_0__ = __nested_webpack_require_23546__(/*! alt1 */ "alt1");
-/* harmony import */ var alt1__WEBPACK_IMPORTED_MODULE_0___default = /*#__PURE__*/__nested_webpack_require_23546__.n(alt1__WEBPACK_IMPORTED_MODULE_0__);
-/* harmony import */ var _OverlayWindow__WEBPACK_IMPORTED_MODULE_1__ = __nested_webpack_require_23546__(/*! ./OverlayWindow */ "./OverlayWindow.ts");
-/* harmony import */ var _InteractionDetector__WEBPACK_IMPORTED_MODULE_2__ = __nested_webpack_require_23546__(/*! ./InteractionDetector */ "./InteractionDetector.ts");
+/* harmony import */ var alt1__WEBPACK_IMPORTED_MODULE_0__ = __nested_webpack_require_24783__(/*! alt1 */ "alt1");
+/* harmony import */ var alt1__WEBPACK_IMPORTED_MODULE_0___default = /*#__PURE__*/__nested_webpack_require_24783__.n(alt1__WEBPACK_IMPORTED_MODULE_0__);
+/* harmony import */ var _OverlayWindow__WEBPACK_IMPORTED_MODULE_1__ = __nested_webpack_require_24783__(/*! ./OverlayWindow */ "./OverlayWindow.ts");
+/* harmony import */ var _InteractionDetector__WEBPACK_IMPORTED_MODULE_2__ = __nested_webpack_require_24783__(/*! ./InteractionDetector */ "./InteractionDetector.ts");
 
 
 
@@ -1087,7 +1108,7 @@ module.exports = __WEBPACK_EXTERNAL_MODULE_alt1__;
 /******/ 	var __webpack_module_cache__ = {};
 /******/ 	
 /******/ 	// The require function
-/******/ 	function __nested_webpack_require_35732__(moduleId) {
+/******/ 	function __nested_webpack_require_36969__(moduleId) {
 /******/ 		// Check if module is in cache
 /******/ 		var cachedModule = __webpack_module_cache__[moduleId];
 /******/ 		if (cachedModule !== undefined) {
@@ -1101,7 +1122,7 @@ module.exports = __WEBPACK_EXTERNAL_MODULE_alt1__;
 /******/ 		};
 /******/ 	
 /******/ 		// Execute the module function
-/******/ 		__webpack_modules__[moduleId](module, module.exports, __nested_webpack_require_35732__);
+/******/ 		__webpack_modules__[moduleId](module, module.exports, __nested_webpack_require_36969__);
 /******/ 	
 /******/ 		// Return the exports of the module
 /******/ 		return module.exports;
@@ -1111,11 +1132,11 @@ module.exports = __WEBPACK_EXTERNAL_MODULE_alt1__;
 /******/ 	/* webpack/runtime/compat get default export */
 /******/ 	(() => {
 /******/ 		// getDefaultExport function for compatibility with non-harmony modules
-/******/ 		__nested_webpack_require_35732__.n = (module) => {
+/******/ 		__nested_webpack_require_36969__.n = (module) => {
 /******/ 			var getter = module && module.__esModule ?
 /******/ 				() => (module['default']) :
 /******/ 				() => (module);
-/******/ 			__nested_webpack_require_35732__.d(getter, { a: getter });
+/******/ 			__nested_webpack_require_36969__.d(getter, { a: getter });
 /******/ 			return getter;
 /******/ 		};
 /******/ 	})();
@@ -1123,9 +1144,9 @@ module.exports = __WEBPACK_EXTERNAL_MODULE_alt1__;
 /******/ 	/* webpack/runtime/define property getters */
 /******/ 	(() => {
 /******/ 		// define getter functions for harmony exports
-/******/ 		__nested_webpack_require_35732__.d = (exports, definition) => {
+/******/ 		__nested_webpack_require_36969__.d = (exports, definition) => {
 /******/ 			for(var key in definition) {
-/******/ 				if(__nested_webpack_require_35732__.o(definition, key) && !__nested_webpack_require_35732__.o(exports, key)) {
+/******/ 				if(__nested_webpack_require_36969__.o(definition, key) && !__nested_webpack_require_36969__.o(exports, key)) {
 /******/ 					Object.defineProperty(exports, key, { enumerable: true, get: definition[key] });
 /******/ 				}
 /******/ 			}
@@ -1134,13 +1155,13 @@ module.exports = __WEBPACK_EXTERNAL_MODULE_alt1__;
 /******/ 	
 /******/ 	/* webpack/runtime/hasOwnProperty shorthand */
 /******/ 	(() => {
-/******/ 		__nested_webpack_require_35732__.o = (obj, prop) => (Object.prototype.hasOwnProperty.call(obj, prop))
+/******/ 		__nested_webpack_require_36969__.o = (obj, prop) => (Object.prototype.hasOwnProperty.call(obj, prop))
 /******/ 	})();
 /******/ 	
 /******/ 	/* webpack/runtime/make namespace object */
 /******/ 	(() => {
 /******/ 		// define __esModule on exports
-/******/ 		__nested_webpack_require_35732__.r = (exports) => {
+/******/ 		__nested_webpack_require_36969__.r = (exports) => {
 /******/ 			if(typeof Symbol !== 'undefined' && Symbol.toStringTag) {
 /******/ 				Object.defineProperty(exports, Symbol.toStringTag, { value: 'Module' });
 /******/ 			}
@@ -1155,8 +1176,8 @@ var __nested_webpack_exports__ = {};
 /*!******************!*\
   !*** ./index.ts ***!
   \******************/
-__nested_webpack_require_35732__.r(__nested_webpack_exports__);
-/* harmony export */ __nested_webpack_require_35732__.d(__nested_webpack_exports__, {
+__nested_webpack_require_36969__.r(__nested_webpack_exports__);
+/* harmony export */ __nested_webpack_require_36969__.d(__nested_webpack_exports__, {
 /* harmony export */   InteractionDetector: () => (/* reexport safe */ _InteractionDetector__WEBPACK_IMPORTED_MODULE_2__.InteractionDetector),
 /* harmony export */   OverlayWindow: () => (/* reexport safe */ _OverlayWindow__WEBPACK_IMPORTED_MODULE_1__.OverlayWindow),
 /* harmony export */   OverlayWindowManager: () => (/* reexport safe */ _OverlayWindowManager__WEBPACK_IMPORTED_MODULE_0__.OverlayWindowManager),
@@ -1164,9 +1185,9 @@ __nested_webpack_require_35732__.r(__nested_webpack_exports__);
 /* harmony export */   createWindowManager: () => (/* binding */ createWindowManager),
 /* harmony export */   "default": () => (__WEBPACK_DEFAULT_EXPORT__)
 /* harmony export */ });
-/* harmony import */ var _OverlayWindowManager__WEBPACK_IMPORTED_MODULE_0__ = __nested_webpack_require_35732__(/*! ./OverlayWindowManager */ "./OverlayWindowManager.ts");
-/* harmony import */ var _OverlayWindow__WEBPACK_IMPORTED_MODULE_1__ = __nested_webpack_require_35732__(/*! ./OverlayWindow */ "./OverlayWindow.ts");
-/* harmony import */ var _InteractionDetector__WEBPACK_IMPORTED_MODULE_2__ = __nested_webpack_require_35732__(/*! ./InteractionDetector */ "./InteractionDetector.ts");
+/* harmony import */ var _OverlayWindowManager__WEBPACK_IMPORTED_MODULE_0__ = __nested_webpack_require_36969__(/*! ./OverlayWindowManager */ "./OverlayWindowManager.ts");
+/* harmony import */ var _OverlayWindow__WEBPACK_IMPORTED_MODULE_1__ = __nested_webpack_require_36969__(/*! ./OverlayWindow */ "./OverlayWindow.ts");
+/* harmony import */ var _InteractionDetector__WEBPACK_IMPORTED_MODULE_2__ = __nested_webpack_require_36969__(/*! ./InteractionDetector */ "./InteractionDetector.ts");
 // Advanced Overlay Windows - Main Export
 //
 // This component provides sophisticated window management for Alt1 applications
@@ -1266,7 +1287,17 @@ class AdvancedWindowsTestApp {
             managerStatus: null,
             windowCount: null,
             focusedWindow: null,
-            interactionStatus: null
+            interactionStatus: null,
+            // Position controls
+            moveWindowLeft: null,
+            moveWindowRight: null,
+            moveWindowUp: null,
+            moveWindowDown: null,
+            // Size controls
+            increaseWidth: null,
+            decreaseWidth: null,
+            increaseHeight: null,
+            decreaseHeight: null
         };
         // Initialize logger first
         this.logger = new _logger__WEBPACK_IMPORTED_MODULE_2__.Alt1Logger('AdvancedWindowsTest', _logger__WEBPACK_IMPORTED_MODULE_2__.LogLevel.DEBUG);
@@ -1312,6 +1343,16 @@ class AdvancedWindowsTestApp {
         this.elements.windowCount = document.getElementById('windowCount');
         this.elements.focusedWindow = document.getElementById('focusedWindow');
         this.elements.interactionStatus = document.getElementById('interactionStatus');
+        // Position controls
+        this.elements.moveWindowLeft = document.getElementById('moveWindowLeft');
+        this.elements.moveWindowRight = document.getElementById('moveWindowRight');
+        this.elements.moveWindowUp = document.getElementById('moveWindowUp');
+        this.elements.moveWindowDown = document.getElementById('moveWindowDown');
+        // Size controls
+        this.elements.increaseWidth = document.getElementById('increaseWidth');
+        this.elements.decreaseWidth = document.getElementById('decreaseWidth');
+        this.elements.increaseHeight = document.getElementById('increaseHeight');
+        this.elements.decreaseHeight = document.getElementById('decreaseHeight');
     }
     /**
      * Check Alt1 status and update UI accordingly
@@ -1417,6 +1458,64 @@ class AdvancedWindowsTestApp {
         this.elements.closeAllWindows?.addEventListener('click', () => {
             this.closeAllWindows();
         });
+        // Position control handlers
+        this.elements.moveWindowLeft?.addEventListener('click', (event) => {
+            this.logger.ui('Button clicked: moveWindowLeft', {
+                disabled: event.target?.disabled,
+                timestamp: Date.now()
+            });
+            this.moveExampleWindow(-50, 0);
+        });
+        this.elements.moveWindowRight?.addEventListener('click', (event) => {
+            this.logger.ui('Button clicked: moveWindowRight', {
+                disabled: event.target?.disabled,
+                timestamp: Date.now()
+            });
+            this.moveExampleWindow(50, 0);
+        });
+        this.elements.moveWindowUp?.addEventListener('click', (event) => {
+            this.logger.ui('Button clicked: moveWindowUp', {
+                disabled: event.target?.disabled,
+                timestamp: Date.now()
+            });
+            this.moveExampleWindow(0, -50);
+        });
+        this.elements.moveWindowDown?.addEventListener('click', (event) => {
+            this.logger.ui('Button clicked: moveWindowDown', {
+                disabled: event.target?.disabled,
+                timestamp: Date.now()
+            });
+            this.moveExampleWindow(0, 50);
+        });
+        // Size control handlers
+        this.elements.increaseWidth?.addEventListener('click', (event) => {
+            this.logger.ui('Button clicked: increaseWidth', {
+                disabled: event.target?.disabled,
+                timestamp: Date.now()
+            });
+            this.resizeExampleWindow(50, 0);
+        });
+        this.elements.decreaseWidth?.addEventListener('click', (event) => {
+            this.logger.ui('Button clicked: decreaseWidth', {
+                disabled: event.target?.disabled,
+                timestamp: Date.now()
+            });
+            this.resizeExampleWindow(-50, 0);
+        });
+        this.elements.increaseHeight?.addEventListener('click', (event) => {
+            this.logger.ui('Button clicked: increaseHeight', {
+                disabled: event.target?.disabled,
+                timestamp: Date.now()
+            });
+            this.resizeExampleWindow(0, 50);
+        });
+        this.elements.decreaseHeight?.addEventListener('click', (event) => {
+            this.logger.ui('Button clicked: decreaseHeight', {
+                disabled: event.target?.disabled,
+                timestamp: Date.now()
+            });
+            this.resizeExampleWindow(0, -50);
+        });
     }
     /**
      * Open an example window with custom content
@@ -1453,18 +1552,18 @@ class AdvancedWindowsTestApp {
             });
             // Set up window-specific event handlers
             this.exampleWindow.on('closed', () => {
-                console.log('Example window closed');
+                this.logger.window('Example window closed event received');
                 this.exampleWindow = null;
                 this.updateButtonStates();
             });
             this.exampleWindow.on('focused', () => {
-                console.log('Example window gained focus');
+                this.logger.window('Example window gained focus');
             });
             this.updateButtonStates();
-            console.log('✅ Example window created successfully');
+            this.logger.success('Example window created successfully:', this.exampleWindow.id);
         }
         catch (error) {
-            console.error('❌ Failed to create example window:', error);
+            this.logger.error('Failed to create example window:', error);
             alert('Failed to create window: ' + error);
         }
     }
@@ -1475,6 +1574,38 @@ class AdvancedWindowsTestApp {
         if (this.exampleWindow && this.windowManager) {
             this.windowManager.closeWindow(this.exampleWindow.id);
         }
+    }
+    /**
+     * Move the example window by delta x and y
+     */
+    moveExampleWindow(deltaX, deltaY) {
+        this.logger.window(`moveExampleWindow(${deltaX}, ${deltaY}) called`);
+        if (!this.exampleWindow) {
+            this.logger.error('moveExampleWindow failed: Example window not available');
+            return;
+        }
+        const currentPos = this.exampleWindow.position;
+        const newX = Math.max(0, currentPos.x + deltaX);
+        const newY = Math.max(0, currentPos.y + deltaY);
+        this.exampleWindow.setPosition(newX, newY);
+        this.exampleWindow.render();
+        this.logger.success(`Example window moved to (${newX}, ${newY})`);
+    }
+    /**
+     * Resize the example window by delta width and height
+     */
+    resizeExampleWindow(deltaWidth, deltaHeight) {
+        this.logger.window(`resizeExampleWindow(${deltaWidth}, ${deltaHeight}) called`);
+        if (!this.exampleWindow) {
+            this.logger.error('resizeExampleWindow failed: Example window not available');
+            return;
+        }
+        const currentSize = this.exampleWindow.size;
+        const newWidth = Math.max(200, currentSize.width + deltaWidth);
+        const newHeight = Math.max(100, currentSize.height + deltaHeight);
+        this.exampleWindow.setSize(newWidth, newHeight);
+        this.exampleWindow.render();
+        this.logger.success(`Example window resized to ${newWidth}x${newHeight}`);
     }
     /**
      * Open multiple windows for testing
@@ -1589,8 +1720,35 @@ class AdvancedWindowsTestApp {
      * Update button states based on current window state
      */
     updateButtonStates() {
+        const hasExampleWindow = !!this.exampleWindow;
         if (this.elements.closeExampleWindow) {
-            this.elements.closeExampleWindow.disabled = !this.exampleWindow;
+            this.elements.closeExampleWindow.disabled = !hasExampleWindow;
+        }
+        // Enable/disable position controls
+        if (this.elements.moveWindowLeft) {
+            this.elements.moveWindowLeft.disabled = !hasExampleWindow;
+        }
+        if (this.elements.moveWindowRight) {
+            this.elements.moveWindowRight.disabled = !hasExampleWindow;
+        }
+        if (this.elements.moveWindowUp) {
+            this.elements.moveWindowUp.disabled = !hasExampleWindow;
+        }
+        if (this.elements.moveWindowDown) {
+            this.elements.moveWindowDown.disabled = !hasExampleWindow;
+        }
+        // Enable/disable size controls
+        if (this.elements.increaseWidth) {
+            this.elements.increaseWidth.disabled = !hasExampleWindow;
+        }
+        if (this.elements.decreaseWidth) {
+            this.elements.decreaseWidth.disabled = !hasExampleWindow;
+        }
+        if (this.elements.increaseHeight) {
+            this.elements.increaseHeight.disabled = !hasExampleWindow;
+        }
+        if (this.elements.decreaseHeight) {
+            this.elements.decreaseHeight.disabled = !hasExampleWindow;
         }
     }
     /**

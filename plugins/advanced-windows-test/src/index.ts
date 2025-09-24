@@ -27,7 +27,17 @@ class AdvancedWindowsTestApp {
         managerStatus: null as HTMLElement | null,
         windowCount: null as HTMLElement | null,
         focusedWindow: null as HTMLElement | null,
-        interactionStatus: null as HTMLElement | null
+        interactionStatus: null as HTMLElement | null,
+        // Position controls
+        moveWindowLeft: null as HTMLButtonElement | null,
+        moveWindowRight: null as HTMLButtonElement | null,
+        moveWindowUp: null as HTMLButtonElement | null,
+        moveWindowDown: null as HTMLButtonElement | null,
+        // Size controls
+        increaseWidth: null as HTMLButtonElement | null,
+        decreaseWidth: null as HTMLButtonElement | null,
+        increaseHeight: null as HTMLButtonElement | null,
+        decreaseHeight: null as HTMLButtonElement | null
     };
 
     constructor() {
@@ -83,6 +93,16 @@ class AdvancedWindowsTestApp {
         this.elements.windowCount = document.getElementById('windowCount');
         this.elements.focusedWindow = document.getElementById('focusedWindow');
         this.elements.interactionStatus = document.getElementById('interactionStatus');
+        // Position controls
+        this.elements.moveWindowLeft = document.getElementById('moveWindowLeft') as HTMLButtonElement;
+        this.elements.moveWindowRight = document.getElementById('moveWindowRight') as HTMLButtonElement;
+        this.elements.moveWindowUp = document.getElementById('moveWindowUp') as HTMLButtonElement;
+        this.elements.moveWindowDown = document.getElementById('moveWindowDown') as HTMLButtonElement;
+        // Size controls
+        this.elements.increaseWidth = document.getElementById('increaseWidth') as HTMLButtonElement;
+        this.elements.decreaseWidth = document.getElementById('decreaseWidth') as HTMLButtonElement;
+        this.elements.increaseHeight = document.getElementById('increaseHeight') as HTMLButtonElement;
+        this.elements.decreaseHeight = document.getElementById('decreaseHeight') as HTMLButtonElement;
     }
 
     /**
@@ -204,6 +224,66 @@ class AdvancedWindowsTestApp {
         this.elements.closeAllWindows?.addEventListener('click', () => {
             this.closeAllWindows();
         });
+
+        // Position control handlers
+        this.elements.moveWindowLeft?.addEventListener('click', (event) => {
+            this.logger.ui('Button clicked: moveWindowLeft', {
+                disabled: (event.target as HTMLButtonElement)?.disabled,
+                timestamp: Date.now()
+            });
+            this.moveExampleWindow(-50, 0);
+        });
+        this.elements.moveWindowRight?.addEventListener('click', (event) => {
+            this.logger.ui('Button clicked: moveWindowRight', {
+                disabled: (event.target as HTMLButtonElement)?.disabled,
+                timestamp: Date.now()
+            });
+            this.moveExampleWindow(50, 0);
+        });
+        this.elements.moveWindowUp?.addEventListener('click', (event) => {
+            this.logger.ui('Button clicked: moveWindowUp', {
+                disabled: (event.target as HTMLButtonElement)?.disabled,
+                timestamp: Date.now()
+            });
+            this.moveExampleWindow(0, -50);
+        });
+        this.elements.moveWindowDown?.addEventListener('click', (event) => {
+            this.logger.ui('Button clicked: moveWindowDown', {
+                disabled: (event.target as HTMLButtonElement)?.disabled,
+                timestamp: Date.now()
+            });
+            this.moveExampleWindow(0, 50);
+        });
+
+        // Size control handlers
+        this.elements.increaseWidth?.addEventListener('click', (event) => {
+            this.logger.ui('Button clicked: increaseWidth', {
+                disabled: (event.target as HTMLButtonElement)?.disabled,
+                timestamp: Date.now()
+            });
+            this.resizeExampleWindow(50, 0);
+        });
+        this.elements.decreaseWidth?.addEventListener('click', (event) => {
+            this.logger.ui('Button clicked: decreaseWidth', {
+                disabled: (event.target as HTMLButtonElement)?.disabled,
+                timestamp: Date.now()
+            });
+            this.resizeExampleWindow(-50, 0);
+        });
+        this.elements.increaseHeight?.addEventListener('click', (event) => {
+            this.logger.ui('Button clicked: increaseHeight', {
+                disabled: (event.target as HTMLButtonElement)?.disabled,
+                timestamp: Date.now()
+            });
+            this.resizeExampleWindow(0, 50);
+        });
+        this.elements.decreaseHeight?.addEventListener('click', (event) => {
+            this.logger.ui('Button clicked: decreaseHeight', {
+                disabled: (event.target as HTMLButtonElement)?.disabled,
+                timestamp: Date.now()
+            });
+            this.resizeExampleWindow(0, -50);
+        });
     }
 
     /**
@@ -246,20 +326,20 @@ class AdvancedWindowsTestApp {
 
             // Set up window-specific event handlers
             this.exampleWindow.on('closed', () => {
-                console.log('Example window closed');
+                this.logger.window('Example window closed event received');
                 this.exampleWindow = null;
                 this.updateButtonStates();
             });
 
             this.exampleWindow.on('focused', () => {
-                console.log('Example window gained focus');
+                this.logger.window('Example window gained focus');
             });
 
             this.updateButtonStates();
-            console.log('✅ Example window created successfully');
+            this.logger.success('Example window created successfully:', this.exampleWindow.id);
 
         } catch (error) {
-            console.error('❌ Failed to create example window:', error);
+            this.logger.error('Failed to create example window:', error);
             alert('Failed to create window: ' + error);
         }
     }
@@ -271,6 +351,48 @@ class AdvancedWindowsTestApp {
         if (this.exampleWindow && this.windowManager) {
             this.windowManager.closeWindow(this.exampleWindow.id);
         }
+    }
+
+    /**
+     * Move the example window by delta x and y
+     */
+    private moveExampleWindow(deltaX: number, deltaY: number): void {
+        this.logger.window(`moveExampleWindow(${deltaX}, ${deltaY}) called`);
+
+        if (!this.exampleWindow) {
+            this.logger.error('moveExampleWindow failed: Example window not available');
+            return;
+        }
+
+        const currentPos = this.exampleWindow.position;
+        const newX = Math.max(0, currentPos.x + deltaX);
+        const newY = Math.max(0, currentPos.y + deltaY);
+
+        this.exampleWindow.setPosition(newX, newY);
+        this.exampleWindow.render();
+
+        this.logger.success(`Example window moved to (${newX}, ${newY})`);
+    }
+
+    /**
+     * Resize the example window by delta width and height
+     */
+    private resizeExampleWindow(deltaWidth: number, deltaHeight: number): void {
+        this.logger.window(`resizeExampleWindow(${deltaWidth}, ${deltaHeight}) called`);
+
+        if (!this.exampleWindow) {
+            this.logger.error('resizeExampleWindow failed: Example window not available');
+            return;
+        }
+
+        const currentSize = this.exampleWindow.size;
+        const newWidth = Math.max(200, currentSize.width + deltaWidth);
+        const newHeight = Math.max(100, currentSize.height + deltaHeight);
+
+        this.exampleWindow.setSize(newWidth, newHeight);
+        this.exampleWindow.render();
+
+        this.logger.success(`Example window resized to ${newWidth}x${newHeight}`);
     }
 
     /**
@@ -501,8 +623,38 @@ class AdvancedWindowsTestApp {
      * Update button states based on current window state
      */
     private updateButtonStates(): void {
+        const hasExampleWindow = !!this.exampleWindow;
+
         if (this.elements.closeExampleWindow) {
-            this.elements.closeExampleWindow.disabled = !this.exampleWindow;
+            this.elements.closeExampleWindow.disabled = !hasExampleWindow;
+        }
+
+        // Enable/disable position controls
+        if (this.elements.moveWindowLeft) {
+            this.elements.moveWindowLeft.disabled = !hasExampleWindow;
+        }
+        if (this.elements.moveWindowRight) {
+            this.elements.moveWindowRight.disabled = !hasExampleWindow;
+        }
+        if (this.elements.moveWindowUp) {
+            this.elements.moveWindowUp.disabled = !hasExampleWindow;
+        }
+        if (this.elements.moveWindowDown) {
+            this.elements.moveWindowDown.disabled = !hasExampleWindow;
+        }
+
+        // Enable/disable size controls
+        if (this.elements.increaseWidth) {
+            this.elements.increaseWidth.disabled = !hasExampleWindow;
+        }
+        if (this.elements.decreaseWidth) {
+            this.elements.decreaseWidth.disabled = !hasExampleWindow;
+        }
+        if (this.elements.increaseHeight) {
+            this.elements.increaseHeight.disabled = !hasExampleWindow;
+        }
+        if (this.elements.decreaseHeight) {
+            this.elements.decreaseHeight.disabled = !hasExampleWindow;
         }
     }
 

@@ -210,6 +210,24 @@
                 <button id="closeAllWindows" class="btn danger">Close All Windows</button>
             </div>
 
+            <!-- Window Position Controls -->
+            <h4 style="margin-top: 15px; margin-bottom: 10px; font-size: 14px;">📍 Window Position (Example Window)</h4>
+            <div class="button-group">
+                <button id="moveWindowLeft" class="btn" disabled>← Move Left</button>
+                <button id="moveWindowRight" class="btn" disabled>Move Right →</button>
+                <button id="moveWindowUp" class="btn" disabled>↑ Move Up</button>
+                <button id="moveWindowDown" class="btn" disabled>Move Down ↓</button>
+            </div>
+
+            <!-- Window Size Controls -->
+            <h4 style="margin-top: 15px; margin-bottom: 10px; font-size: 14px;">📐 Window Size (Example Window)</h4>
+            <div class="button-group">
+                <button id="increaseWidth" class="btn" disabled>↔ Wider</button>
+                <button id="decreaseWidth" class="btn" disabled>↔ Narrower</button>
+                <button id="increaseHeight" class="btn" disabled>↕ Taller</button>
+                <button id="decreaseHeight" class="btn" disabled>↕ Shorter</button>
+            </div>
+
             <div class="status">
                 <h4>📊 Window Status</h4>
                 <div class="status-item">
@@ -237,12 +255,12 @@
             <p>This test plugin demonstrates the advanced overlay windows component capabilities:</p>
             <ul>
                 <li><strong>Create Windows:</strong> Click "Open Example Window" to create overlay windows</li>
-                <li><strong>Interact:</strong> Drag windows by their title bars, resize using corner handles</li>
-                <li><strong>Focus:</strong> Click on windows to bring them to front</li>
-                <li><strong>Close:</strong> Use the × button on windows or the "Close" buttons below</li>
+                <li><strong>Move Windows:</strong> Use the position control buttons to move windows</li>
+                <li><strong>Resize Windows:</strong> Use the size control buttons to resize windows</li>
+                <li><strong>Close Windows:</strong> Use the "Close" buttons in this control panel</li>
             </ul>
+            <p><strong>Important:</strong> Alt1 overlays are visual-only and cannot receive mouse clicks directly. Use the control buttons in this panel to interact with windows.</p>
             <p>Windows are created using: <code>windowManager.createWindow(config)</code></p>
-            <p>All interactions are detected using computer vision and mouse tracking!</p>
         </div>
     </div>
 

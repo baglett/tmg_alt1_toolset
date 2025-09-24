@@ -3,6 +3,17 @@ import { WindowConfig, OverlayWindowState, Point, Size, Rect, InteractionEvent, 
 
 /**
  * Individual overlay window with advanced rendering and interaction capabilities
+ *
+ * IMPORTANT: Alt1 overlay limitations:
+ * - Overlays are purely visual and cannot receive mouse events directly
+ * - Interactions must be handled by the main Alt1 application window
+ * - Drag, resize, and click functionality requires workarounds using:
+ *   1. Main window buttons to control overlay windows
+ *   2. Keyboard shortcuts for window management
+ *   3. Context menus in the main Alt1 app window
+ *
+ * This implementation provides the visual rendering and state management,
+ * but actual interaction must be triggered from the main application.
  */
 export class OverlayWindow {
     private state: OverlayWindowState;
@@ -25,11 +36,11 @@ export class OverlayWindow {
     // Default theme - lazy initialization to avoid alt1lib import issues
     private static getDefaultTheme(): WindowTheme {
         return {
-            titleBarColor: alt1lib.mixColor(88, 101, 242, 240),     // Discord purple
+            titleBarColor: alt1lib.mixColor(88, 101, 242, 255),     // Discord purple (full opacity)
             titleBarTextColor: alt1lib.mixColor(255, 255, 255, 255), // White text
             borderColor: alt1lib.mixColor(88, 101, 242, 255),       // Purple border
-            backgroundColor: alt1lib.mixColor(47, 49, 54, 240),     // Dark background
-            shadowColor: alt1lib.mixColor(0, 0, 0, 80),             // Dark shadow
+            backgroundColor: alt1lib.mixColor(54, 57, 63, 255),     // Dark background (full opacity for visibility)
+            shadowColor: alt1lib.mixColor(0, 0, 0, 128),            // Dark shadow
             accentColor: alt1lib.mixColor(114, 137, 218, 255)       // Light purple accent
         };
     }
@@ -329,7 +340,8 @@ export class OverlayWindow {
         const { x, y } = this.state.position;
         const { width, height } = this.state.size;
 
-        // Main window background
+        // Main window background - render twice for better opacity
+        // First pass: solid background
         window.alt1.overLayRect(
             this.theme.backgroundColor,
             x,
@@ -337,7 +349,7 @@ export class OverlayWindow {
             width,
             height,
             60000,
-            0
+            0  // filled rectangle
         );
 
         // Border with focus highlight
@@ -345,14 +357,46 @@ export class OverlayWindow {
             ? this.theme.accentColor
             : this.theme.borderColor;
 
+        // Draw border as four separate rectangles for better visibility
+        // Top border
         window.alt1.overLayRect(
             borderColor,
             x - this.borderWidth,
             y - this.borderWidth,
             width + (this.borderWidth * 2),
-            height + (this.borderWidth * 2),
+            this.borderWidth,
             60000,
-            this.borderWidth
+            0
+        );
+        // Bottom border
+        window.alt1.overLayRect(
+            borderColor,
+            x - this.borderWidth,
+            y + height,
+            width + (this.borderWidth * 2),
+            this.borderWidth,
+            60000,
+            0
+        );
+        // Left border
+        window.alt1.overLayRect(
+            borderColor,
+            x - this.borderWidth,
+            y,
+            this.borderWidth,
+            height,
+            60000,
+            0
+        );
+        // Right border
+        window.alt1.overLayRect(
+            borderColor,
+            x + width,
+            y,
+            this.borderWidth,
+            height,
+            60000,
+            0
         );
     }
 
@@ -419,9 +463,9 @@ export class OverlayWindow {
             const closeX = x + width - 25;
             const closeY = y + 5;
 
-            // Close button background
+            // Close button background - full opacity for visibility
             window.alt1.overLayRect(
-                alt1lib.mixColor(220, 53, 69, 200), // Red background
+                alt1lib.mixColor(220, 53, 69, 255), // Red background with full opacity
                 closeX,
                 closeY,
                 20,

@@ -1,6 +1,17 @@
 import { WindowConfig, Point, Size, Rect, InteractionEvent } from './types';
 /**
  * Individual overlay window with advanced rendering and interaction capabilities
+ *
+ * IMPORTANT: Alt1 overlay limitations:
+ * - Overlays are purely visual and cannot receive mouse events directly
+ * - Interactions must be handled by the main Alt1 application window
+ * - Drag, resize, and click functionality requires workarounds using:
+ *   1. Main window buttons to control overlay windows
+ *   2. Keyboard shortcuts for window management
+ *   3. Context menus in the main Alt1 app window
+ *
+ * This implementation provides the visual rendering and state management,
+ * but actual interaction must be triggered from the main application.
  */
 export declare class OverlayWindow {
     private state;

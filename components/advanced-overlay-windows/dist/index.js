@@ -282,16 +282,27 @@ __webpack_require__.r(__webpack_exports__);
 
 /**
  * Individual overlay window with advanced rendering and interaction capabilities
+ *
+ * IMPORTANT: Alt1 overlay limitations:
+ * - Overlays are purely visual and cannot receive mouse events directly
+ * - Interactions must be handled by the main Alt1 application window
+ * - Drag, resize, and click functionality requires workarounds using:
+ *   1. Main window buttons to control overlay windows
+ *   2. Keyboard shortcuts for window management
+ *   3. Context menus in the main Alt1 app window
+ *
+ * This implementation provides the visual rendering and state management,
+ * but actual interaction must be triggered from the main application.
  */
 class OverlayWindow {
     // Default theme - lazy initialization to avoid alt1lib import issues
     static getDefaultTheme() {
         return {
-            titleBarColor: alt1__WEBPACK_IMPORTED_MODULE_0__.mixColor(88, 101, 242, 240), // Discord purple
+            titleBarColor: alt1__WEBPACK_IMPORTED_MODULE_0__.mixColor(88, 101, 242, 255), // Discord purple (full opacity)
             titleBarTextColor: alt1__WEBPACK_IMPORTED_MODULE_0__.mixColor(255, 255, 255, 255), // White text
             borderColor: alt1__WEBPACK_IMPORTED_MODULE_0__.mixColor(88, 101, 242, 255), // Purple border
-            backgroundColor: alt1__WEBPACK_IMPORTED_MODULE_0__.mixColor(47, 49, 54, 240), // Dark background
-            shadowColor: alt1__WEBPACK_IMPORTED_MODULE_0__.mixColor(0, 0, 0, 80), // Dark shadow
+            backgroundColor: alt1__WEBPACK_IMPORTED_MODULE_0__.mixColor(54, 57, 63, 255), // Dark background (full opacity for visibility)
+            shadowColor: alt1__WEBPACK_IMPORTED_MODULE_0__.mixColor(0, 0, 0, 128), // Dark shadow
             accentColor: alt1__WEBPACK_IMPORTED_MODULE_0__.mixColor(114, 137, 218, 255) // Light purple accent
         };
     }
@@ -559,13 +570,23 @@ class OverlayWindow {
             return;
         const { x, y } = this.state.position;
         const { width, height } = this.state.size;
-        // Main window background
-        window.alt1.overLayRect(this.theme.backgroundColor, x, y, width, height, 60000, 0);
+        // Main window background - render twice for better opacity
+        // First pass: solid background
+        window.alt1.overLayRect(this.theme.backgroundColor, x, y, width, height, 60000, 0 // filled rectangle
+        );
         // Border with focus highlight
         const borderColor = this.state.isFocused
             ? this.theme.accentColor
             : this.theme.borderColor;
-        window.alt1.overLayRect(borderColor, x - this.borderWidth, y - this.borderWidth, width + (this.borderWidth * 2), height + (this.borderWidth * 2), 60000, this.borderWidth);
+        // Draw border as four separate rectangles for better visibility
+        // Top border
+        window.alt1.overLayRect(borderColor, x - this.borderWidth, y - this.borderWidth, width + (this.borderWidth * 2), this.borderWidth, 60000, 0);
+        // Bottom border
+        window.alt1.overLayRect(borderColor, x - this.borderWidth, y + height, width + (this.borderWidth * 2), this.borderWidth, 60000, 0);
+        // Left border
+        window.alt1.overLayRect(borderColor, x - this.borderWidth, y, this.borderWidth, height, 60000, 0);
+        // Right border
+        window.alt1.overLayRect(borderColor, x + width, y, this.borderWidth, height, 60000, 0);
     }
     renderTitleBar() {
         if (!window.alt1)
@@ -601,8 +622,8 @@ class OverlayWindow {
         if (this.state.config.closable !== false) {
             const closeX = x + width - 25;
             const closeY = y + 5;
-            // Close button background
-            window.alt1.overLayRect(alt1__WEBPACK_IMPORTED_MODULE_0__.mixColor(220, 53, 69, 200), // Red background
+            // Close button background - full opacity for visibility
+            window.alt1.overLayRect(alt1__WEBPACK_IMPORTED_MODULE_0__.mixColor(220, 53, 69, 255), // Red background with full opacity
             closeX, closeY, 20, 20, 60000, 0);
             // Close button X
             window.alt1.overLayText('×', alt1__WEBPACK_IMPORTED_MODULE_0__.mixColor(255, 255, 255, 255), 16, closeX + 6, closeY + 15, 60000);
