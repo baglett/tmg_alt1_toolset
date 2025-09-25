@@ -1,0 +1,36 @@
+{
+  "name": "@tmg-alt1/window-resizer",
+  "version": "1.0.0",
+  "description": "Universal Alt1 plugin window resizer with multiple fallback strategies",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "scripts": {
+    "build": "webpack",
+    "dev": "webpack --mode development --watch",
+    "typecheck": "tsc --noEmit"
+  },
+  "keywords": [
+    "alt1",
+    "runescape",
+    "window",
+    "resize",
+    "toolkit",
+    "plugin"
+  ],
+  "author": "TMG Development Team",
+  "license": "MIT",
+  "dependencies": {
+    "alt1": "^0.1.0"
+  },
+  "devDependencies": {
+    "typescript": "^5.1.3",
+    "webpack": "^5.65.0",
+    "ts-loader": "^9.3.1",
+    "webpack-cli": "^4.10.0"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/baglett/tmg_alt1_toolset.git",
+    "directory": "components/window-resizer"
+  }
+}

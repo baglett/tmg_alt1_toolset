@@ -9,6 +9,13 @@ import {
     WindowThemes,
     type HybridWindowConfig
 } from '../../../components/interactive-windows/dist/index';
+import {
+    WindowResizer,
+    LayoutManager,
+    type WindowCapabilities,
+    type ResizeResult,
+    LAYOUT_PRESETS
+} from '../../../components/window-resizer/dist/index';
 import { Alt1Logger, LogLevel } from './logger';
 
 /**
@@ -17,6 +24,8 @@ import { Alt1Logger, LogLevel } from './logger';
 class InteractiveWindowsTestApp {
     private windowManager: InteractiveWindowManager | null = null;
     private hybridWindowManager: HybridWindowManager | null = null;
+    private windowResizer: WindowResizer | null = null;
+    private layoutManager: LayoutManager | null = null;
     private openWindows: any[] = [];
     private isInitialized = false;
     private logger: Alt1Logger;
@@ -30,12 +39,20 @@ class InteractiveWindowsTestApp {
         openSettingsModal: null as HTMLButtonElement | null,
         openMultipleWindows: null as HTMLButtonElement | null,
         openHybridModal: null as HTMLButtonElement | null,
+        testWindowResize: null as HTMLButtonElement | null,
+        testCompactLayout: null as HTMLButtonElement | null,
+        testExpandedLayout: null as HTMLButtonElement | null,
+        detectResizeCapabilities: null as HTMLButtonElement | null,
         showAlert: null as HTMLButtonElement | null,
         showConfirm: null as HTMLButtonElement | null,
         closeAllWindows: null as HTMLButtonElement | null,
         managerStatus: null as HTMLElement | null,
         windowCount: null as HTMLElement | null,
-        focusedWindow: null as HTMLElement | null
+        focusedWindow: null as HTMLElement | null,
+        resizerStatus: null as HTMLElement | null,
+        currentWindowSize: null as HTMLElement | null,
+        userResizeStatus: null as HTMLElement | null,
+        webApiStatus: null as HTMLElement | null
     };
 
     constructor() {
@@ -70,6 +87,8 @@ class InteractiveWindowsTestApp {
         // Initialize window managers
         this.initializeInteractiveWindowManager();
         this.initializeHybridWindowManager();
+        this.initializeWindowResizer();
+        this.initializeLayoutManager();
 
         this.isInitialized = true;
         console.log('✅ Interactive Windows Test App initialized successfully');
@@ -86,12 +105,20 @@ class InteractiveWindowsTestApp {
         this.elements.openSettingsModal = document.getElementById('openSettingsModal') as HTMLButtonElement;
         this.elements.openMultipleWindows = document.getElementById('openMultipleWindows') as HTMLButtonElement;
         this.elements.openHybridModal = document.getElementById('openHybridModal') as HTMLButtonElement;
+        this.elements.testWindowResize = document.getElementById('testWindowResize') as HTMLButtonElement;
+        this.elements.testCompactLayout = document.getElementById('testCompactLayout') as HTMLButtonElement;
+        this.elements.testExpandedLayout = document.getElementById('testExpandedLayout') as HTMLButtonElement;
+        this.elements.detectResizeCapabilities = document.getElementById('detectResizeCapabilities') as HTMLButtonElement;
         this.elements.showAlert = document.getElementById('showAlert') as HTMLButtonElement;
         this.elements.showConfirm = document.getElementById('showConfirm') as HTMLButtonElement;
         this.elements.closeAllWindows = document.getElementById('closeAllWindows') as HTMLButtonElement;
         this.elements.managerStatus = document.getElementById('managerStatus');
         this.elements.windowCount = document.getElementById('windowCount');
         this.elements.focusedWindow = document.getElementById('focusedWindow');
+        this.elements.resizerStatus = document.getElementById('resizerStatus');
+        this.elements.currentWindowSize = document.getElementById('currentWindowSize');
+        this.elements.userResizeStatus = document.getElementById('userResizeStatus');
+        this.elements.webApiStatus = document.getElementById('webApiStatus');
     }
 
     /**
@@ -154,6 +181,7 @@ class InteractiveWindowsTestApp {
 
             // Update status
             this.updateStatus();
+            this.updateResizeStatus();
 
         } catch (error) {
             this.logger.error('Failed to initialize InteractiveWindowManager:', error);
@@ -176,6 +204,72 @@ class InteractiveWindowsTestApp {
 
         } catch (error) {
             this.logger.error('Failed to initialize HybridWindowManager:', error);
+        }
+    }
+
+    /**
+     * Initialize the window resizer component
+     */
+    private initializeWindowResizer(): void {
+        try {
+            this.logger.init('Initializing WindowResizer...');
+
+            this.windowResizer = new WindowResizer({
+                enableFallbacks: true,
+                maxFallbackAttempts: 3,
+                detectCapabilitiesOnInit: true,
+                logLevel: 'debug'
+            });
+
+            this.logger.success('WindowResizer initialized successfully');
+            this.updateResizeStatus();
+
+        } catch (error) {
+            this.logger.error('Failed to initialize WindowResizer:', error);
+            if (this.elements.resizerStatus) {
+                this.elements.resizerStatus.textContent = 'Error';
+                this.elements.resizerStatus.style.color = '#ff6b6b';
+            }
+        }
+    }
+
+    /**
+     * Initialize the layout manager
+     */
+    private initializeLayoutManager(): void {
+        try {
+            this.logger.init('Initializing LayoutManager...');
+
+            if (!this.windowResizer) {
+                this.logger.error('Cannot initialize LayoutManager: WindowResizer not available');
+                return;
+            }
+
+            this.layoutManager = new LayoutManager(this.windowResizer);
+
+            // Add some preset layouts for testing
+            this.layoutManager.addLayout({
+                name: 'test-compact',
+                displayName: 'Test Compact',
+                width: 400,
+                height: 300,
+                description: 'Compact layout for testing',
+                responsive: true
+            });
+
+            this.layoutManager.addLayout({
+                name: 'test-expanded',
+                displayName: 'Test Expanded',
+                width: 800,
+                height: 600,
+                description: 'Expanded layout for testing',
+                responsive: true
+            });
+
+            this.logger.success('LayoutManager initialized successfully');
+
+        } catch (error) {
+            this.logger.error('Failed to initialize LayoutManager:', error);
         }
     }
 
@@ -227,6 +321,42 @@ class InteractiveWindowsTestApp {
                 timestamp: Date.now()
             });
             this.openHybridModal();
+        });
+
+        // Test window resize functionality
+        this.elements.testWindowResize?.addEventListener('click', (event) => {
+            this.logger.ui('Button clicked: testWindowResize', {
+                disabled: (event.target as HTMLButtonElement)?.disabled,
+                timestamp: Date.now()
+            });
+            this.testWindowResize();
+        });
+
+        // Test compact layout
+        this.elements.testCompactLayout?.addEventListener('click', (event) => {
+            this.logger.ui('Button clicked: testCompactLayout', {
+                disabled: (event.target as HTMLButtonElement)?.disabled,
+                timestamp: Date.now()
+            });
+            this.testCompactLayout();
+        });
+
+        // Test expanded layout
+        this.elements.testExpandedLayout?.addEventListener('click', (event) => {
+            this.logger.ui('Button clicked: testExpandedLayout', {
+                disabled: (event.target as HTMLButtonElement)?.disabled,
+                timestamp: Date.now()
+            });
+            this.testExpandedLayout();
+        });
+
+        // Detect resize capabilities
+        this.elements.detectResizeCapabilities?.addEventListener('click', (event) => {
+            this.logger.ui('Button clicked: detectResizeCapabilities', {
+                disabled: (event.target as HTMLButtonElement)?.disabled,
+                timestamp: Date.now()
+            });
+            this.detectResizeCapabilities();
         });
 
         // Show alert
@@ -651,6 +781,226 @@ class InteractiveWindowsTestApp {
             const visibleWindows = this.windowManager ? this.windowManager.getVisibleWindows() : [];
             const focusedWindow = visibleWindows.length > 0 ? visibleWindows[visibleWindows.length - 1] : null;
             this.elements.focusedWindow.textContent = focusedWindow ? focusedWindow.id : 'None';
+        }
+    }
+
+    /**
+     * Update resize status display
+     */
+    private updateResizeStatus(): void {
+        if (this.elements.resizerStatus) {
+            this.elements.resizerStatus.textContent = this.windowResizer ? 'Ready' : 'Not Available';
+            this.elements.resizerStatus.style.color = this.windowResizer ? '#51cf66' : '#ff6b6b';
+        }
+
+        if (this.elements.currentWindowSize && this.windowResizer) {
+            const size = this.windowResizer.getCurrentSize();
+            this.elements.currentWindowSize.textContent = `${size.width}x${size.height}`;
+        }
+
+        if (this.windowResizer) {
+            const capabilities = this.windowResizer.detectCapabilities();
+
+            if (this.elements.userResizeStatus) {
+                this.elements.userResizeStatus.textContent = capabilities.alt1APIs.userResize ? 'Available' : 'Not Available';
+                this.elements.userResizeStatus.style.color = capabilities.alt1APIs.userResize ? '#51cf66' : '#ff6b6b';
+            }
+
+            if (this.elements.webApiStatus) {
+                const hasWebAPIs = capabilities.webAPIs.resizeTo || capabilities.webAPIs.resizeBy;
+                this.elements.webApiStatus.textContent = hasWebAPIs ? 'Available' : 'Blocked';
+                this.elements.webApiStatus.style.color = hasWebAPIs ? '#51cf66' : '#ff6b6b';
+            }
+        }
+    }
+
+    /**
+     * Test Alt1 window resize functionality
+     */
+    private async testWindowResize(): Promise<void> {
+        this.logger.window('testWindowResize() called');
+
+        if (!this.windowResizer) {
+            this.logger.error('testWindowResize failed: Window resizer not available');
+            alert('❌ Window resizer not initialized!');
+            return;
+        }
+
+        try {
+            this.logger.window('Attempting to resize window to 800x600...');
+
+            const result: ResizeResult = await this.windowResizer.resizeWindow(800, 600, {
+                animated: true,
+                duration: 300,
+                maxAttempts: 3,
+                fallbackToContentExpansion: true,
+                onProgress: (progressResult) => {
+                    this.logger.window('Resize progress:', progressResult);
+                },
+                onError: (error, method) => {
+                    this.logger.error(`Resize error with ${method}:`, error);
+                }
+            });
+
+            this.updateResizeStatus();
+
+            if (result.success) {
+                this.logger.success('Window resize succeeded:', result);
+                alert(`✅ Window resize successful!\n\nMethod: ${result.method}\nNew size: ${result.newSize?.width}x${result.newSize?.height}\nExecution time: ${result.executionTime?.toFixed(2)}ms`);
+            } else {
+                this.logger.error('Window resize failed:', result);
+                alert(`❌ Window resize failed!\n\nError: ${result.error}\nFallbacks attempted: ${result.fallbacksAttempted}\nExecution time: ${result.executionTime?.toFixed(2)}ms\n\nThis demonstrates Alt1's window resize limitations.`);
+            }
+
+        } catch (error) {
+            this.logger.error('Failed to test window resize:', error);
+            alert(`❌ Window resize test failed: ${error instanceof Error ? error.message : String(error)}`);
+        }
+    }
+
+    /**
+     * Test compact layout switching
+     */
+    private async testCompactLayout(): Promise<void> {
+        this.logger.window('testCompactLayout() called');
+
+        if (!this.layoutManager) {
+            this.logger.error('testCompactLayout failed: Layout manager not available');
+            alert('❌ Layout manager not initialized!');
+            return;
+        }
+
+        try {
+            this.logger.window('Switching to compact layout...');
+
+            const result = await this.layoutManager.switchLayout('test-compact', {
+                animated: true,
+                duration: 300,
+                onProgress: (progressResult) => {
+                    this.logger.window('Layout switch progress:', progressResult);
+                }
+            });
+
+            if (result.success) {
+                this.logger.success('Compact layout applied:', result);
+                alert(`📱 Compact Layout Applied!\n\nSize: 400x300\nMethod: ${result.method}\n\nNote: This is content-based resizing since Alt1 blocks true window resizing.`);
+            } else {
+                this.logger.error('Compact layout failed:', result);
+                alert(`❌ Compact layout failed: ${result.error}`);
+            }
+
+            this.updateResizeStatus();
+
+        } catch (error) {
+            this.logger.error('Failed to test compact layout:', error);
+            alert(`❌ Compact layout test failed: ${error instanceof Error ? error.message : String(error)}`);
+        }
+    }
+
+    /**
+     * Test expanded layout switching
+     */
+    private async testExpandedLayout(): Promise<void> {
+        this.logger.window('testExpandedLayout() called');
+
+        if (!this.layoutManager) {
+            this.logger.error('testExpandedLayout failed: Layout manager not available');
+            alert('❌ Layout manager not initialized!');
+            return;
+        }
+
+        try {
+            this.logger.window('Switching to expanded layout...');
+
+            const result = await this.layoutManager.switchLayout('test-expanded', {
+                animated: true,
+                duration: 300,
+                onProgress: (progressResult) => {
+                    this.logger.window('Layout switch progress:', progressResult);
+                }
+            });
+
+            if (result.success) {
+                this.logger.success('Expanded layout applied:', result);
+                alert(`📊 Expanded Layout Applied!\n\nSize: 800x600\nMethod: ${result.method}\n\nNote: This demonstrates content-based adaptive layouts.`);
+            } else {
+                this.logger.error('Expanded layout failed:', result);
+                alert(`❌ Expanded layout failed: ${result.error}`);
+            }
+
+            this.updateResizeStatus();
+
+        } catch (error) {
+            this.logger.error('Failed to test expanded layout:', error);
+            alert(`❌ Expanded layout test failed: ${error instanceof Error ? error.message : String(error)}`);
+        }
+    }
+
+    /**
+     * Detect and display resize capabilities
+     */
+    private detectResizeCapabilities(): void {
+        this.logger.window('detectResizeCapabilities() called');
+
+        if (!this.windowResizer) {
+            this.logger.error('detectResizeCapabilities failed: Window resizer not available');
+            alert('❌ Window resizer not initialized!');
+            return;
+        }
+
+        try {
+            const capabilities: WindowCapabilities = this.windowResizer.detectCapabilities();
+            const availableStrategies = this.windowResizer.getAvailableStrategies();
+
+            this.logger.window('Detected capabilities:', capabilities);
+            this.logger.window('Available strategies:', availableStrategies.map(s => s.name));
+
+            this.updateResizeStatus();
+
+            // Build detailed capability report
+            let report = '🔍 Alt1 Window Resize Capabilities\n\n';
+
+            report += '📊 Web APIs:\n';
+            report += `  • resizeTo(): ${capabilities.webAPIs.resizeTo ? '✅ Available' : '❌ Blocked'}\n`;
+            report += `  • resizeBy(): ${capabilities.webAPIs.resizeBy ? '✅ Available' : '❌ Blocked'}\n`;
+            report += `  • outerWidth: ${capabilities.webAPIs.outerWidth ? '✅ Available' : '❌ Blocked'}\n`;
+            report += `  • outerHeight: ${capabilities.webAPIs.outerHeight ? '✅ Available' : '❌ Blocked'}\n\n`;
+
+            report += '🎮 Alt1 APIs:\n';
+            report += `  • userResize(): ${capabilities.alt1APIs.userResize ? '✅ Available' : '❌ Not Available'}\n`;
+            report += `  • updateConfig(): ${capabilities.alt1APIs.updateConfig ? '✅ Available' : '❌ Not Available'}\n`;
+            report += `  • windowControl(): ${capabilities.alt1APIs.windowControl ? '✅ Available' : '❌ Not Available'}\n\n`;
+
+            report += '🔧 Alternative Methods:\n';
+            report += `  • Content Expansion: ${capabilities.contentExpansion ? '✅ Available' : '❌ Not Available'}\n`;
+            report += `  • External Control: ${capabilities.externalControl ? '✅ Available' : '❌ Not Available'}\n\n`;
+
+            report += `🏷️ Alt1 Version: ${capabilities.detectedVersion || 'Unknown'}\n\n`;
+
+            report += '⚡ Available Strategies:\n';
+            availableStrategies.forEach((strategy, index) => {
+                report += `  ${index + 1}. ${strategy.name} (priority: ${strategy.priority})\n`;
+            });
+
+            if (capabilities.limitations && capabilities.limitations.length > 0) {
+                report += '\n⚠️ Detected Limitations:\n';
+                capabilities.limitations.forEach(limitation => {
+                    report += `  • ${limitation}\n`;
+                });
+            }
+
+            report += '\n💡 Conclusion:\n';
+            if (capabilities.alt1APIs.userResize) {
+                report += 'Alt1 userResize API is available but designed for user interaction, not programmatic control.';
+            } else {
+                report += 'Alt1 blocks programmatic window resizing. Content-based adaptive layouts are the recommended alternative.';
+            }
+
+            alert(report);
+
+        } catch (error) {
+            this.logger.error('Failed to detect resize capabilities:', error);
+            alert(`❌ Capability detection failed: ${error instanceof Error ? error.message : String(error)}`);
         }
     }
 }

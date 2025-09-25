@@ -218,6 +218,14 @@
                 <button id="openHybridModal" class="btn" style="background: #9C27B0;">🌟 Hybrid Modal (Full Screen)</button>
             </div>
 
+            <h3>📏 Window Resize Testing</h3>
+            <div class="button-group">
+                <button id="testWindowResize" class="btn" style="background: #E91E63;">🔧 Test Alt1 Resize (800x600)</button>
+                <button id="testCompactLayout" class="btn" style="background: #9C27B0;">📱 Compact Layout</button>
+                <button id="testExpandedLayout" class="btn" style="background: #2196F3;">📊 Expanded Layout</button>
+                <button id="detectResizeCapabilities" class="btn" style="background: #FF9800;">🔍 Detect Capabilities</button>
+            </div>
+
             <h3>💬 Dialog System</h3>
             <div class="button-group">
                 <button id="showAlert" class="btn" style="background: #FFC107; color: black;">📢 Show Alert</button>
@@ -238,6 +246,26 @@
                 <div class="status-item">
                     <span>Focused Window:</span>
                     <span id="focusedWindow" class="status-value">None</span>
+                </div>
+            </div>
+
+            <div class="status">
+                <h4>🔧 Window Resize Status</h4>
+                <div class="status-item">
+                    <span>Resize Component:</span>
+                    <span id="resizerStatus" class="status-value">Not Initialized</span>
+                </div>
+                <div class="status-item">
+                    <span>Current Size:</span>
+                    <span id="currentWindowSize" class="status-value">Unknown</span>
+                </div>
+                <div class="status-item">
+                    <span>Alt1 userResize:</span>
+                    <span id="userResizeStatus" class="status-value">Unknown</span>
+                </div>
+                <div class="status-item">
+                    <span>Web APIs:</span>
+                    <span id="webApiStatus" class="status-value">Unknown</span>
                 </div>
             </div>
         </div>
