@@ -43,8 +43,15 @@ export class WebAPIStrategy implements ResizeStrategy {
                     height: window.outerHeight
                 };
 
-                // Check if resize was successful
-                if (Math.abs(newSize.width - width) < 10 && Math.abs(newSize.height - height) < 10) {
+                // Check if resize was successful with stricter verification for Alt1
+                const widthDiff = Math.abs(newSize.width - width);
+                const heightDiff = Math.abs(newSize.height - height);
+                const actuallyResized = widthDiff < 10 && heightDiff < 10;
+
+                // Additional Alt1-specific check: verify the resize actually took visual effect
+                const alt1SilentIgnore = this.detectAlt1SilentIgnore(previousSize, newSize, width, height);
+
+                if (actuallyResized && !alt1SilentIgnore) {
                     return {
                         success: true,
                         method: this.name,
@@ -52,6 +59,18 @@ export class WebAPIStrategy implements ResizeStrategy {
                         newSize,
                         executionTime: performance.now() - startTime
                     };
+                } else {
+                    // Method 1 failed - provide specific feedback
+                    let errorMessage = 'resizeTo() call did not achieve target dimensions';
+
+                    if (alt1SilentIgnore) {
+                        errorMessage = 'Alt1 Toolkit silently ignored resizeTo() command - expected behavior for security';
+                    } else if (!actuallyResized) {
+                        errorMessage = `resizeTo() failed - target: ${width}x${height}, actual: ${newSize.width}x${newSize.height} (diff: ${widthDiff}x${heightDiff})`;
+                    }
+
+                    // Continue to try other methods, but store this error for potential use
+                    // Fall through to method 2
                 }
             }
 
@@ -105,16 +124,30 @@ export class WebAPIStrategy implements ResizeStrategy {
                 // Property assignment failed, continue to failure
             }
 
-            // All methods failed
+            // All methods failed - determine why
+            const finalSize = {
+                width: window.outerWidth,
+                height: window.outerHeight
+            };
+
+            // Check if Alt1 is silently ignoring commands
+            const alt1Detected = typeof (window as any).alt1 !== 'undefined';
+            let errorMessage = 'Web APIs available but resize was blocked or ineffective';
+
+            if (alt1Detected) {
+                if (previousSize.width === finalSize.width && previousSize.height === finalSize.height) {
+                    errorMessage = 'Alt1 Toolkit silently ignored window resize commands - this is expected behavior for security';
+                } else {
+                    errorMessage = `Alt1 Toolkit partially processed resize (${previousSize.width}x${previousSize.height} → ${finalSize.width}x${finalSize.height}) but blocked target size (${width}x${height})`;
+                }
+            }
+
             return {
                 success: false,
                 method: this.name,
                 previousSize,
-                newSize: {
-                    width: window.outerWidth,
-                    height: window.outerHeight
-                },
-                error: 'Web APIs available but resize was blocked or ineffective',
+                newSize: finalSize,
+                error: errorMessage,
                 executionTime: performance.now() - startTime
             };
 
@@ -134,6 +167,30 @@ export class WebAPIStrategy implements ResizeStrategy {
             // Give browser time to process resize
             setTimeout(resolve, 50);
         });
+    }
+
+    /**
+     * Detect if Alt1 is silently ignoring resize commands
+     * This happens when window.resizeTo() executes but has no visual effect
+     */
+    private detectAlt1SilentIgnore(previousSize: {width: number, height: number},
+                                   newSize: {width: number, height: number},
+                                   targetWidth: number,
+                                   targetHeight: number): boolean {
+
+        // Check if we're in Alt1 environment
+        const isAlt1 = typeof (window as any).alt1 !== 'undefined';
+        if (!isAlt1) return false;
+
+        // If window dimensions didn't change at all despite resize command
+        const noVisualChange = previousSize.width === newSize.width &&
+                              previousSize.height === newSize.height;
+
+        // If outerWidth/outerHeight report the target size but visually nothing changed
+        const reportsFakeSuccess = (Math.abs(newSize.width - targetWidth) < 10 &&
+                                   Math.abs(newSize.height - targetHeight) < 10) && noVisualChange;
+
+        return noVisualChange || reportsFakeSuccess;
     }
 
     // Detect available Web API capabilities

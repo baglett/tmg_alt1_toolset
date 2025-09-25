@@ -3136,8 +3136,13 @@ class WebAPIStrategy {
                     width: window.outerWidth,
                     height: window.outerHeight
                 };
-                // Check if resize was successful
-                if (Math.abs(newSize.width - width) < 10 && Math.abs(newSize.height - height) < 10) {
+                // Check if resize was successful with stricter verification for Alt1
+                const widthDiff = Math.abs(newSize.width - width);
+                const heightDiff = Math.abs(newSize.height - height);
+                const actuallyResized = widthDiff < 10 && heightDiff < 10;
+                // Additional Alt1-specific check: verify the resize actually took visual effect
+                const alt1SilentIgnore = this.detectAlt1SilentIgnore(previousSize, newSize, width, height);
+                if (actuallyResized && !alt1SilentIgnore) {
                     return {
                         success: true,
                         method: this.name,
@@ -3145,6 +3150,18 @@ class WebAPIStrategy {
                         newSize,
                         executionTime: performance.now() - startTime
                     };
+                }
+                else {
+                    // Method 1 failed - provide specific feedback
+                    let errorMessage = 'resizeTo() call did not achieve target dimensions';
+                    if (alt1SilentIgnore) {
+                        errorMessage = 'Alt1 Toolkit silently ignored resizeTo() command - expected behavior for security';
+                    }
+                    else if (!actuallyResized) {
+                        errorMessage = `resizeTo() failed - target: ${width}x${height}, actual: ${newSize.width}x${newSize.height} (diff: ${widthDiff}x${heightDiff})`;
+                    }
+                    // Continue to try other methods, but store this error for potential use
+                    // Fall through to method 2
                 }
             }
             // Method 2: Calculate delta and use resizeBy
@@ -3189,16 +3206,28 @@ class WebAPIStrategy {
             catch (e) {
                 // Property assignment failed, continue to failure
             }
-            // All methods failed
+            // All methods failed - determine why
+            const finalSize = {
+                width: window.outerWidth,
+                height: window.outerHeight
+            };
+            // Check if Alt1 is silently ignoring commands
+            const alt1Detected = typeof window.alt1 !== 'undefined';
+            let errorMessage = 'Web APIs available but resize was blocked or ineffective';
+            if (alt1Detected) {
+                if (previousSize.width === finalSize.width && previousSize.height === finalSize.height) {
+                    errorMessage = 'Alt1 Toolkit silently ignored window resize commands - this is expected behavior for security';
+                }
+                else {
+                    errorMessage = `Alt1 Toolkit partially processed resize (${previousSize.width}x${previousSize.height} → ${finalSize.width}x${finalSize.height}) but blocked target size (${width}x${height})`;
+                }
+            }
             return {
                 success: false,
                 method: this.name,
                 previousSize,
-                newSize: {
-                    width: window.outerWidth,
-                    height: window.outerHeight
-                },
-                error: 'Web APIs available but resize was blocked or ineffective',
+                newSize: finalSize,
+                error: errorMessage,
                 executionTime: performance.now() - startTime
             };
         }
@@ -3218,6 +3247,23 @@ class WebAPIStrategy {
             setTimeout(resolve, 50);
         });
     }
+    /**
+     * Detect if Alt1 is silently ignoring resize commands
+     * This happens when window.resizeTo() executes but has no visual effect
+     */
+    detectAlt1SilentIgnore(previousSize, newSize, targetWidth, targetHeight) {
+        // Check if we're in Alt1 environment
+        const isAlt1 = typeof window.alt1 !== 'undefined';
+        if (!isAlt1)
+            return false;
+        // If window dimensions didn't change at all despite resize command
+        const noVisualChange = previousSize.width === newSize.width &&
+            previousSize.height === newSize.height;
+        // If outerWidth/outerHeight report the target size but visually nothing changed
+        const reportsFakeSuccess = (Math.abs(newSize.width - targetWidth) < 10 &&
+            Math.abs(newSize.height - targetHeight) < 10) && noVisualChange;
+        return noVisualChange || reportsFakeSuccess;
+    }
     // Detect available Web API capabilities
     static detectCapabilities() {
         return {
@@ -3236,10 +3282,10 @@ class WebAPIStrategy {
 /*!******************!*\
   !*** ./types.ts ***!
   \******************/
-/***/ ((__unused_webpack_module, __nested_webpack_exports__, __nested_webpack_require_48659__) => {
+/***/ ((__unused_webpack_module, __nested_webpack_exports__, __nested_webpack_require_51501__) => {
 
-__nested_webpack_require_48659__.r(__nested_webpack_exports__);
-/* harmony export */ __nested_webpack_require_48659__.d(__nested_webpack_exports__, {
+__nested_webpack_require_51501__.r(__nested_webpack_exports__);
+/* harmony export */ __nested_webpack_require_51501__.d(__nested_webpack_exports__, {
 /* harmony export */   LAYOUT_PRESETS: () => (/* binding */ LAYOUT_PRESETS)
 /* harmony export */ });
 /**
@@ -3266,7 +3312,7 @@ const LAYOUT_PRESETS = {
 /******/ 	var __webpack_module_cache__ = {};
 /******/ 	
 /******/ 	// The require function
-/******/ 	function __nested_webpack_require_49438__(moduleId) {
+/******/ 	function __nested_webpack_require_52280__(moduleId) {
 /******/ 		// Check if module is in cache
 /******/ 		var cachedModule = __webpack_module_cache__[moduleId];
 /******/ 		if (cachedModule !== undefined) {
@@ -3280,7 +3326,7 @@ const LAYOUT_PRESETS = {
 /******/ 		};
 /******/ 	
 /******/ 		// Execute the module function
-/******/ 		__webpack_modules__[moduleId](module, module.exports, __nested_webpack_require_49438__);
+/******/ 		__webpack_modules__[moduleId](module, module.exports, __nested_webpack_require_52280__);
 /******/ 	
 /******/ 		// Return the exports of the module
 /******/ 		return module.exports;
@@ -3290,9 +3336,9 @@ const LAYOUT_PRESETS = {
 /******/ 	/* webpack/runtime/define property getters */
 /******/ 	(() => {
 /******/ 		// define getter functions for harmony exports
-/******/ 		__nested_webpack_require_49438__.d = (exports, definition) => {
+/******/ 		__nested_webpack_require_52280__.d = (exports, definition) => {
 /******/ 			for(var key in definition) {
-/******/ 				if(__nested_webpack_require_49438__.o(definition, key) && !__nested_webpack_require_49438__.o(exports, key)) {
+/******/ 				if(__nested_webpack_require_52280__.o(definition, key) && !__nested_webpack_require_52280__.o(exports, key)) {
 /******/ 					Object.defineProperty(exports, key, { enumerable: true, get: definition[key] });
 /******/ 				}
 /******/ 			}
@@ -3301,13 +3347,13 @@ const LAYOUT_PRESETS = {
 /******/ 	
 /******/ 	/* webpack/runtime/hasOwnProperty shorthand */
 /******/ 	(() => {
-/******/ 		__nested_webpack_require_49438__.o = (obj, prop) => (Object.prototype.hasOwnProperty.call(obj, prop))
+/******/ 		__nested_webpack_require_52280__.o = (obj, prop) => (Object.prototype.hasOwnProperty.call(obj, prop))
 /******/ 	})();
 /******/ 	
 /******/ 	/* webpack/runtime/make namespace object */
 /******/ 	(() => {
 /******/ 		// define __esModule on exports
-/******/ 		__nested_webpack_require_49438__.r = (exports) => {
+/******/ 		__nested_webpack_require_52280__.r = (exports) => {
 /******/ 			if(typeof Symbol !== 'undefined' && Symbol.toStringTag) {
 /******/ 				Object.defineProperty(exports, Symbol.toStringTag, { value: 'Module' });
 /******/ 			}
@@ -3322,8 +3368,8 @@ var __nested_webpack_exports__ = {};
 /*!******************!*\
   !*** ./index.ts ***!
   \******************/
-__nested_webpack_require_49438__.r(__nested_webpack_exports__);
-/* harmony export */ __nested_webpack_require_49438__.d(__nested_webpack_exports__, {
+__nested_webpack_require_52280__.r(__nested_webpack_exports__);
+/* harmony export */ __nested_webpack_require_52280__.d(__nested_webpack_exports__, {
 /* harmony export */   Alt1NativeStrategy: () => (/* reexport safe */ _strategies_Alt1NativeStrategy__WEBPACK_IMPORTED_MODULE_4__.Alt1NativeStrategy),
 /* harmony export */   ContentExpansionStrategy: () => (/* reexport safe */ _strategies_ContentExpansionStrategy__WEBPACK_IMPORTED_MODULE_5__.ContentExpansionStrategy),
 /* harmony export */   LAYOUT_PRESETS: () => (/* reexport safe */ _types__WEBPACK_IMPORTED_MODULE_2__.LAYOUT_PRESETS),
@@ -3331,12 +3377,12 @@ __nested_webpack_require_49438__.r(__nested_webpack_exports__);
 /* harmony export */   WebAPIStrategy: () => (/* reexport safe */ _strategies_WebAPIStrategy__WEBPACK_IMPORTED_MODULE_3__.WebAPIStrategy),
 /* harmony export */   WindowResizer: () => (/* reexport safe */ _WindowResizer__WEBPACK_IMPORTED_MODULE_0__.WindowResizer)
 /* harmony export */ });
-/* harmony import */ var _WindowResizer__WEBPACK_IMPORTED_MODULE_0__ = __nested_webpack_require_49438__(/*! ./WindowResizer */ "./WindowResizer.ts");
-/* harmony import */ var _LayoutManager__WEBPACK_IMPORTED_MODULE_1__ = __nested_webpack_require_49438__(/*! ./LayoutManager */ "./LayoutManager.ts");
-/* harmony import */ var _types__WEBPACK_IMPORTED_MODULE_2__ = __nested_webpack_require_49438__(/*! ./types */ "./types.ts");
-/* harmony import */ var _strategies_WebAPIStrategy__WEBPACK_IMPORTED_MODULE_3__ = __nested_webpack_require_49438__(/*! ./strategies/WebAPIStrategy */ "./strategies/WebAPIStrategy.ts");
-/* harmony import */ var _strategies_Alt1NativeStrategy__WEBPACK_IMPORTED_MODULE_4__ = __nested_webpack_require_49438__(/*! ./strategies/Alt1NativeStrategy */ "./strategies/Alt1NativeStrategy.ts");
-/* harmony import */ var _strategies_ContentExpansionStrategy__WEBPACK_IMPORTED_MODULE_5__ = __nested_webpack_require_49438__(/*! ./strategies/ContentExpansionStrategy */ "./strategies/ContentExpansionStrategy.ts");
+/* harmony import */ var _WindowResizer__WEBPACK_IMPORTED_MODULE_0__ = __nested_webpack_require_52280__(/*! ./WindowResizer */ "./WindowResizer.ts");
+/* harmony import */ var _LayoutManager__WEBPACK_IMPORTED_MODULE_1__ = __nested_webpack_require_52280__(/*! ./LayoutManager */ "./LayoutManager.ts");
+/* harmony import */ var _types__WEBPACK_IMPORTED_MODULE_2__ = __nested_webpack_require_52280__(/*! ./types */ "./types.ts");
+/* harmony import */ var _strategies_WebAPIStrategy__WEBPACK_IMPORTED_MODULE_3__ = __nested_webpack_require_52280__(/*! ./strategies/WebAPIStrategy */ "./strategies/WebAPIStrategy.ts");
+/* harmony import */ var _strategies_Alt1NativeStrategy__WEBPACK_IMPORTED_MODULE_4__ = __nested_webpack_require_52280__(/*! ./strategies/Alt1NativeStrategy */ "./strategies/Alt1NativeStrategy.ts");
+/* harmony import */ var _strategies_ContentExpansionStrategy__WEBPACK_IMPORTED_MODULE_5__ = __nested_webpack_require_52280__(/*! ./strategies/ContentExpansionStrategy */ "./strategies/ContentExpansionStrategy.ts");
 /**
  * @tmg-alt1/window-resizer
  * Universal Alt1 plugin window resizer with multiple fallback strategies
