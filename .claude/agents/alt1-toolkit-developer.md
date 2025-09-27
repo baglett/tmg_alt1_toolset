@@ -134,5 +134,6 @@ private handleButtonClick(): void {
 - Clean separation between reusable components and application-specific code
 - Responsive design within fixed window constraints
 - **MANDATORY**: Comprehensive Alt1Logger implementation for debugging and monitoring
+- **MANDATORY**: when developing, ALWAYS build, commit, push, and monitor the Github Actions that allows the content to be installed via the alt1 add app link. 
 
 When providing solutions, always consider the monorepo architecture, Alt1 API constraints, and include proper deployment monitoring steps. Focus on maintainable, reusable patterns that align with the established component-plugin architecture.
