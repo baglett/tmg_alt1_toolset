@@ -51,16 +51,14 @@ tmg_alt1_toolset/
 - **`alt1` npm package** (`import * as a1lib from 'alt1'`): Utility functions, color mixing, image processing
 - **`window.alt1` runtime API** (`(window as any).alt1`): Core overlay functions, screen capture, app registration
 
-**Build & Development**
-- Webpack Dev Server (hot reload on port 9000)
+**Build & Deployment**
+- Webpack (production builds only - no dev server for Alt1 apps)
 - Copy Webpack Plugin (asset management)
 - CSS/SASS Loaders (styling support)
 - TypeScript Loader (compilation)
-
-**Deployment**
-- GitHub Pages (automated via GitHub Actions)
-- Alt1 Protocol (`alt1://addapp/` URLs)
-- Local development (`http://localhost:9000/`)
+- GitHub Pages (automated deployment via GitHub Actions)
+- Alt1 Protocol (`alt1://addapp/` URLs for branch deployments)
+- **NO LOCAL DEVELOPMENT FOR ALT1 APPS** - Must deploy to test
 
 ## Development Patterns
 
@@ -77,20 +75,24 @@ import { DoorTextReader } from '../mouse_text_tool/dist/index.bundle.js';
 class DoorTextReader { /* embedded copy */ }
 ```
 
-### Workspace Development Pattern
+### Workspace Build Pattern
 ```bash
 # Root workspace commands
 npm run build:all              # Build all components and plugins
-npm run dev:dungeoneering      # Start dungeoneering plugin dev server
-npm run dev:mouse-text         # Start mouse-text component dev server
 
-# Individual component development
+# Individual component builds
 cd components/mouse-text-tool
-npm run dev                    # Component-specific development
+npm run build                  # Build component library
 
-# Individual plugin development
+# Individual plugin builds
 cd plugins/dungeoneering-optimizer
-npm run dev                    # Plugin-specific development
+npm run build                  # Build Alt1 application
+
+# IMPORTANT: After building, always commit and push for deployment
+git add .
+git commit -m "Your changes"
+git push
+# Then monitor: https://github.com/baglett/tmg_alt1_toolset/actions
 ```
 
 ### Alt1 Integration Pattern
@@ -114,10 +116,8 @@ if (window.alt1) {
 module.exports = {
     entry: './src/index.ts',
     output: { path: path.resolve(__dirname, 'dist') },
-    devServer: {
-        port: 9000,
-        headers: { "Access-Control-Allow-Origin": "*" }
-    }
+    // NO devServer configuration for Alt1 apps
+    // Apps must be deployed to GitHub Pages for testing
 };
 ```
 
@@ -149,28 +149,74 @@ module.exports = {
 
 ## Development Workflow
 
-### Modern Workspace Development
+### MANDATORY Alt1 Development Workflow
+
+**CRITICAL: Alt1 apps CANNOT be properly tested locally. They MUST run in the actual Alt1 Toolkit environment.**
+
+**NEVER use these commands for Alt1 development:**
+- ❌ `npm run dev` - Local dev servers can't replicate Alt1 environment
+- ❌ `webpack serve` - Missing Alt1 API injection and permissions
+- ❌ `http-server` - No Alt1 window management or overlays
+- ❌ `alt1://addapp/http://localhost:9000/appconfig.json` - Unreliable for testing
+
+**ALWAYS follow this exact workflow:**
+
 ```bash
-# Root-level development (recommended)
-npm run dev:mouse-text         # Start mouse-text component dev server
-npm run dev:dungeoneering      # Start dungeoneering plugin dev server
+# Step 1: Build locally to catch errors early
+npm run build                  # Build current plugin/component
+# OR
 npm run build:all              # Build all components and plugins
-npm run test:all               # Run tests across all workspaces
 
-# Individual workspace development
-cd components/mouse-text-tool && npm run dev
-cd plugins/dungeoneering-optimizer && npm run dev
+# Step 2: Commit changes with descriptive message
+git add .
+git commit -m "Your descriptive commit message
 
-# Alt1 Testing URLs
-# Component: alt1://addapp/http://localhost:9000/appconfig.json
-# Plugin: alt1://addapp/http://localhost:9000/appconfig.json
+🤖 Generated with [Claude Code](https://claude.ai/code)
 
-# Production deployment with monitoring
-git add . && git commit -m "Your changes"
-git push                       # Triggers GitHub Actions
-# REQUIRED: Check https://github.com/baglett/tmg_alt1_toolset/actions
-# Monitor deployment status and fix any failures immediately
+Co-Authored-By: Claude <noreply@anthropic.com>"
+
+# Step 3: Push to trigger automatic deployment
+git push
+
+# Step 4: Monitor GitHub Actions immediately
+# Visit: https://github.com/baglett/tmg_alt1_toolset/actions
+# Wait for deployment to complete (usually 2-3 minutes)
+
+# Step 5: Test using branch-specific Alt1 install URL
+# For feature branches (e.g., feature/claude_setup):
+alt1://addapp/https://baglett.github.io/tmg_alt1_toolset/feature/claude_setup/[plugin-name]/appconfig.json
+
+# For main branch (production):
+alt1://addapp/https://baglett.github.io/tmg_alt1_toolset/[plugin-name]/appconfig.json
 ```
+
+### Why This Workflow is MANDATORY
+
+1. **Alt1 Environment Requirements**: Alt1 apps need the actual Alt1 Toolkit runtime to function properly
+2. **Security Constraints**: Alt1's permission system and API injection only work in the real environment
+3. **Window Management**: Alt1's window constraints and overlay system can't be simulated locally
+4. **Branch Deployments**: Every push triggers automatic deployment to a branch-specific URL for safe testing
+5. **Immediate Feedback**: GitHub Actions provide quick deployment (2-3 minutes) with full Alt1 compatibility
+
+### What You Should Always Tell Users
+
+When developing Alt1 applications:
+- "We'll build locally, commit, and push to trigger deployment"
+- "Let's monitor the GitHub Actions to ensure successful deployment"
+- "Once deployed, use this branch-specific Alt1 install URL to test"
+- "Never try to run Alt1 apps locally - they need the actual Alt1 environment"
+
+### Component Development Exception
+
+Components (libraries without appconfig.json) can be developed locally for unit testing:
+```bash
+# For component libraries only (not Alt1 apps):
+cd components/mouse-text-tool
+npm run dev                    # OK for component development
+npm run test                   # OK for unit testing
+```
+
+But plugins (Alt1 apps) MUST use the deployment workflow above.
 
 ### File Structure Convention
 ```
@@ -232,11 +278,11 @@ component-name/
 
 ## Common Commands
 
-### Development
+### Build Commands
 ```bash
-npm run dev     # Start dev server with hot reload
-npm run build   # Production build
-npm run start   # Build and serve
+npm run build     # Production build (REQUIRED before committing)
+npm run build:all # Build all components and plugins
+# Note: NO dev server commands for Alt1 apps - must deploy to test
 ```
 
 ### **CRITICAL: Build Before Commit Protocol**
@@ -309,17 +355,29 @@ ${{ github.ref_name == 'main' && '' || github.ref_name }}${{ github.ref_name == 
 
 #### Required Development Protocol
 ```bash
-# BEFORE committing any changes:
-1. Build affected components/plugins: npm run build:all
-2. Test locally: npm run dev:[plugin-name]
-3. Commit with built dist/ files: git add . && git commit -m "message"
+# MANDATORY WORKFLOW - NO LOCAL TESTING FOR ALT1 APPS:
 
-# AFTER pushing commits, ALWAYS check deployment status:
-4. Check GitHub Actions tab: https://github.com/baglett/tmg_alt1_toolset/actions
-5. Monitor latest workflow run for success/failure
-6. If failed, check logs and fix issues before next push
-7. Verify branch-specific deployment URL is accessible after success
-8. Test Alt1 install links for the appropriate branch
+# Step 1: Build components/plugins locally
+npm run build:all              # Or specific build command
+
+# Step 2: Commit with built dist/ files
+git add .
+git commit -m "Your descriptive message
+
+🤖 Generated with [Claude Code](https://claude.ai/code)
+
+Co-Authored-By: Claude <noreply@anthropic.com>"
+
+# Step 3: Push to trigger deployment
+git push
+
+# Step 4: Monitor GitHub Actions IMMEDIATELY
+# Visit: https://github.com/baglett/tmg_alt1_toolset/actions
+# Wait for deployment completion (2-3 minutes)
+
+# Step 5: Test with branch-specific Alt1 URL
+# Feature branch: alt1://addapp/https://baglett.github.io/tmg_alt1_toolset/[branch-name]/[plugin-name]/appconfig.json
+# Main branch: alt1://addapp/https://baglett.github.io/tmg_alt1_toolset/[plugin-name]/appconfig.json
 ```
 
 ## Key Dependencies
@@ -458,11 +516,13 @@ When working on this codebase:
 1. **Respect component boundaries** - Libraries export, applications consume
 2. **Fix duplication issues** - Replace embedded code with proper imports
 3. **Follow TypeScript patterns** - Avoid mixed HTML/JS implementations
-4. **Test in Alt1** - Use development URLs for real-world testing
+4. **NEVER test Alt1 apps locally** - Always build, commit, push, and use branch deployment URLs
 5. **Maintain build consistency** - All components should follow webpack pattern
 6. **Version management** - Update `appconfig.json` version for releases
 7. **MANDATORY: Implement Alt1Logger** - All applications must use standardized logging
 8. **Log all user interactions** - Button clicks, method entries, errors with full context
+9. **ALWAYS use deployment workflow** - Build → Commit → Push → Monitor → Test with Alt1 URL
+10. **NO local dev servers for Alt1 apps** - They cannot replicate the Alt1 environment
 
 ## Documentation References
 
