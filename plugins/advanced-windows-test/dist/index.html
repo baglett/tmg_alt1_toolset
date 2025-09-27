@@ -131,6 +131,28 @@
             color: #ff6b6b;
         }
 
+        .constraint-info {
+            background: rgba(0, 0, 0, 0.1);
+            padding: 15px;
+            border-radius: 8px;
+            border-left: 4px solid #51cf66;
+        }
+
+        .constraint-info ul {
+            margin: 10px 0;
+            padding-left: 20px;
+        }
+
+        .constraint-info li {
+            margin: 5px 0;
+            font-family: 'Courier New', monospace;
+        }
+
+        .constraint-info small {
+            opacity: 0.8;
+            font-style: italic;
+        }
+
         .size-display {
             font-size: 24px;
             font-weight: bold;
@@ -175,8 +197,8 @@
 
         <h3>🔧 Window Resize Testing</h3>
         <div class="button-group">
-            <button id="testWindowResize" class="btn primary">🔧 Resize to 800x600</button>
-            <button id="testWindowResize2" class="btn primary">📱 Resize to 400x300</button>
+            <button id="testWindowResize" class="btn primary">🔧 Resize to 500x650</button>
+            <button id="testWindowResize2" class="btn primary">📱 Resize to 550x700</button>
             <button id="refreshSize" class="btn success">🔄 Refresh Size</button>
         </div>
 
@@ -201,6 +223,20 @@
             <div class="status-item">
                 <span>Last Resize Result:</span>
                 <span id="lastResizeResult" class="status-value">None</span>
+            </div>
+        </div>
+
+        <!-- Alt1 Window Constraints Information -->
+        <div class="control-panel">
+            <h3>⚖️ Alt1 Window Constraints</h3>
+            <div class="constraint-info">
+                <p><strong>Allowed Size Range:</strong></p>
+                <ul>
+                    <li>Width: 400px - 600px</li>
+                    <li>Height: 500px - 800px</li>
+                    <li>Default: 450px × 600px</li>
+                </ul>
+                <p><small>ℹ️ Alt1 enforces these limits via appconfig.json for security. Resize requests outside these bounds will be silently ignored.</small></p>
             </div>
         </div>
     </div>

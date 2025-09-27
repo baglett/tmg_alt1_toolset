@@ -177,22 +177,22 @@ class Alt1WindowResizeTest {
     private setupEventHandlers(): void {
         this.logger.init('Setting up event handlers...');
 
-        // Resize to 800x600
+        // Resize to 500x650 (within appconfig.json bounds: 400-600Ã—500-800)
         this.elements.testWindowResize?.addEventListener('click', (event) => {
             this.logger.ui('Button clicked: testWindowResize', {
                 disabled: (event.target as HTMLButtonElement)?.disabled,
                 timestamp: Date.now()
             });
-            this.testWindowResize(800, 600);
+            this.testWindowResize(500, 650);
         });
 
-        // Resize to 400x300
+        // Resize to 550x700 (within appconfig.json bounds: 400-600Ã—500-800)
         this.elements.testWindowResize2?.addEventListener('click', (event) => {
             this.logger.ui('Button clicked: testWindowResize2', {
                 disabled: (event.target as HTMLButtonElement)?.disabled,
                 timestamp: Date.now()
             });
-            this.testWindowResize(400, 300);
+            this.testWindowResize(550, 700);
         });
 
         // Refresh size
@@ -233,7 +233,7 @@ class Alt1WindowResizeTest {
 
         try {
             const size = this.windowResizer.getCurrentSize();
-            const sizeText = `${size.width} × ${size.height}`;
+            const sizeText = `${size.width} ï¿½ ${size.height}`;
 
             this.setCurrentSizeDisplay(sizeText, 'success');
             this.setStatusValue('currentWindowSize', sizeText, 'success');
@@ -320,7 +320,7 @@ class Alt1WindowResizeTest {
                     ` ${result.method} (${result.executionTime?.toFixed(0)}ms)`,
                     'success'
                 );
-                alert(` Resize successful!\n\nMethod: ${result.method}\nNew size: ${result.newSize?.width}×${result.newSize?.height}\nTime: ${result.executionTime?.toFixed(2)}ms`);
+                alert(` Resize successful!\n\nMethod: ${result.method}\nNew size: ${result.newSize?.width}ï¿½${result.newSize?.height}\nTime: ${result.executionTime?.toFixed(2)}ms`);
             } else {
                 this.logger.error('Window resize failed:', result);
                 this.setStatusValue('lastResizeResult',

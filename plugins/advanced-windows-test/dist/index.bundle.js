@@ -1616,21 +1616,21 @@ class Alt1WindowResizeTest {
      */
     setupEventHandlers() {
         this.logger.init('Setting up event handlers...');
-        // Resize to 800x600
+        // Resize to 500x650 (within appconfig.json bounds: 400-600×500-800)
         this.elements.testWindowResize?.addEventListener('click', (event) => {
             this.logger.ui('Button clicked: testWindowResize', {
                 disabled: event.target?.disabled,
                 timestamp: Date.now()
             });
-            this.testWindowResize(800, 600);
+            this.testWindowResize(500, 650);
         });
-        // Resize to 400x300
+        // Resize to 550x700 (within appconfig.json bounds: 400-600×500-800)
         this.elements.testWindowResize2?.addEventListener('click', (event) => {
             this.logger.ui('Button clicked: testWindowResize2', {
                 disabled: event.target?.disabled,
                 timestamp: Date.now()
             });
-            this.testWindowResize(400, 300);
+            this.testWindowResize(550, 700);
         });
         // Refresh size
         this.elements.refreshSize?.addEventListener('click', (event) => {
