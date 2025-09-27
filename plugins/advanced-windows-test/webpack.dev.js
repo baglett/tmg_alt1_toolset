@@ -1,12 +1,9 @@
 const path = require("path");
 const CopyPlugin = require("copy-webpack-plugin");
-const { merge } = require("webpack-merge");
-const baseConfig = require("../../shared/webpack.config.base.js");
 
-/**
- * @type {import("webpack").Configuration}
- */
-module.exports = merge(baseConfig, {
+module.exports = {
+    mode: 'development',
+    devtool: 'source-map',
     context: path.resolve(__dirname, "src"),
     entry: {
         "index": "./index.ts"
@@ -20,6 +17,27 @@ module.exports = merge(baseConfig, {
         },
         clean: true,
         globalObject: 'this'
+    },
+    module: {
+        rules: [
+            {
+                test: /\.tsx?$/,
+                use: 'ts-loader',
+                exclude: /node_modules/,
+            },
+            {
+                test: /\.css$/,
+                use: ['style-loader', 'css-loader'],
+            },
+            {
+                test: /\.s[ac]ss$/i,
+                use: ['style-loader', 'css-loader', 'sass-loader'],
+            },
+            {
+                test: /\.(png|svg|jpg|jpeg|gif)$/i,
+                type: 'asset/resource',
+            },
+        ],
     },
     externals: [
         "sharp",
@@ -56,17 +74,13 @@ module.exports = merge(baseConfig, {
     devServer: {
         port: 9000,
         hot: true,
-        liveReload: true,
         static: {
             directory: path.join(__dirname, 'dist'),
         },
-        compress: true,
         headers: {
             "Access-Control-Allow-Origin": "*",
             "Access-Control-Allow-Methods": "GET, POST, PUT, DELETE, PATCH, OPTIONS",
-            "Access-Control-Allow-Headers": "X-Requested-With, content-type, Authorization",
-            "Cross-Origin-Opener-Policy": "same-origin",
-            "Cross-Origin-Embedder-Policy": "require-corp"
+            "Access-Control-Allow-Headers": "X-Requested-With, content-type, Authorization"
         }
     }
-});
+};

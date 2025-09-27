@@ -3,24 +3,22 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Interactive Windows Test</title>
+    <title>Alt1 Window Resize Test</title>
     <style>
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
             margin: 0;
-            padding: 0;
+            padding: 20px;
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             color: white;
-            height: 100vh;
-            display: flex;
-            flex-direction: column;
-            overflow: hidden;
+            min-height: 100vh;
         }
 
         .header {
             background: rgba(0, 0, 0, 0.2);
             padding: 15px 20px;
-            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 10px;
+            margin-bottom: 20px;
             display: flex;
             justify-content: space-between;
             align-items: center;
@@ -43,7 +41,6 @@
             align-items: center;
             gap: 8px;
             font-size: 12px;
-            opacity: 0.9;
         }
 
         .header-status.detected {
@@ -54,22 +51,11 @@
             color: #ff6b6b;
         }
 
-        .header-status .status-icon {
-            font-size: 14px;
-        }
-
-        .main-content {
-            flex: 1;
-            padding: 20px;
-            display: flex;
-            flex-direction: column;
-            gap: 20px;
-        }
-
         .control-panel {
             background: rgba(255, 255, 255, 0.1);
             border-radius: 10px;
             padding: 20px;
+            margin-bottom: 20px;
             backdrop-filter: blur(10px);
             border: 1px solid rgba(255, 255, 255, 0.2);
         }
@@ -84,6 +70,7 @@
             display: flex;
             gap: 10px;
             flex-wrap: wrap;
+            margin-bottom: 20px;
         }
 
         .btn {
@@ -104,33 +91,18 @@
             box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
         }
 
-        .btn:active {
-            transform: translateY(0);
-        }
-
-        .btn.danger {
-            background: linear-gradient(45deg, #ff6b6b, #ee5a52);
+        .btn.primary {
+            background: linear-gradient(45deg, #E91E63, #C2185B);
         }
 
         .btn.success {
             background: linear-gradient(45deg, #51cf66, #40c057);
         }
 
-        .btn.warning {
-            background: linear-gradient(45deg, #ffd43b, #fab005);
-        }
-
-        .btn:disabled {
-            background: #666;
-            cursor: not-allowed;
-            transform: none;
-        }
-
         .status {
             background: rgba(0, 0, 0, 0.2);
             border-radius: 6px;
             padding: 15px;
-            margin-top: 15px;
         }
 
         .status h4 {
@@ -142,13 +114,32 @@
         .status-item {
             display: flex;
             justify-content: space-between;
-            margin: 5px 0;
+            margin: 8px 0;
             font-size: 13px;
         }
 
         .status-value {
             font-weight: 600;
             color: #51cf66;
+        }
+
+        .status-value.updating {
+            color: #ffd43b;
+        }
+
+        .status-value.error {
+            color: #ff6b6b;
+        }
+
+        .size-display {
+            font-size: 24px;
+            font-weight: bold;
+            text-align: center;
+            background: rgba(0, 0, 0, 0.3);
+            padding: 20px;
+            border-radius: 8px;
+            margin: 15px 0;
+            border: 2px solid rgba(255, 255, 255, 0.2);
         }
 
         .alt1-link {
@@ -161,43 +152,13 @@
         .alt1-link:hover {
             text-decoration: underline;
         }
-
-        .example-section {
-            background: rgba(255, 255, 255, 0.05);
-            border-radius: 10px;
-            padding: 20px;
-            border: 1px solid rgba(255, 255, 255, 0.1);
-        }
-
-        .example-section h3 {
-            margin: 0 0 15px 0;
-            color: #74c0fc;
-        }
-
-        .example-section code {
-            background: rgba(0, 0, 0, 0.3);
-            padding: 2px 6px;
-            border-radius: 3px;
-            font-family: 'Consolas', 'Monaco', monospace;
-            font-size: 12px;
-        }
-
-        @media (max-width: 480px) {
-            .button-group {
-                flex-direction: column;
-            }
-
-            .btn {
-                min-width: auto;
-            }
-        }
     </style>
 </head>
 <body>
     <div class="header">
         <div class="header-left">
-            <h1>🎯 Interactive Windows Test</h1>
-            <p>Test the revolutionary @tmg-alt1/interactive-windows component</p>
+            <h1>📏 Alt1 Window Resize Test</h1>
+            <p>MVP for testing Alt1 window resize functionality</p>
         </div>
         <div id="alt1Status" class="header-status not-detected">
             <span class="status-icon">⚪</span>
@@ -206,83 +167,41 @@
         </div>
     </div>
 
-    <div class="main-content">
-
-        <!-- Interactive Windows Test Panel -->
-        <div class="control-panel">
-            <h3>🎯 Interactive Window Controls</h3>
-            <div class="button-group">
-                <button id="openInteractiveModal" class="btn" style="background: #007ACC;">🎯 Open Interactive Modal</button>
-                <button id="openSettingsModal" class="btn" style="background: #28A745;">⚙️ Open Settings Modal</button>
-                <button id="openMultipleWindows" class="btn" style="background: #FF6B6B;">🪟 Multiple Windows Test</button>
-                <button id="openHybridModal" class="btn" style="background: #9C27B0;">🌟 Hybrid Modal (Full Screen)</button>
-            </div>
-
-            <h3>📏 Window Resize Testing</h3>
-            <div class="button-group">
-                <button id="testWindowResize" class="btn" style="background: #E91E63;">🔧 Test Alt1 Resize (800x600)</button>
-                <button id="testCompactLayout" class="btn" style="background: #9C27B0;">📱 Compact Layout</button>
-                <button id="testExpandedLayout" class="btn" style="background: #2196F3;">📊 Expanded Layout</button>
-                <button id="detectResizeCapabilities" class="btn" style="background: #FF9800;">🔍 Detect Capabilities</button>
-            </div>
-
-            <h3>💬 Dialog System</h3>
-            <div class="button-group">
-                <button id="showAlert" class="btn" style="background: #FFC107; color: black;">📢 Show Alert</button>
-                <button id="showConfirm" class="btn" style="background: #17A2B8;">❓ Show Confirm</button>
-                <button id="closeAllWindows" class="btn danger">❌ Close All Windows</button>
-            </div>
-
-            <div class="status">
-                <h4>📊 Interactive Windows Status</h4>
-                <div class="status-item">
-                    <span>Windows Manager:</span>
-                    <span id="managerStatus" class="status-value">Not Initialized</span>
-                </div>
-                <div class="status-item">
-                    <span>Open Windows:</span>
-                    <span id="windowCount" class="status-value">0</span>
-                </div>
-                <div class="status-item">
-                    <span>Focused Window:</span>
-                    <span id="focusedWindow" class="status-value">None</span>
-                </div>
-            </div>
-
-            <div class="status">
-                <h4>🔧 Window Resize Status</h4>
-                <div class="status-item">
-                    <span>Resize Component:</span>
-                    <span id="resizerStatus" class="status-value">Not Initialized</span>
-                </div>
-                <div class="status-item">
-                    <span>Current Size:</span>
-                    <span id="currentWindowSize" class="status-value">Unknown</span>
-                </div>
-                <div class="status-item">
-                    <span>Alt1 userResize:</span>
-                    <span id="userResizeStatus" class="status-value">Unknown</span>
-                </div>
-                <div class="status-item">
-                    <span>Web APIs:</span>
-                    <span id="webApiStatus" class="status-value">Unknown</span>
-                </div>
-            </div>
+    <div class="control-panel">
+        <h3>📏 Current Alt1 Window Size</h3>
+        <div id="currentSizeDisplay" class="size-display">
+            Detecting...
         </div>
 
-        <!-- Interactive Windows Features -->
-        <div class="example-section">
-            <h3>🎯 Interactive Windows Features</h3>
-            <p>Unlike Alt1 overlays, these windows support full mouse and keyboard interaction:</p>
-            <ul>
-                <li><strong>🖱️ Drag Windows:</strong> Click and drag the title bar to move windows</li>
-                <li><strong>↔️ Resize Windows:</strong> Drag corners and edges to resize</li>
-                <li><strong>❌ Close Windows:</strong> Click the X button to close</li>
-                <li><strong>⌨️ Form Interactions:</strong> Type in inputs, click buttons, use dropdowns</li>
-                <li><strong>🪟 Multiple Windows:</strong> Focus management and Z-index layering</li>
-            </ul>
-            <p><strong>Test Instructions:</strong> Click buttons above to create windows, then interact directly with them!</p>
-            <p>Component: <code>@tmg-alt1/interactive-windows</code></p>
+        <h3>🔧 Window Resize Testing</h3>
+        <div class="button-group">
+            <button id="testWindowResize" class="btn primary">🔧 Resize to 800x600</button>
+            <button id="testWindowResize2" class="btn primary">📱 Resize to 400x300</button>
+            <button id="refreshSize" class="btn success">🔄 Refresh Size</button>
+        </div>
+
+        <div class="status">
+            <h4>🔧 Window Resize Status</h4>
+            <div class="status-item">
+                <span>Resize Component:</span>
+                <span id="resizerStatus" class="status-value">Initializing...</span>
+            </div>
+            <div class="status-item">
+                <span>Current Size:</span>
+                <span id="currentWindowSize" class="status-value">Detecting...</span>
+            </div>
+            <div class="status-item">
+                <span>Alt1 userResize API:</span>
+                <span id="userResizeStatus" class="status-value">Checking...</span>
+            </div>
+            <div class="status-item">
+                <span>Web APIs:</span>
+                <span id="webApiStatus" class="status-value">Checking...</span>
+            </div>
+            <div class="status-item">
+                <span>Last Resize Result:</span>
+                <span id="lastResizeResult" class="status-value">None</span>
+            </div>
         </div>
     </div>
 

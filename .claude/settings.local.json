@@ -52,7 +52,8 @@
       "Bash(echo:*)",
       "Bash(npm info:*)",
       "Bash(npm search:*)",
-      "Bash(npx webpack serve:*)"
+      "Bash(npx webpack serve:*)",
+      "Bash(powershell:*)"
     ],
     "deny": [],
     "ask": []
